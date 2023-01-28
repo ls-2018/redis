@@ -1,3 +1,7 @@
+#include "ae.h"
+#include "anet.h"
+#include "redisassert.h"
+
 #include <stdio.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -11,20 +15,20 @@
 #include "zmalloc.h"
 #include "config.h"
 
-#include "ae.h"
-
+/* Include the best multiplexing layer supported by this system.
+ * The following should be ordered by performances, descending. */
 #ifdef HAVE_EVPORT
-#include "ae_evport.c" // Solaris
+#include "ae_evport.c"
 #else
-#ifdef HAVE_EPOLL
-#include "ae_epoll.c" // Linux
-#else
-#ifdef HAVE_KQUEUE
-#include "ae_kqueue.c" // MacOS
-#else
-#include "ae_select.c" // Windows
-#endif
-#endif
+    #ifdef HAVE_EPOLL
+    #include "ae_epoll.c"
+    #else
+        #ifdef HAVE_KQUEUE
+        #include "ae_kqueue.c"
+        #else
+        #include "ae_select.c"
+        #endif
+    #endif
 #endif
 
 // 初始化事件处理器状态

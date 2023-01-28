@@ -1,11 +1,38 @@
+/*
+ * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *   * Redistributions of source code must retain the above copyright notice,
+ *     this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ *   * Neither the name of Redis nor the names of its contributors may be used
+ *     to endorse or promote products derived from this software without
+ *     specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
 #ifdef __APPLE__
-
 #include <fcntl.h> // for fcntl(fd, F_FULLFSYNC)
 #include <AvailabilityMacros.h>
-
 #endif
 
 #ifdef __linux__
@@ -83,7 +110,7 @@
 #if defined(__linux__)
 #define redis_fsync(fd) fdatasync(fd)
 #elif defined(__APPLE__)
-#define redis_fsync(fd) fcntl(fd, F_FULLFSYNC) // 同步+确认   当数据刷到磁盘时
+#define redis_fsync(fd) fcntl(fd, F_FULLFSYNC)
 #else
 #define redis_fsync(fd) fsync(fd)
 #endif
@@ -150,11 +177,8 @@
 #if (defined __linux || defined __APPLE__)
 #define USE_SETPROCTITLE
 #define INIT_SETPROCTITLE_REPLACEMENT
-
 void spt_init(int argc, char *argv[]);
-
 void setproctitle(const char *fmt, ...);
-
 #endif
 
 /* Byte ordering detection */
@@ -259,11 +283,8 @@ void setproctitle(const char *fmt, ...);
 #define redis_set_thread_title(name) rename_thread(find_thread(0), name)
 #else
 #if (defined __APPLE__ && defined(MAC_OS_X_VERSION_10_7))
-
 int pthread_setname_np(const char *name);
-
 #include <pthread.h>
-
 #define redis_set_thread_title(name) pthread_setname_np(name)
 #else
 #define redis_set_thread_title(name)

@@ -34,32 +34,18 @@
 #include "crc64.h"
 #include "bio.h"
 #include "quicklist.h"
-#include "fcntl.h"
+
 #include <arpa/inet.h>
 #include <signal.h>
 #include <dlfcn.h>
-
-#ifndef __GNU_VISIBLE
-
-#include <dlfcn.h>
-
-#else // windows
-
-#include "win_dlfcn.h"
-
-#endif
-
+#include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
 #ifdef HAVE_BACKTRACE
-
 #include <execinfo.h>
-
 #ifndef __OpenBSD__
-
 #include <ucontext.h>
-
 #else
 typedef ucontext_t sigcontext_t;
 #endif
@@ -76,16 +62,13 @@ typedef ucontext_t sigcontext_t;
 #endif
 
 /* Globals */
-static int             bug_report_start = 0; /* True if bug report header was already logged. */
+static int bug_report_start = 0; /* True if bug report header was already logged. */
 static pthread_mutex_t bug_report_start_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* Forward declarations */
 void bugReportStart(void);
-
 void printCrashReport(void);
-
 void bugReportEnd(int killViaSignal, int sig);
-
 void logStackTrace(void *eip, int uplevel);
 
 /* ================================= Debugging ============================== */
@@ -97,9 +80,9 @@ void logStackTrace(void *eip, int uplevel);
  *
  * So digest(a,b,c,d) will be the same of digest(b,a,c,d) */
 void xorDigest(unsigned char *digest, const void *ptr, size_t len) {
-    SHA1_CTX      ctx;
+    SHA1_CTX ctx;
     unsigned char hash[20];
-    int           j;
+    int j;
 
     SHA1Init(&ctx);
     SHA1Update(&ctx, ptr, len);
@@ -155,7 +138,7 @@ void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) 
     uint32_t aux = htonl(o->type);
     mixDigest(digest, &aux, sizeof(aux));
     long long expiretime = getExpire(db, keyobj);
-    char      buf[128];
+    char buf[128];
 
     /* Save the key and associated value */
     if (o->type == OBJ_STRING) {
@@ -163,7 +146,7 @@ void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) 
     }
     else if (o->type == OBJ_LIST) {
         listTypeIterator *li = listTypeInitIterator(o, 0, LIST_TAIL);
-        listTypeEntry     entry;
+        listTypeEntry entry;
         while (listTypeNext(li, &entry)) {
             robj *eleobj = listTypeGet(&entry);
             mixStringObjectDigest(digest, eleobj);
@@ -173,7 +156,7 @@ void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) 
     }
     else if (o->type == OBJ_SET) {
         setTypeIterator *si = setTypeInitIterator(o);
-        sds              sdsele;
+        sds sdsele;
         while ((sdsele = setTypeNextObject(si)) != NULL) {
             xorDigest(digest, sdsele, sdslen(sdsele));
             sdsfree(sdsele);
@@ -187,9 +170,9 @@ void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) 
             unsigned char *zl = o->ptr;
             unsigned char *eptr, *sptr;
             unsigned char *vstr;
-            unsigned int   vlen;
-            long long      vll;
-            double         score;
+            unsigned int vlen;
+            long long vll;
+            double score;
 
             eptr = lpSeek(zl, 0);
             serverAssert(eptr != NULL);
@@ -216,12 +199,12 @@ void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) 
             }
         }
         else if (o->encoding == OBJ_ENCODING_SKIPLIST) {
-            zset         *zs = o->ptr;
+            zset *zs = o->ptr;
             dictIterator *di = dictGetIterator(zs->dict);
-            dictEntry    *de;
+            dictEntry *de;
 
             while ((de = dictNext(di)) != NULL) {
-                sds     sdsele = dictGetKey(de);
+                sds sdsele = dictGetKey(de);
                 double *score = dictGetVal(de);
 
                 snprintf(buf, sizeof(buf), "%.17g", *score);
@@ -240,7 +223,7 @@ void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) 
         hashTypeIterator *hi = hashTypeInitIterator(o);
         while (hashTypeNext(hi) != C_ERR) {
             unsigned char eledigest[20];
-            sds           sdsele;
+            sds sdsele;
 
             memset(eledigest, 0, 20);
             sdsele = hashTypeCurrentObjectNewSds(hi, OBJ_HASH_KEY);
@@ -257,7 +240,7 @@ void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) 
         streamIterator si;
         streamIteratorStart(&si, o->ptr, NULL, NULL, 0);
         streamID id;
-        int64_t  numfields;
+        int64_t numfields;
 
         while (streamIteratorGetID(&si, &id, &numfields)) {
             sds itemid = sdscatfmt(sdsempty(), "%U.%U", id.ms, id.seq);
@@ -266,7 +249,7 @@ void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) 
 
             while (numfields--) {
                 unsigned char *field, *value;
-                int64_t        field_len, value_len;
+                int64_t field_len, value_len;
                 streamIteratorGetField(&si, &field, &value, &field_len, &value_len);
                 mixDigest(digest, field, field_len);
                 mixDigest(digest, value, value_len);
@@ -276,8 +259,8 @@ void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) 
     }
     else if (o->type == OBJ_MODULE) {
         RedisModuleDigest md = {{0}, {0}, keyobj, db->id};
-        moduleValue      *mv = o->ptr;
-        moduleType       *mt = mv->type;
+        moduleValue *mv = o->ptr;
+        moduleType *mt = mv->type;
         moduleInitDigestContext(md);
         if (mt->digest) {
             mt->digest(&md, mv->value);
@@ -301,9 +284,9 @@ void xorObjectDigest(redisDb *db, robj *keyobj, unsigned char *digest, robj *o) 
 void computeDatasetDigest(unsigned char *final) {
     unsigned char digest[20];
     dictIterator *di = NULL;
-    dictEntry    *de;
-    int           j;
-    uint32_t      aux;
+    dictEntry *de;
+    int j;
+    uint32_t aux;
 
     memset(final, 0, 20); /* Start with a clean result */
 
@@ -321,7 +304,7 @@ void computeDatasetDigest(unsigned char *final) {
 
         /* Iterate this DB writing every entry */
         while ((de = dictNext(di)) != NULL) {
-            sds   key;
+            sds key;
             robj *keyobj, *o;
 
             memset(digest, 0, 20); /* This key-val digest */
@@ -385,8 +368,8 @@ void mallctl_int(client *c, robj **argv, int argc) {
 }
 
 void mallctl_string(client *c, robj **argv, int argc) {
-    int    rret, wret;
-    char  *old;
+    int rret, wret;
+    char *old;
     size_t sz = sizeof(old);
     /* for strings, it seems we need to first get the old value, before overriding it. */
     if ((rret = je_mallctl(argv[0]->ptr, &old, &sz, NULL, 0))) {
@@ -397,7 +380,7 @@ void mallctl_string(client *c, robj **argv, int argc) {
         }
     }
     if (argc > 1) {
-        char  *val = argv[1]->ptr;
+        char *val = argv[1]->ptr;
         char **valref = &val;
         if ((!strcmp(val, "VOID")))
             valref = NULL, sz = 0;
@@ -613,20 +596,17 @@ void debugCommand(client *c) {
         addReply(c, shared.ok);
     }
     else if (!strcasecmp(c->argv[1]->ptr, "loadaof")) {
-        if (server.aof_state != AOF_OFF) {
+        if (server.aof_state != AOF_OFF)
             flushAppendOnlyFile(1);
-        }
         emptyData(-1, EMPTYDB_NO_FLAGS, NULL);
         protectClient(c);
-        if (server.aof_manifest) {
+        if (server.aof_manifest)
             aofManifestFree(server.aof_manifest);
-        }
         aofLoadManifestFromDisk();
         aofDelHistoryFiles();
         int ret = loadAppendOnlyFiles(server.aof_manifest);
-        if (ret != AOF_OK && ret != AOF_EMPTY) {
+        if (ret != AOF_OK && ret != AOF_EMPTY)
             exit(1);
-        }
         unprotectClient(c);
         server.dirty = 0; /* Prevent AOF / replication */
         serverLog(LL_WARNING, "Append Only File loaded by DEBUG LOADAOF");
@@ -641,8 +621,8 @@ void debugCommand(client *c) {
     }
     else if (!strcasecmp(c->argv[1]->ptr, "object") && c->argc == 3) {
         dictEntry *de;
-        robj      *val;
-        char      *strenc;
+        robj *val;
+        char *strenc;
 
         if ((de = dictFind(c->db->dict, c->argv[2]->ptr)) == NULL) {
             addReplyErrorObject(c, shared.nokeyerr);
@@ -653,8 +633,8 @@ void debugCommand(client *c) {
 
         char extra[138] = {0};
         if (val->encoding == OBJ_ENCODING_QUICKLIST) {
-            char      *nextra = extra;
-            int        remaining = sizeof(extra);
+            char *nextra = extra;
+            int remaining = sizeof(extra);
             quicklist *ql = val->ptr;
             /* Add number of quicklist nodes */
             int used = snprintf(nextra, remaining, " ql_nodes:%lu", ql->len);
@@ -693,8 +673,8 @@ void debugCommand(client *c) {
     }
     else if (!strcasecmp(c->argv[1]->ptr, "sdslen") && c->argc == 3) {
         dictEntry *de;
-        robj      *val;
-        sds        key;
+        robj *val;
+        sds key;
 
         if ((de = dictFind(c->db->dict, c->argv[2]->ptr)) == NULL) {
             addReplyErrorObject(c, shared.nokeyerr);
@@ -746,9 +726,9 @@ void debugCommand(client *c) {
         }
     }
     else if (!strcasecmp(c->argv[1]->ptr, "populate") && c->argc >= 3 && c->argc <= 5) {
-        long  keys, j;
+        long keys, j;
         robj *key, *val;
-        char  buf[128];
+        char buf[128];
 
         if (getPositiveLongFromObjectOrReply(c, c->argv[2], &keys, NULL) != C_OK)
             return;
@@ -782,7 +762,7 @@ void debugCommand(client *c) {
     else if (!strcasecmp(c->argv[1]->ptr, "digest") && c->argc == 2) {
         /* DEBUG DIGEST (form without keys specified) */
         unsigned char digest[20];
-        sds           d = sdsempty();
+        sds d = sdsempty();
 
         computeDatasetDigest(digest);
         for (int i = 0; i < 20; i++) d = sdscatprintf(d, "%02x", digest[i]);
@@ -799,7 +779,7 @@ void debugCommand(client *c) {
             /* We don't use lookupKey because a debug command should
              * work on logically expired keys */
             dictEntry *de;
-            robj      *o = ((de = dictFind(c->db->dict, c->argv[j]->ptr)) == NULL) ? NULL : dictGetVal(de);
+            robj *o = ((de = dictFind(c->db->dict, c->argv[j]->ptr)) == NULL) ? NULL : dictGetVal(de);
             if (o)
                 xorObjectDigest(c->db, c->argv[j], digest, o);
 
@@ -882,8 +862,8 @@ void debugCommand(client *c) {
         }
     }
     else if (!strcasecmp(c->argv[1]->ptr, "sleep") && c->argc == 3) {
-        double          dtime = strtod(c->argv[2]->ptr, NULL);
-        long long       utime = dtime * 1000000;
+        double dtime = strtod(c->argv[2]->ptr, NULL);
+        long long utime = dtime * 1000000;
         struct timespec tv;
 
         tv.tv_sec = utime / 1000000;
@@ -896,7 +876,7 @@ void debugCommand(client *c) {
         addReply(c, shared.ok);
     }
     else if (!strcasecmp(c->argv[1]->ptr, "quicklist-packed-threshold") && c->argc == 3) {
-        int                memerr;
+        int memerr;
         unsigned long long sz = memtoull((const char *)c->argv[2]->ptr, &memerr);
         if (memerr || !quicklistisSetPackedThreshold(sz)) {
             addReplyError(c, "argument must be a memory value bigger than 1 and smaller than 4gb");
@@ -939,7 +919,7 @@ void debugCommand(client *c) {
     }
     else if (!strcasecmp(c->argv[1]->ptr, "htstats") && c->argc == 3) {
         long dbid;
-        sds  stats = sdsempty();
+        sds stats = sdsempty();
         char buf[4096];
 
         if (getLongFromObjectOrReply(c, c->argv[2], &dbid, NULL) != C_OK) {
@@ -1091,7 +1071,7 @@ void _serverAssert(const char *estr, const char *file, int line) {
 }
 
 void _serverAssertPrintClientInfo(const client *c) {
-    int  j;
+    int j;
     char conninfo[CONN_INFO_LEN];
 
     bugReportStart();
@@ -1100,7 +1080,7 @@ void _serverAssertPrintClientInfo(const client *c) {
     serverLog(LL_WARNING, "client->conn = %s", connGetInfo(c->conn, conninfo, sizeof(conninfo)));
     serverLog(LL_WARNING, "client->argc = %d", c->argc);
     for (j = 0; j < c->argc; j++) {
-        char  buf[128];
+        char buf[128];
         char *arg;
 
         if (c->argv[j]->type == OBJ_STRING && sdsEncodedObject(c->argv[j])) {
@@ -1202,7 +1182,6 @@ void bugReportStart(void) {
 }
 
 #ifdef HAVE_BACKTRACE
-
 static void *getMcontextEip(ucontext_t *uc) {
 #define NOT_SUPPORTED() \
     do {                \
@@ -1210,7 +1189,7 @@ static void *getMcontextEip(ucontext_t *uc) {
         return NULL;    \
     } while (0)
 #if defined(__APPLE__) && !defined(MAC_OS_X_VERSION_10_6)
-    /* OSX < 10.6 */
+/* OSX < 10.6 */
 #if defined(__x86_64__)
     return (void *)uc->uc_mcontext->__ss.__rip;
 #elif defined(__i386__)
@@ -1219,7 +1198,7 @@ static void *getMcontextEip(ucontext_t *uc) {
     return (void *)uc->uc_mcontext->__ss.__srr0;
 #endif
 #elif defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_6)
-    /* OSX >= 10.6 */
+/* OSX >= 10.6 */
 #if defined(_STRUCT_X86_THREAD_STATE64) && !defined(__i386__)
     return (void *)uc->uc_mcontext->__ss.__rip;
 #elif defined(__i386__)
@@ -1229,7 +1208,7 @@ static void *getMcontextEip(ucontext_t *uc) {
     return (void *)arm_thread_state64_get_pc(uc->uc_mcontext->__ss);
 #endif
 #elif defined(__linux__)
-    /* Linux */
+/* Linux */
 #if defined(__i386__) || ((defined(__X86_64__) || defined(__x86_64__)) && defined(__ILP32__))
     return (void *)uc->uc_mcontext.gregs[14]; /* Linux 32 */
 #elif defined(__X86_64__) || defined(__x86_64__)
@@ -1244,7 +1223,7 @@ static void *getMcontextEip(ucontext_t *uc) {
     NOT_SUPPORTED();
 #endif
 #elif defined(__FreeBSD__)
-    /* FreeBSD */
+/* FreeBSD */
 #if defined(__i386__)
     return (void *)uc->uc_mcontext.mc_eip;
 #elif defined(__x86_64__)
@@ -1253,7 +1232,7 @@ static void *getMcontextEip(ucontext_t *uc) {
     NOT_SUPPORTED();
 #endif
 #elif defined(__OpenBSD__)
-    /* OpenBSD */
+/* OpenBSD */
 #if defined(__i386__)
     return (void *)uc->sc_eip;
 #elif defined(__x86_64__)
@@ -1351,7 +1330,7 @@ void logRegisters(ucontext_t *uc) {
 #endif
 /* Linux */
 #elif defined(__linux__)
-    /* Linux x86 */
+/* Linux x86 */
 #if defined(__i386__) || ((defined(__X86_64__) || defined(__x86_64__)) && defined(__ILP32__))
     serverLog(
         LL_WARNING,
@@ -1537,7 +1516,7 @@ void closeDirectLogFiledes(int fd) {
  */
 void logStackTrace(void *eip, int uplevel) {
     void *trace[100];
-    int   trace_size = 0, fd = openDirectLogFiledes();
+    int trace_size = 0, fd = openDirectLogFiledes();
     char *msg;
     uplevel++; /* skip this function */
 
@@ -1575,7 +1554,7 @@ void logStackTrace(void *eip, int uplevel) {
 void logServerInfo(void) {
     sds infostring, clients;
     serverLogRaw(LL_WARNING | LL_RAW, "\n------ INFO OUTPUT ------\n");
-    int   all = 0, everything = 0;
+    int all = 0, everything = 0;
     robj *argv[1];
     argv[0] = createStringObject("all", strlen("all"));
     dict *section_dict = genInfoSectionDict(argv, 1, NULL, &all, &everything);
@@ -1615,8 +1594,8 @@ void logCurrentClient(void) {
         return;
 
     client *cc = server.current_client;
-    sds     client;
-    int     j;
+    sds client;
+    int j;
 
     serverLogRaw(LL_WARNING | LL_RAW, "\n------ CURRENT CLIENT INFO ------\n");
     client = catClientInfoString(sdsempty(), cc);
@@ -1633,7 +1612,7 @@ void logCurrentClient(void) {
     /* Check if the first argument, usually a key, is found inside the
      * selected DB, and if so print info about the associated object. */
     if (cc->argc > 1) {
-        robj      *val, *key;
+        robj *val, *key;
         dictEntry *de;
 
         key = getDecodedObject(cc->argv[1]);
@@ -1653,13 +1632,13 @@ void logCurrentClient(void) {
 
 /* A non destructive memory test executed during segfault. */
 int memtest_test_linux_anonymous_maps(void) {
-    FILE  *fp;
-    char   line[1024];
-    char   logbuf[1024];
+    FILE *fp;
+    char line[1024];
+    char logbuf[1024];
     size_t start_addr, end_addr, size;
     size_t start_vect[MEMTEST_MAX_REGIONS];
     size_t size_vect[MEMTEST_MAX_REGIONS];
-    int    regions = 0, j;
+    int regions = 0, j;
 
     int fd = openDirectLogFiledes();
     if (!fd)
@@ -1764,9 +1743,9 @@ void doFastMemoryTest(void) {
  * bytes, searching for E8 (callq) opcodes, and dumping the symbols
  * and the call offset if they appear to be valid. */
 void dumpX86Calls(void *addr, size_t len) {
-    size_t         j;
+    size_t j;
     unsigned char *p = addr;
-    Dl_info        info;
+    Dl_info info;
     /* Hash table to best-effort avoid printing the same symbol
      * multiple times. */
     unsigned long ht[256] = {0};
@@ -1777,7 +1756,7 @@ void dumpX86Calls(void *addr, size_t len) {
         if (p[j] != 0xE8)
             continue; /* Not an E8 CALL opcode. */
         unsigned long target = (unsigned long)addr + j + 5;
-        uint32_t      tmp;
+        uint32_t tmp;
         memcpy(&tmp, p + j + 1, sizeof(tmp));
         target += tmp;
         if (dladdr((void *)target, &info) != 0 && info.dli_sname != NULL) {
@@ -1802,13 +1781,13 @@ void dumpCodeAroundEIP(void *eip) {
             "$ objdump --adjust-vma=%p -D -b binary -m i386:x86-64 /tmp/dump.bin\n"
             "------\n",
             info.dli_sname, info.dli_saddr, info.dli_fname, info.dli_fbase, info.dli_saddr);
-        size_t        len = (long)eip - (long)info.dli_saddr;
+        size_t len = (long)eip - (long)info.dli_saddr;
         unsigned long sz = sysconf(_SC_PAGESIZE);
         if (len < 1 << 13) { /* we don't have functions over 8k (verified) */
             /* Find the address of the next page, which is our "safety"
              * limit when dumping. Then try to dump just 128 bytes more
              * than EIP if there is room, or stop sooner. */
-            void         *base = (void *)info.dli_saddr;
+            void *base = (void *)info.dli_saddr;
             unsigned long next = ((unsigned long)eip + sz) & ~(sz - 1);
             unsigned long end = (unsigned long)eip + 128;
             if (end > next)
@@ -1835,7 +1814,7 @@ void sigsegvHandler(int sig, siginfo_t *info, void *secret) {
 
 #ifdef HAVE_BACKTRACE
     ucontext_t *uc = (ucontext_t *)secret;
-    void       *eip = getMcontextEip(uc);
+    void *eip = getMcontextEip(uc);
     if (eip != NULL) {
         serverLog(LL_WARNING, "Crashed running the instruction at: %p", eip);
     }
@@ -1909,9 +1888,9 @@ void bugReportEnd(int killViaSignal, int sig) {
 /* ==================== Logging functions for debugging ===================== */
 
 void serverLogHexDump(int level, char *descr, void *value, size_t len) {
-    char           buf[65], *b;
+    char buf[65], *b;
     unsigned char *v = value;
-    char           charset[] = "0123456789abcdef";
+    char charset[] = "0123456789abcdef";
 
     serverLog(level, "%s (hexdump of %zu bytes):", descr, len);
     b = buf;

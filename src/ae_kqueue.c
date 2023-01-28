@@ -1,12 +1,6 @@
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
-#include "ae.h"
-#include "hdr_redis_malloc.h"
-#include "string.h"
-#include "redisassert.h"
-#include "errno.h"
-#include "anet.h"
 
 typedef struct aeApiState {
     int            kqfd;       // kqueue 句柄
