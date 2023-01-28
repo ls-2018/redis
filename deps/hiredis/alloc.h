@@ -41,14 +41,14 @@ extern "C" {
 /* Structure pointing to our actually configured allocators */
 typedef struct hiredisAllocFuncs {
     void *(*mallocFn)(size_t);
-    void *(*callocFn)(size_t,size_t);
-    void *(*reallocFn)(void*,size_t);
-    char *(*strdupFn)(const char*);
-    void (*freeFn)(void*);
+    void *(*callocFn)(size_t, size_t);
+    void *(*reallocFn)(void *, size_t);
+    char *(*strdupFn)(const char *);
+    void (*freeFn)(void *);
 } hiredisAllocFuncs;
 
 hiredisAllocFuncs hiredisSetAllocators(hiredisAllocFuncs *ha);
-void hiredisResetAllocators(void);
+void              hiredisResetAllocators(void);
 
 #ifndef _WIN32
 
@@ -85,7 +85,7 @@ void *hi_malloc(size_t size);
 void *hi_calloc(size_t nmemb, size_t size);
 void *hi_realloc(void *ptr, size_t size);
 char *hi_strdup(const char *str);
-void hi_free(void *ptr);
+void  hi_free(void *ptr);
 
 #endif
 

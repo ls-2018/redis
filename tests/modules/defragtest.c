@@ -8,8 +8,8 @@ static RedisModuleType *FragType;
 
 struct FragObject {
     unsigned long len;
-    void **values;
-    int maxstep;
+    void        **values;
+    int           maxstep;
 };
 
 /* Make sure we get the expected cursor */
@@ -22,11 +22,10 @@ unsigned long int datatype_wrong_cursor = 0;
 unsigned long int global_attempts = 0;
 unsigned long int global_defragged = 0;
 
-int global_strings_len = 0;
+int                 global_strings_len = 0;
 RedisModuleString **global_strings = NULL;
 
-static void createGlobalStrings(RedisModuleCtx *ctx, int count)
-{
+static void createGlobalStrings(RedisModuleCtx *ctx, int count) {
     global_strings_len = count;
     global_strings = RedisModule_Alloc(sizeof(RedisModuleString *) * count);
 
@@ -35,8 +34,7 @@ static void createGlobalStrings(RedisModuleCtx *ctx, int count)
     }
 }
 
-static int defragGlobalStrings(RedisModuleDefragCtx *ctx)
-{
+static int defragGlobalStrings(RedisModuleDefragCtx *ctx) {
     for (int i = 0; i < global_strings_len; i++) {
         RedisModuleString *new = RedisModule_DefragRedisModuleString(ctx, global_strings[i]);
         global_attempts++;
@@ -64,7 +62,7 @@ static void FragInfo(RedisModuleInfoCtx *ctx, int for_crash_report) {
 struct FragObject *createFragObject(unsigned long len, unsigned long size, int maxstep) {
     struct FragObject *o = RedisModule_Alloc(sizeof(*o));
     o->len = len;
-    o->values = RedisModule_Alloc(sizeof(RedisModuleString*) * len);
+    o->values = RedisModule_Alloc(sizeof(RedisModuleString *) * len);
     o->maxstep = maxstep;
 
     for (unsigned long i = 0; i < len; i++) {
@@ -95,11 +93,9 @@ static int fragCreateCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int 
     if (argc != 5)
         return RedisModule_WrongArity(ctx);
 
-    RedisModuleKey *key = RedisModule_OpenKey(ctx,argv[1],
-                                              REDISMODULE_READ|REDISMODULE_WRITE);
-    int type = RedisModule_KeyType(key);
-    if (type != REDISMODULE_KEYTYPE_EMPTY)
-    {
+    RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
+    int             type = RedisModule_KeyType(key);
+    if (type != REDISMODULE_KEYTYPE_EMPTY) {
         return RedisModule_ReplyWithError(ctx, "ERR key exists");
     }
 
@@ -129,8 +125,7 @@ static int fragCreateCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int 
 void FragFree(void *value) {
     struct FragObject *o = value;
 
-    for (unsigned long i = 0; i < o->len; i++)
-        RedisModule_Free(o->values[i]);
+    for (unsigned long i = 0; i < o->len; i++) RedisModule_Free(o->values[i]);
     RedisModule_Free(o->values);
     RedisModule_Free(o);
 }
@@ -145,19 +140,23 @@ size_t FragFreeEffort(RedisModuleString *key, const void *value) {
 int FragDefrag(RedisModuleDefragCtx *ctx, RedisModuleString *key, void **value) {
     REDISMODULE_NOT_USED(key);
     unsigned long i = 0;
-    int steps = 0;
+    int           steps = 0;
 
     int dbid = RedisModule_GetDbIdFromDefragCtx(ctx);
     RedisModule_Assert(dbid != -1);
 
     /* Attempt to get cursor, validate it's what we're exepcting */
     if (RedisModule_DefragCursorGet(ctx, &i) == REDISMODULE_OK) {
-        if (i > 0) datatype_resumes++;
+        if (i > 0)
+            datatype_resumes++;
 
         /* Validate we're expecting this cursor */
-        if (i != last_set_cursor) datatype_wrong_cursor++;
-    } else {
-        if (last_set_cursor != 0) datatype_wrong_cursor++;
+        if (i != last_set_cursor)
+            datatype_wrong_cursor++;
+    }
+    else {
+        if (last_set_cursor != 0)
+            datatype_wrong_cursor++;
     }
 
     /* Attempt to defrag the object itself */
@@ -166,7 +165,8 @@ int FragDefrag(RedisModuleDefragCtx *ctx, RedisModuleString *key, void **value) 
     if (o == NULL) {
         /* Not defragged */
         o = *value;
-    } else {
+    }
+    else {
         /* Defragged */
         *value = o;
         datatype_defragged++;
@@ -181,9 +181,7 @@ int FragDefrag(RedisModuleDefragCtx *ctx, RedisModuleString *key, void **value) 
             datatype_defragged++;
         }
 
-        if ((o->maxstep && ++steps > o->maxstep) ||
-            ((i % 64 == 0) && RedisModule_DefragShouldStop(ctx)))
-        {
+        if ((o->maxstep && ++steps > o->maxstep) || ((i % 64 == 0) && RedisModule_DefragShouldStop(ctx))) {
             RedisModule_DefragCursorSet(ctx, i);
             last_set_cursor = i;
             return 1;
@@ -198,8 +196,8 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    if (RedisModule_Init(ctx, "defragtest", 1, REDISMODULE_APIVER_1)
-        == REDISMODULE_ERR) return REDISMODULE_ERR;
+    if (RedisModule_Init(ctx, "defragtest", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR)
+        return REDISMODULE_ERR;
 
     if (RedisModule_GetTypeMethodVersion() < REDISMODULE_TYPE_METHOD_VERSION) {
         return REDISMODULE_ERR;
@@ -212,22 +210,16 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
 
     createGlobalStrings(ctx, glen);
 
-    RedisModuleTypeMethods tm = {
-            .version = REDISMODULE_TYPE_METHOD_VERSION,
-            .free = FragFree,
-            .free_effort = FragFreeEffort,
-            .defrag = FragDefrag
-    };
+    RedisModuleTypeMethods tm = {.version = REDISMODULE_TYPE_METHOD_VERSION, .free = FragFree, .free_effort = FragFreeEffort, .defrag = FragDefrag};
 
     FragType = RedisModule_CreateDataType(ctx, "frag_type", 0, &tm);
-    if (FragType == NULL) return REDISMODULE_ERR;
-
-    if (RedisModule_CreateCommand(ctx, "frag.create",
-                                  fragCreateCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR)
+    if (FragType == NULL)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx, "frag.resetstats",
-                                  fragResetStatsCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR)
+    if (RedisModule_CreateCommand(ctx, "frag.create", fragCreateCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR)
+        return REDISMODULE_ERR;
+
+    if (RedisModule_CreateCommand(ctx, "frag.resetstats", fragResetStatsCommand, "write deny-oom", 1, 1, 1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     RedisModule_RegisterInfoFunc(ctx, FragInfo);

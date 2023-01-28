@@ -52,7 +52,7 @@ hiredisAllocFuncs hiredisSetAllocators(hiredisAllocFuncs *override) {
 
 /* Reset allocators to use libc defaults */
 void hiredisResetAllocators(void) {
-    hiredisAllocFns = (hiredisAllocFuncs) {
+    hiredisAllocFns = (hiredisAllocFuncs){
         .mallocFn = malloc,
         .callocFn = calloc,
         .reallocFn = realloc,

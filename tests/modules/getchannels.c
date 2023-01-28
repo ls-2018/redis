@@ -11,43 +11,48 @@ int getChannels_subscribe(RedisModuleCtx *ctx, RedisModuleString **argv, int arg
         return REDISMODULE_OK;
     }
     char *err = NULL;
-    
+
     /* getchannels.command [[subscribe|unsubscribe|publish] [pattern|literal] <channel> ...]
      * This command marks the given channel is accessed based on the
      * provided modifiers. */
     for (int i = 1; i < argc; i += 3) {
         const char *operation = RedisModule_StringPtrLen(argv[i], NULL);
-        const char *type = RedisModule_StringPtrLen(argv[i+1], NULL);
-        int flags = 0;
+        const char *type = RedisModule_StringPtrLen(argv[i + 1], NULL);
+        int         flags = 0;
 
         if (!strcasecmp(operation, "subscribe")) {
             flags |= REDISMODULE_CMD_CHANNEL_SUBSCRIBE;
-        } else if (!strcasecmp(operation, "unsubscribe")) {
+        }
+        else if (!strcasecmp(operation, "unsubscribe")) {
             flags |= REDISMODULE_CMD_CHANNEL_UNSUBSCRIBE;
-        } else if (!strcasecmp(operation, "publish")) {
+        }
+        else if (!strcasecmp(operation, "publish")) {
             flags |= REDISMODULE_CMD_CHANNEL_PUBLISH;
-        } else {
+        }
+        else {
             err = "Invalid channel operation";
             break;
         }
 
-        if (!strcasecmp(type, "literal")) {
-            /* No op */
-        } else if (!strcasecmp(type, "pattern")) {
+        if (!strcasecmp(type, "literal")) { /* No op */
+        }
+        else if (!strcasecmp(type, "pattern")) {
             flags |= REDISMODULE_CMD_CHANNEL_PATTERN;
-        } else {
+        }
+        else {
             err = "Invalid channel type";
             break;
         }
         if (RedisModule_IsChannelsPositionRequest(ctx)) {
-            RedisModule_ChannelAtPosWithFlags(ctx, i+2, flags);
+            RedisModule_ChannelAtPosWithFlags(ctx, i + 2, flags);
         }
     }
 
     if (!RedisModule_IsChannelsPositionRequest(ctx)) {
         if (err) {
             RedisModule_ReplyWithError(ctx, err);
-        } else {
+        }
+        else {
             /* Normal implementation would go here, but for tests just return okay */
             RedisModule_ReplyWithSimpleString(ctx, "OK");
         }

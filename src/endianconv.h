@@ -37,14 +37,18 @@
 #include <stdint.h>
 
 void memrev16(void *p);
+
 void memrev32(void *p);
+
 void memrev64(void *p);
+
 uint16_t intrev16(uint16_t v);
+
 uint32_t intrev32(uint32_t v);
+
 uint64_t intrev64(uint64_t v);
 
-/* variants of the function doing the actual conversion only if the target
- * host is big endian */
+// 只有当目标主机为大端时,函数的变体才执行实际转换
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define memrev16ifbe(p) ((void)(0))
 #define memrev32ifbe(p) ((void)(0))

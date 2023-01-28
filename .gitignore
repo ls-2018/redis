@@ -4,6 +4,8 @@
 *.so
 *.d
 *.log
+*.exe
+*.dll
 dump.rdb
 redis-benchmark
 redis-check-aof
@@ -23,7 +25,6 @@ release.h
 src/transfer.sh
 src/configs
 redis.ds
-src/redis.conf
 src/nodes.conf
 deps/lua/src/lua
 deps/lua/src/luac
@@ -35,8 +36,10 @@ tests/tls/*
 *.dSYM
 Makefile.dep
 .vscode/*
-.idea/*
 .ccls
 .ccls-cache/*
 compile_commands.json
 redis.code-workspace
+cmake-build-debug
+.DS_Store
+.idea/

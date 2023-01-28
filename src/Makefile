@@ -404,7 +404,7 @@ DEP = $(REDIS_SERVER_OBJ:%.o=%.d) $(REDIS_CLI_OBJ:%.o=%.d) $(REDIS_BENCHMARK_OBJ
 # The file commands.c is checked in and doesn't normally need to be rebuilt. It
 # is built only if python is available and its prereqs are modified.
 ifneq (,$(PYTHON))
-commands.c: commands/*.json ../utils/generate-command-code.py
+commands.c:
 	$(QUIET_GEN)$(PYTHON) ../utils/generate-command-code.py
 endif
 

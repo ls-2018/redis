@@ -2,8 +2,11 @@
 #define HDR_MALLOC_H__
 
 void *zmalloc(size_t size);
+
 void *zcalloc_num(size_t num, size_t size);
+
 void *zrealloc(void *ptr, size_t size);
+
 void zfree(void *ptr);
 
 #define hdr_malloc zmalloc

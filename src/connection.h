@@ -34,79 +34,69 @@
 #include <errno.h>
 #include <sys/uio.h>
 
-#define CONN_INFO_LEN   32
+#define CONN_INFO_LEN 32
 
 struct aeEventLoop;
 typedef struct connection connection;
 
-typedef enum {
-    CONN_STATE_NONE = 0,
-    CONN_STATE_CONNECTING,
-    CONN_STATE_ACCEPTING,
-    CONN_STATE_CONNECTED,
-    CONN_STATE_CLOSED,
-    CONN_STATE_ERROR
-} ConnectionState;
+typedef enum { CONN_STATE_NONE = 0, CONN_STATE_CONNECTING, CONN_STATE_ACCEPTING, CONN_STATE_CONNECTED, CONN_STATE_CLOSED, CONN_STATE_ERROR } ConnectionState;
 
-#define CONN_FLAG_CLOSE_SCHEDULED   (1<<0)      /* Closed scheduled by a handler */
-#define CONN_FLAG_WRITE_BARRIER     (1<<1)      /* Write barrier requested */
+#define CONN_FLAG_CLOSE_SCHEDULED (1 << 0) /* 由处理程序计划关闭 */
+#define CONN_FLAG_WRITE_BARRIER (1 << 1)   /* 已请求 写屏障 */
 
-#define CONN_TYPE_SOCKET            1
-#define CONN_TYPE_TLS               2
+#define CONN_TYPE_SOCKET 1
+#define CONN_TYPE_TLS 2
 
 typedef void (*ConnectionCallbackFunc)(struct connection *conn);
 
 typedef struct ConnectionType {
     void (*ae_handler)(struct aeEventLoop *el, int fd, void *clientData, int mask);
+
     int (*connect)(struct connection *conn, const char *addr, int port, const char *source_addr, ConnectionCallbackFunc connect_handler);
+
     int (*write)(struct connection *conn, const void *data, size_t data_len);
+
     int (*writev)(struct connection *conn, const struct iovec *iov, int iovcnt);
+
     int (*read)(struct connection *conn, void *buf, size_t buf_len);
+
     void (*close)(struct connection *conn);
+
     int (*accept)(struct connection *conn, ConnectionCallbackFunc accept_handler);
+
     int (*set_write_handler)(struct connection *conn, ConnectionCallbackFunc handler, int barrier);
+
     int (*set_read_handler)(struct connection *conn, ConnectionCallbackFunc handler);
+
     const char *(*get_last_error)(struct connection *conn);
+
     int (*blocking_connect)(struct connection *conn, const char *addr, int port, long long timeout);
+
     ssize_t (*sync_write)(struct connection *conn, char *ptr, ssize_t size, long long timeout);
+
     ssize_t (*sync_read)(struct connection *conn, char *ptr, ssize_t size, long long timeout);
+
     ssize_t (*sync_readline)(struct connection *conn, char *ptr, ssize_t size, long long timeout);
+
     int (*get_type)(struct connection *conn);
 } ConnectionType;
 
 struct connection {
-    ConnectionType *type;
-    ConnectionState state;
-    short int flags;
-    short int refs;
-    int last_errno;
-    void *private_data;
+    ConnectionType        *type;
+    ConnectionState        state;
+    short int              flags;
+    short int              refs;
+    int                    last_errno;
+    void                  *private_data;
     ConnectionCallbackFunc conn_handler;
     ConnectionCallbackFunc write_handler;
     ConnectionCallbackFunc read_handler;
-    int fd;
+    int                    fd;
 };
 
-/* The connection module does not deal with listening and accepting sockets,
- * so we assume we have a socket when an incoming connection is created.
- *
- * The fd supplied should therefore be associated with an already accept()ed
- * socket.
- *
- * connAccept() may directly call accept_handler(), or return and call it
- * at a later time. This behavior is a bit awkward but aims to reduce the need
- * to wait for the next event loop, if no additional handshake is required.
- *
- * IMPORTANT: accept_handler may decide to close the connection, calling connClose().
- * To make this safe, the connection is only marked with CONN_FLAG_CLOSE_SCHEDULED
- * in this case, and connAccept() returns with an error.
- *
- * connAccept() callers must always check the return value and on error (C_ERR)
- * a connClose() must be called.
- */
-
+// 链接建立好之后的回调函数
 static inline int connAccept(connection *conn, ConnectionCallbackFunc accept_handler) {
-    return conn->type->accept(conn, accept_handler);
+    return conn->type->accept(conn, accept_handler); // connSocketAccept
 }
 
 /* Establish a connection.  The connect_handler will be called when the connection
@@ -118,8 +108,7 @@ static inline int connAccept(connection *conn, ConnectionCallbackFunc accept_han
  * If C_ERR is returned, the operation failed and the connection handler shall
  * not be expected.
  */
-static inline int connConnect(connection *conn, const char *addr, int port, const char *src_addr,
-        ConnectionCallbackFunc connect_handler) {
+static inline int connConnect(connection *conn, const char *addr, int port, const char *src_addr, ConnectionCallbackFunc connect_handler) {
     return conn->type->connect(conn, addr, port, src_addr, connect_handler);
 }
 
@@ -157,7 +146,7 @@ static inline int connWritev(connection *conn, const struct iovec *iov, int iovc
 }
 
 /* Read from the connection, behaves the same as read(2).
- * 
+ *
  * Like read(2), a short read is possible.  A return value of 0 will indicate the
  * connection was closed, and -1 will indicate an error.
  *
@@ -169,17 +158,13 @@ static inline int connRead(connection *conn, void *buf, size_t buf_len) {
     return ret;
 }
 
-/* Register a write handler, to be called when the connection is writable.
- * If NULL, the existing handler is removed.
- */
+/*注册一个写处理程序,在连接可写时调用.如果为NULL,则删除现有的处理程序.*/
 static inline int connSetWriteHandler(connection *conn, ConnectionCallbackFunc func) {
     return conn->type->set_write_handler(conn, func, 0);
 }
 
-/* Register a read handler, to be called when the connection is readable.
- * If NULL, the existing handler is removed.
- */
-static inline int connSetReadHandler(connection *conn, ConnectionCallbackFunc func) {
+/*注册一个读处理程序,在连接可读时调用.如果为NULL,则删除现有的处理程序.*/
+static inline int connSetReadHandler(connection *conn, ConnectionCallbackFunc func) { // clusterReadHandler、readQueryFromClient、syncWithMaster、readSyncBulkPayload
     return conn->type->set_read_handler(conn, func);
 }
 
@@ -189,6 +174,8 @@ static inline int connSetReadHandler(connection *conn, ConnectionCallbackFunc fu
  * fired in the same event loop iteration. Useful when you want to persist
  * things to disk before sending replies, and want to do that in a group fashion. */
 static inline int connSetWriteHandlerWithBarrier(connection *conn, ConnectionCallbackFunc func, int barrier) {
+    //创建可写事件的监听,以及设置回调函数
+
     return conn->type->set_write_handler(conn, func, barrier);
 }
 
@@ -225,34 +212,53 @@ static inline int connLastErrorRetryable(connection *conn) {
 }
 
 connection *connCreateSocket();
+
 connection *connCreateAcceptedSocket(int fd);
 
 connection *connCreateTLS();
+
 connection *connCreateAcceptedTLS(int fd, int require_auth);
 
 void connSetPrivateData(connection *conn, void *data);
+
 void *connGetPrivateData(connection *conn);
+
 int connGetState(connection *conn);
+
 int connHasWriteHandler(connection *conn);
+
 int connHasReadHandler(connection *conn);
+
 int connGetSocketError(connection *conn);
 
 /* anet-style wrappers to conns */
 int connBlock(connection *conn);
+// 将连接设为非阻塞模式
 int connNonBlock(connection *conn);
+
 int connEnableTcpNoDelay(connection *conn);
+
 int connDisableTcpNoDelay(connection *conn);
+
 int connKeepAlive(connection *conn, int interval);
+
 int connSendTimeout(connection *conn, long long ms);
+
 int connRecvTimeout(connection *conn, long long ms);
+
 int connPeerToString(connection *conn, char *ip, size_t ip_len, int *port);
+
 int connFormatFdAddr(connection *conn, char *buf, size_t buf_len, int fd_to_str_type);
+
 int connSockName(connection *conn, char *ip, size_t ip_len, int *port);
+
 const char *connGetInfo(connection *conn, char *buf, size_t buf_len);
 
 /* Helpers for tls special considerations */
 sds connTLSGetPeerCert(connection *conn);
+
 int tlsHasPendingData();
+
 int tlsProcessPendingData();
 
-#endif  /* __REDIS_CONNECTION_H */
+#endif /* __REDIS_CONNECTION_H */

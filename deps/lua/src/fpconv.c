@@ -49,8 +49,7 @@ static char locale_decimal_point = '.';
  * localconv() may not be thread safe (=>crash), and nl_langinfo() is
  * not supported on some platforms. Use sprintf() instead - if the
  * locale does change, at least Lua CJSON won't crash. */
-static void fpconv_update_locale()
-{
+static void fpconv_update_locale() {
     char buf[8];
 
     snprintf(buf, sizeof(buf), "%g", 0.5);
@@ -72,8 +71,7 @@ static void fpconv_update_locale()
  * invalid characters are counted - strtod() will find the valid
  * number if it exists.  The risk is that slightly more memory might
  * be allocated before a parse error occurs. */
-static inline int valid_number_character(char ch)
-{
+static inline int valid_number_character(char ch) {
     char lower_ch;
 
     if ('0' <= ch && ch <= '9')
@@ -91,23 +89,20 @@ static inline int valid_number_character(char ch)
 
 /* Calculate the size of the buffer required for a strtod locale
  * conversion. */
-static int strtod_buffer_size(const char *s)
-{
+static int strtod_buffer_size(const char *s) {
     const char *p = s;
 
-    while (valid_number_character(*p))
-        p++;
+    while (valid_number_character(*p)) p++;
 
     return p - s;
 }
 
 /* Similar to strtod(), but must be passed the current locale's decimal point
  * character. Guaranteed to be called at the start of any valid number in a string */
-double fpconv_strtod(const char *nptr, char **endptr)
-{
-    char localbuf[FPCONV_G_FMT_BUFSIZE];
-    char *buf, *endbuf, *dp;
-    int buflen;
+double fpconv_strtod(const char *nptr, char **endptr) {
+    char   localbuf[FPCONV_G_FMT_BUFSIZE];
+    char  *buf, *endbuf, *dp;
+    int    buflen;
     double value;
 
     /* System strtod() is fine when decimal point is '.' */
@@ -129,7 +124,8 @@ double fpconv_strtod(const char *nptr, char **endptr)
             fprintf(stderr, "Out of memory");
             abort();
         }
-    } else {
+    }
+    else {
         /* This is the common case.. */
         buf = localbuf;
     }
@@ -150,8 +146,7 @@ double fpconv_strtod(const char *nptr, char **endptr)
 }
 
 /* "fmt" must point to a buffer of at least 6 characters */
-static void set_number_format(char *fmt, int precision)
-{
+static void set_number_format(char *fmt, int precision) {
     int d1, d2, i;
 
     assert(1 <= precision && precision <= 14);
@@ -171,11 +166,10 @@ static void set_number_format(char *fmt, int precision)
 }
 
 /* Assumes there is always at least 32 characters available in the target buffer */
-int fpconv_g_fmt(char *str, double num, int precision)
-{
-    char buf[FPCONV_G_FMT_BUFSIZE];
-    char fmt[6];
-    int len;
+int fpconv_g_fmt(char *str, double num, int precision) {
+    char  buf[FPCONV_G_FMT_BUFSIZE];
+    char  fmt[6];
+    int   len;
     char *b;
 
     set_number_format(fmt, precision);
@@ -191,13 +185,12 @@ int fpconv_g_fmt(char *str, double num, int precision)
     b = buf;
     do {
         *str++ = (*b == locale_decimal_point ? '.' : *b);
-    } while(*b++);
+    } while (*b++);
 
     return len;
 }
 
-void fpconv_init()
-{
+void fpconv_init() {
     fpconv_update_locale();
 }
 

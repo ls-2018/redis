@@ -27,7 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <errno.h>
 #include <port.h>
 #include <poll.h>
@@ -65,16 +64,17 @@ static int evport_debug = 0;
 #define MAX_EVENT_BATCHSZ 512
 
 typedef struct aeApiState {
-    int     portfd;                             /* event port */
-    uint_t  npending;                           /* # of pending fds */
-    int     pending_fds[MAX_EVENT_BATCHSZ];     /* pending fds */
-    int     pending_masks[MAX_EVENT_BATCHSZ];   /* pending fds' masks */
+    int    portfd;                           /* event port */
+    uint_t npending;                         /* # of pending fds */
+    int    pending_fds[MAX_EVENT_BATCHSZ];   /* pending fds */
+    int    pending_masks[MAX_EVENT_BATCHSZ]; /* pending fds' masks */
 } aeApiState;
 
 static int aeApiCreate(aeEventLoop *eventLoop) {
-    int i;
+    int         i;
     aeApiState *state = zmalloc(sizeof(aeApiState));
-    if (!state) return -1;
+    if (!state)
+        return -1;
 
     state->portfd = port_create();
     if (state->portfd == -1) {
@@ -95,8 +95,8 @@ static int aeApiCreate(aeEventLoop *eventLoop) {
 }
 
 static int aeApiResize(aeEventLoop *eventLoop, int setsize) {
-    (void) eventLoop;
-    (void) setsize;
+    (void)eventLoop;
+    (void)setsize;
     /* Nothing to resize here. */
     return 0;
 }
@@ -134,8 +134,7 @@ static int aeApiAssociate(const char *where, int portfd, int fd, int mask) {
     if (evport_debug)
         fprintf(stderr, "%s: port_associate(%d, 0x%x) = ", where, fd, events);
 
-    rv = port_associate(portfd, PORT_SOURCE_FD, fd, events,
-        (void *)(uintptr_t)mask);
+    rv = port_associate(portfd, PORT_SOURCE_FD, fd, events, (void *)(uintptr_t)mask);
     err = errno;
 
     if (evport_debug)
@@ -153,7 +152,7 @@ static int aeApiAssociate(const char *where, int portfd, int fd, int mask) {
 
 static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
     aeApiState *state = eventLoop->apidata;
-    int fullmask, pfd;
+    int         fullmask, pfd;
 
     if (evport_debug)
         fprintf(stderr, "aeApiAddEvent: fd %d mask 0x%x\n", fd, mask);
@@ -184,7 +183,7 @@ static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
 
 static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int mask) {
     aeApiState *state = eventLoop->apidata;
-    int fullmask, pfd;
+    int         fullmask, pfd;
 
     if (evport_debug)
         fprintf(stderr, "del fd %d mask 0x%x\n", fd, mask);
@@ -229,8 +228,8 @@ static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int mask) {
             perror("aeApiDelEvent: port_dissociate");
             abort(); /* will not return */
         }
-    } else if (aeApiAssociate("aeApiDelEvent", state->portfd, fd,
-        fullmask) != 0) {
+    }
+    else if (aeApiAssociate("aeApiDelEvent", state->portfd, fd, fullmask) != 0) {
         /*
          * ENOMEM is a potentially transient condition, but the kernel won't
          * generally return it unless things are really bad.  EAGAIN indicates
@@ -243,11 +242,11 @@ static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int mask) {
 }
 
 static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
-    aeApiState *state = eventLoop->apidata;
+    aeApiState     *state = eventLoop->apidata;
     struct timespec timeout, *tsp;
-    uint_t mask, i;
-    uint_t nevents;
-    port_event_t event[MAX_EVENT_BATCHSZ];
+    uint_t          mask, i;
+    uint_t          nevents;
+    port_event_t    event[MAX_EVENT_BATCHSZ];
 
     /*
      * If we've returned fd events before, we must re-associate them with the
@@ -259,8 +258,7 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
             /* This fd has since been deleted. */
             continue;
 
-        if (aeApiAssociate("aeApiPoll", state->portfd,
-            state->pending_fds[i], state->pending_masks[i]) != 0) {
+        if (aeApiAssociate("aeApiPoll", state->portfd, state->pending_fds[i], state->pending_masks[i]) != 0) {
             /* See aeApiDelEvent for why this case is fatal. */
             abort();
         }
@@ -275,7 +273,8 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
         timeout.tv_sec = tvp->tv_sec;
         timeout.tv_nsec = tvp->tv_usec * 1000;
         tsp = &timeout;
-    } else {
+    }
+    else {
         tsp = NULL;
     }
 
@@ -284,8 +283,7 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
      * So if we get ETIME, we check nevents, too.
      */
     nevents = 1;
-    if (port_getn(state->portfd, event, MAX_EVENT_BATCHSZ, &nevents,
-        tsp) == -1 && (errno != ETIME || nevents == 0)) {
+    if (port_getn(state->portfd, event, MAX_EVENT_BATCHSZ, &nevents, tsp) == -1 && (errno != ETIME || nevents == 0)) {
         if (errno == ETIME || errno == EINTR)
             return 0;
 
@@ -296,21 +294,20 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
     state->npending = nevents;
 
     for (i = 0; i < nevents; i++) {
-            mask = 0;
-            if (event[i].portev_events & POLLIN)
-                mask |= AE_READABLE;
-            if (event[i].portev_events & POLLOUT)
-                mask |= AE_WRITABLE;
+        mask = 0;
+        if (event[i].portev_events & POLLIN)
+            mask |= AE_READABLE;
+        if (event[i].portev_events & POLLOUT)
+            mask |= AE_WRITABLE;
 
-            eventLoop->fired[i].fd = event[i].portev_object;
-            eventLoop->fired[i].mask = mask;
+        eventLoop->fired[i].fd = event[i].portev_object;
+        eventLoop->fired[i].mask = mask;
 
-            if (evport_debug)
-                fprintf(stderr, "aeApiPoll: fd %d mask 0x%x\n",
-                    (int)event[i].portev_object, mask);
+        if (evport_debug)
+            fprintf(stderr, "aeApiPoll: fd %d mask 0x%x\n", (int)event[i].portev_object, mask);
 
-            state->pending_fds[i] = event[i].portev_object;
-            state->pending_masks[i] = (uintptr_t)event[i].portev_user;
+        state->pending_fds[i] = event[i].portev_object;
+        state->pending_masks[i] = (uintptr_t)event[i].portev_user;
     }
 
     return nevents;

@@ -1,12 +1,13 @@
 #include "redismodule.h"
 #include <strings.h>
-int mutable_bool_val;
-int immutable_bool_val;
-long long longval;
-long long memval;
+
+int                mutable_bool_val;
+int                immutable_bool_val;
+long long          longval;
+long long          memval;
 RedisModuleString *strval = NULL;
-int enumval;
-int flagsval;
+int                enumval;
+int                flagsval;
 
 /* Series of get and set callbacks for each type of config, these rely on the privdata ptr
  * to point to the config, and they register the configs as such. Note that one could also just
@@ -25,7 +26,7 @@ int setBoolConfigCommand(const char *name, int new, void *privdata, RedisModuleS
 
 long long getNumericConfigCommand(const char *name, void *privdata) {
     REDISMODULE_NOT_USED(name);
-    return (*(long long *) privdata);
+    return (*(long long *)privdata);
 }
 
 int setNumericConfigCommand(const char *name, long long new, void *privdata, RedisModuleString **err) {
@@ -40,6 +41,7 @@ RedisModuleString *getStringConfigCommand(const char *name, void *privdata) {
     REDISMODULE_NOT_USED(privdata);
     return strval;
 }
+
 int setStringConfigCommand(const char *name, RedisModuleString *new, void *privdata, RedisModuleString **err) {
     REDISMODULE_NOT_USED(name);
     REDISMODULE_NOT_USED(err);
@@ -49,7 +51,8 @@ int setStringConfigCommand(const char *name, RedisModuleString *new, void *privd
         *err = RedisModule_CreateString(NULL, "Cannot set string to 'rejectisfreed'", 36);
         return REDISMODULE_ERR;
     }
-    if (strval) RedisModule_FreeString(NULL, strval);
+    if (strval)
+        RedisModule_FreeString(NULL, strval);
     RedisModule_RetainString(NULL, new);
     strval = new;
     return REDISMODULE_OK;
@@ -107,7 +110,8 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    if (RedisModule_Init(ctx, "moduleconfigs", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR) return REDISMODULE_ERR;
+    if (RedisModule_Init(ctx, "moduleconfigs", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR)
+        return REDISMODULE_ERR;
 
     if (RedisModule_RegisterBoolConfig(ctx, "mutable_bool", 1, REDISMODULE_CONFIG_DEFAULT, getBoolConfigCommand, setBoolConfigCommand, boolApplyFunc, &mutable_bool_val) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
@@ -122,7 +126,7 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
 
     /* On the stack to make sure we're copying them. */
     const char *enum_vals[] = {"none", "one", "two", "three"};
-    const int int_vals[] = {0, 1, 2, 4};
+    const int   int_vals[] = {0, 1, 2, 4};
 
     if (RedisModule_RegisterEnumConfig(ctx, "enum", 1, REDISMODULE_CONFIG_DEFAULT, enum_vals, int_vals, 4, getEnumConfigCommand, setEnumConfigCommand, NULL, NULL) == REDISMODULE_ERR) {
         return REDISMODULE_ERR;
@@ -140,7 +144,8 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
     size_t len;
     if (argc && !strcasecmp(RedisModule_StringPtrLen(argv[0], &len), "noload")) {
         return REDISMODULE_OK;
-    } else if (RedisModule_LoadConfigs(ctx) == REDISMODULE_ERR) {
+    }
+    else if (RedisModule_LoadConfigs(ctx) == REDISMODULE_ERR) {
         if (strval) {
             RedisModule_FreeString(ctx, strval);
             strval = NULL;

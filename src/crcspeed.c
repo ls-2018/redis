@@ -1,45 +1,16 @@
-/*
- * Copyright (C) 2013 Mark Adler
- * Originally by: crc64.c Version 1.4  16 Dec 2013  Mark Adler
- * Modifications by Matt Stancliff <matt@genges.com>:
- *   - removed CRC64-specific behavior
- *   - added generation of lookup tables by parameters
- *   - removed inversion of CRC input/result
- *   - removed automatic initialization in favor of explicit initialization
-
-  This software is provided 'as-is', without any express or implied
-  warranty.  In no event will the author be held liable for any damages
-  arising from the use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-  including commercial applications, and to alter it and redistribute it
-  freely, subject to the following restrictions:
-
-  1. The origin of this software must not be misrepresented; you must not
-     claim that you wrote the original software. If you use this software
-     in a product, an acknowledgment in the product documentation would be
-     appreciated but is not required.
-  2. Altered source versions must be plainly marked as such, and must not be
-     misrepresented as being the original software.
-  3. This notice may not be removed or altered from any source distribution.
-
-  Mark Adler
-  madler@alumni.caltech.edu
- */
-
 #include "crcspeed.h"
 
-/* Fill in a CRC constants table. */
+// 填充crc常量表
 void crcspeed64little_init(crcfn64 crcfn, uint64_t table[8][256]) {
     uint64_t crc;
 
-    /* generate CRCs for all single byte sequences */
+    // 为所有单字节序列生成crc,填充第一行数据
     for (int n = 0; n < 256; n++) {
         unsigned char v = n;
         table[0][n] = crcfn(0, &v, 1);
     }
 
-    /* generate nested CRC table for future slice-by-8 lookup */
+    // 生成嵌套的CRC表,用于将来的分片8查找
     for (int n = 0; n < 256; n++) {
         crc = table[0][n];
         for (int k = 1; k < 8; k++) {
@@ -48,16 +19,16 @@ void crcspeed64little_init(crcfn64 crcfn, uint64_t table[8][256]) {
         }
     }
 }
-
+// 填充crc常量表
 void crcspeed16little_init(crcfn16 crcfn, uint16_t table[8][256]) {
     uint16_t crc;
 
-    /* generate CRCs for all single byte sequences */
+    // 为所有单字节序列生成crc,填充第一行数据
     for (int n = 0; n < 256; n++) {
         table[0][n] = crcfn(0, &n, 1);
     }
 
-    /* generate nested CRC table for future slice-by-8 lookup */
+    // 生成嵌套的CRC表,用于将来的分片8查找
     for (int n = 0; n < 256; n++) {
         crc = table[0][n];
         for (int k = 1; k < 8; k++) {
@@ -109,8 +80,7 @@ void crcspeed16big_init(crcfn16 fn, uint16_t big_table[8][256]) {
  * *after* calling.
  * 64 bit crc = process 8 bytes at once;
  */
-uint64_t crcspeed64little(uint64_t little_table[8][256], uint64_t crc,
-                          void *buf, size_t len) {
+uint64_t crcspeed64little(uint64_t little_table[8][256], uint64_t crc, void *buf, size_t len) {
     unsigned char *next = buf;
 
     /* process individual bytes until we reach an 8-byte aligned pointer */
@@ -122,14 +92,7 @@ uint64_t crcspeed64little(uint64_t little_table[8][256], uint64_t crc,
     /* fast middle processing, 8 bytes (aligned!) per loop */
     while (len >= 8) {
         crc ^= *(uint64_t *)next;
-        crc = little_table[7][crc & 0xff] ^
-              little_table[6][(crc >> 8) & 0xff] ^
-              little_table[5][(crc >> 16) & 0xff] ^
-              little_table[4][(crc >> 24) & 0xff] ^
-              little_table[3][(crc >> 32) & 0xff] ^
-              little_table[2][(crc >> 40) & 0xff] ^
-              little_table[1][(crc >> 48) & 0xff] ^
-              little_table[0][crc >> 56];
+        crc = little_table[7][crc & 0xff] ^ little_table[6][(crc >> 8) & 0xff] ^ little_table[5][(crc >> 16) & 0xff] ^ little_table[4][(crc >> 24) & 0xff] ^ little_table[3][(crc >> 32) & 0xff] ^ little_table[2][(crc >> 40) & 0xff] ^ little_table[1][(crc >> 48) & 0xff] ^ little_table[0][crc >> 56];
         next += 8;
         len -= 8;
     }
@@ -143,8 +106,7 @@ uint64_t crcspeed64little(uint64_t little_table[8][256], uint64_t crc,
     return crc;
 }
 
-uint16_t crcspeed16little(uint16_t little_table[8][256], uint16_t crc,
-                          void *buf, size_t len) {
+uint16_t crcspeed16little(uint16_t little_table[8][256], uint16_t crc, void *buf, size_t len) {
     unsigned char *next = buf;
 
     /* process individual bytes until we reach an 8-byte aligned pointer */
@@ -156,14 +118,7 @@ uint16_t crcspeed16little(uint16_t little_table[8][256], uint16_t crc,
     /* fast middle processing, 8 bytes (aligned!) per loop */
     while (len >= 8) {
         uint64_t n = *(uint64_t *)next;
-        crc = little_table[7][(n & 0xff) ^ ((crc >> 8) & 0xff)] ^
-              little_table[6][((n >> 8) & 0xff) ^ (crc & 0xff)] ^
-              little_table[5][(n >> 16) & 0xff] ^
-              little_table[4][(n >> 24) & 0xff] ^
-              little_table[3][(n >> 32) & 0xff] ^
-              little_table[2][(n >> 40) & 0xff] ^
-              little_table[1][(n >> 48) & 0xff] ^
-              little_table[0][n >> 56];
+        crc = little_table[7][(n & 0xff) ^ ((crc >> 8) & 0xff)] ^ little_table[6][((n >> 8) & 0xff) ^ (crc & 0xff)] ^ little_table[5][(n >> 16) & 0xff] ^ little_table[4][(n >> 24) & 0xff] ^ little_table[3][(n >> 32) & 0xff] ^ little_table[2][(n >> 40) & 0xff] ^ little_table[1][(n >> 48) & 0xff] ^ little_table[0][n >> 56];
         next += 8;
         len -= 8;
     }
@@ -180,8 +135,7 @@ uint16_t crcspeed16little(uint16_t little_table[8][256], uint16_t crc,
 /* Calculate a non-inverted CRC eight bytes at a time on a big-endian
  * architecture.
  */
-uint64_t crcspeed64big(uint64_t big_table[8][256], uint64_t crc, void *buf,
-                       size_t len) {
+uint64_t crcspeed64big(uint64_t big_table[8][256], uint64_t crc, void *buf, size_t len) {
     unsigned char *next = buf;
 
     crc = rev8(crc);
@@ -192,14 +146,7 @@ uint64_t crcspeed64big(uint64_t big_table[8][256], uint64_t crc, void *buf,
 
     while (len >= 8) {
         crc ^= *(uint64_t *)next;
-        crc = big_table[0][crc & 0xff] ^
-              big_table[1][(crc >> 8) & 0xff] ^
-              big_table[2][(crc >> 16) & 0xff] ^
-              big_table[3][(crc >> 24) & 0xff] ^
-              big_table[4][(crc >> 32) & 0xff] ^
-              big_table[5][(crc >> 40) & 0xff] ^
-              big_table[6][(crc >> 48) & 0xff] ^
-              big_table[7][crc >> 56];
+        crc = big_table[0][crc & 0xff] ^ big_table[1][(crc >> 8) & 0xff] ^ big_table[2][(crc >> 16) & 0xff] ^ big_table[3][(crc >> 24) & 0xff] ^ big_table[4][(crc >> 32) & 0xff] ^ big_table[5][(crc >> 40) & 0xff] ^ big_table[6][(crc >> 48) & 0xff] ^ big_table[7][crc >> 56];
         next += 8;
         len -= 8;
     }
@@ -213,10 +160,9 @@ uint64_t crcspeed64big(uint64_t big_table[8][256], uint64_t crc, void *buf,
 }
 
 /* WARNING: Completely untested on big endian architecture.  Possibly broken. */
-uint16_t crcspeed16big(uint16_t big_table[8][256], uint16_t crc_in, void *buf,
-                       size_t len) {
+uint16_t crcspeed16big(uint16_t big_table[8][256], uint16_t crc_in, void *buf, size_t len) {
     unsigned char *next = buf;
-    uint64_t crc = crc_in;
+    uint64_t       crc = crc_in;
 
     crc = rev8(crc);
     while (len && ((uintptr_t)next & 7) != 0) {
@@ -226,14 +172,7 @@ uint16_t crcspeed16big(uint16_t big_table[8][256], uint16_t crc_in, void *buf,
 
     while (len >= 8) {
         uint64_t n = *(uint64_t *)next;
-        crc = big_table[0][(n & 0xff) ^ ((crc >> (56 - 8)) & 0xff)] ^
-              big_table[1][((n >> 8) & 0xff) ^ (crc & 0xff)] ^
-              big_table[2][(n >> 16) & 0xff] ^
-              big_table[3][(n >> 24) & 0xff] ^
-              big_table[4][(n >> 32) & 0xff] ^
-              big_table[5][(n >> 40) & 0xff] ^
-              big_table[6][(n >> 48) & 0xff] ^
-              big_table[7][n >> 56];
+        crc = big_table[0][(n & 0xff) ^ ((crc >> (56 - 8)) & 0xff)] ^ big_table[1][((n >> 8) & 0xff) ^ (crc & 0xff)] ^ big_table[2][(n >> 16) & 0xff] ^ big_table[3][(n >> 24) & 0xff] ^ big_table[4][(n >> 32) & 0xff] ^ big_table[5][(n >> 40) & 0xff] ^ big_table[6][(n >> 48) & 0xff] ^ big_table[7][n >> 56];
         next += 8;
         len -= 8;
     }
@@ -250,33 +189,31 @@ uint16_t crcspeed16big(uint16_t big_table[8][256], uint16_t crc_in, void *buf,
    at a time using passed-in lookup table.
    This selects one of two routines depending on the endianness of
    the architecture. */
-uint64_t crcspeed64native(uint64_t table[8][256], uint64_t crc, void *buf,
-                          size_t len) {
+uint64_t crcspeed64native(uint64_t table[8][256], uint64_t crc, void *buf, size_t len) {
     uint64_t n = 1;
 
-    return *(char *)&n ? crcspeed64little(table, crc, buf, len)
-                       : crcspeed64big(table, crc, buf, len);
+    return *(char *)&n ? crcspeed64little(table, crc, buf, len) : crcspeed64big(table, crc, buf, len);
 }
 
-uint16_t crcspeed16native(uint16_t table[8][256], uint16_t crc, void *buf,
-                          size_t len) {
+uint16_t crcspeed16native(uint16_t table[8][256], uint16_t crc, void *buf, size_t len) {
     uint64_t n = 1;
 
-    return *(char *)&n ? crcspeed16little(table, crc, buf, len)
-                       : crcspeed16big(table, crc, buf, len);
+    return *(char *)&n ? crcspeed16little(table, crc, buf, len) : crcspeed16big(table, crc, buf, len);
 }
 
-/* Initialize CRC lookup table in architecture-dependent manner. */
+// 初始化crc 查找表  依赖于架构方式.
 void crcspeed64native_init(crcfn64 fn, uint64_t table[8][256]) {
     uint64_t n = 1;
-
-    *(char *)&n ? crcspeed64little_init(fn, table)
-                : crcspeed64big_init(fn, table);
+    if (*(char *)&n) {
+        crcspeed64little_init(fn, table); // 小端
+    }
+    else {
+        crcspeed64big_init(fn, table); // 大端
+    }
 }
 
 void crcspeed16native_init(crcfn16 fn, uint16_t table[8][256]) {
     uint64_t n = 1;
 
-    *(char *)&n ? crcspeed16little_init(fn, table)
-                : crcspeed16big_init(fn, table);
+    *(char *)&n ? crcspeed16little_init(fn, table) : crcspeed16big_init(fn, table);
 }

@@ -30,9 +30,9 @@
 #include "server.h"
 #include "call_reply.h"
 
-#define REPLY_FLAG_ROOT (1<<0)
-#define REPLY_FLAG_PARSED (1<<1)
-#define REPLY_FLAG_RESP3 (1<<2)
+#define REPLY_FLAG_ROOT (1 << 0)
+#define REPLY_FLAG_PARSED (1 << 1)
+#define REPLY_FLAG_RESP3 (1 << 2)
 
 /* --------------------------------------------------------
  * An opaque struct used to parse a RESP protocol reply and
@@ -40,14 +40,15 @@
  * or Lua scripts.
  * -------------------------------------------------------- */
 struct CallReply {
-    void *private_data;
-    sds original_proto; /* Available only for root reply. */
+    void       *private_data;
+    sds         original_proto; /* Available only for root reply. */
     const char *proto;
-    size_t proto_len;
-    int type;       /* REPLY_... */
-    int flags;      /* REPLY_FLAG... */
-    size_t len;     /* Length of a string, or the number elements in an array. */
-    union {
+    size_t      proto_len;
+    int         type;  /* REPLY_... */
+    int         flags; /* REPLY_FLAG... */
+    size_t      len;   /* Length of a string, or the number elements in an array. */
+    union
+    {
         const char *str; /* String pointer for string and error replies. This
                           * does not need to be freed, always points inside
                           * a reply->proto buffer of the reply object or, in
@@ -55,13 +56,13 @@ struct CallReply {
         struct {
             const char *str;
             const char *format;
-        } verbatim_str;  /* Reply value for verbatim string */
-        long long ll;    /* Reply value for integer reply. */
-        double d;        /* Reply value for double reply. */
+        } verbatim_str;          /* Reply value for verbatim string */
+        long long         ll;    /* Reply value for integer reply. */
+        double            d;     /* Reply value for double reply. */
         struct CallReply *array; /* Array of sub-reply elements. used for set, array, map, and attribute */
     } val;
-    list *deferred_error_list;   /* list of errors in sds form or NULL */
-    struct CallReply *attribute; /* attribute reply, NULL if not exists */
+    list             *deferred_error_list; /* list of errors in sds form or NULL */
+    struct CallReply *attribute;           /* attribute reply, NULL if not exists */
 };
 
 static void callReplySetSharedData(CallReply *rep, int type, const char *proto, size_t proto_len, int extra_flags) {
@@ -144,7 +145,7 @@ static void callReplyParseCollection(ReplyParser *parser, CallReply *rep, size_t
     rep->len = len;
     rep->val.array = zcalloc(elements_per_entry * len * sizeof(CallReply));
     for (size_t i = 0; i < len * elements_per_entry; i += elements_per_entry) {
-        for (size_t j = 0 ; j < elements_per_entry ; ++j) {
+        for (size_t j = 0; j < elements_per_entry; ++j) {
             rep->val.array[i + j].private_data = rep->private_data;
             parseReply(parser, rep->val.array + i + j);
             rep->val.array[i + j].flags |= REPLY_FLAG_PARSED;
@@ -206,14 +207,14 @@ static void callReplyParseError(void *ctx) {
 /* Recursively free the current call reply and its sub-replies. */
 static void freeCallReplyInternal(CallReply *rep) {
     if (rep->type == REDISMODULE_REPLY_ARRAY || rep->type == REDISMODULE_REPLY_SET) {
-        for (size_t i = 0 ; i < rep->len ; ++i) {
+        for (size_t i = 0; i < rep->len; ++i) {
             freeCallReplyInternal(rep->val.array + i);
         }
         zfree(rep->val.array);
     }
 
     if (rep->type == REDISMODULE_REPLY_MAP || rep->type == REDISMODULE_REPLY_ATTRIBUTE) {
-        for (size_t i = 0 ; i < rep->len ; ++i) {
+        for (size_t i = 0; i < rep->len; ++i) {
             freeCallReplyInternal(rep->val.array + i * 2);
             freeCallReplyInternal(rep->val.array + i * 2 + 1);
         }
@@ -276,7 +277,8 @@ static void callReplyParse(CallReply *rep) {
 
 /* Return the call reply type (REDISMODULE_REPLY_...). */
 int callReplyType(CallReply *rep) {
-    if (!rep) return REDISMODULE_REPLY_UNKNOWN;
+    if (!rep)
+        return REDISMODULE_REPLY_UNKNOWN;
     callReplyParse(rep);
     return rep->type;
 }
@@ -293,9 +295,10 @@ int callReplyType(CallReply *rep) {
  */
 const char *callReplyGetString(CallReply *rep, size_t *len) {
     callReplyParse(rep);
-    if (rep->type != REDISMODULE_REPLY_STRING &&
-        rep->type != REDISMODULE_REPLY_ERROR) return NULL;
-    if (len) *len = rep->len;
+    if (rep->type != REDISMODULE_REPLY_STRING && rep->type != REDISMODULE_REPLY_ERROR)
+        return NULL;
+    if (len)
+        *len = rep->len;
     return rep->val.str;
 }
 
@@ -304,7 +307,8 @@ const char *callReplyGetString(CallReply *rep, size_t *len) {
  */
 long long callReplyGetLongLong(CallReply *rep) {
     callReplyParse(rep);
-    if (rep->type != REDISMODULE_REPLY_INTEGER) return LLONG_MIN;
+    if (rep->type != REDISMODULE_REPLY_INTEGER)
+        return LLONG_MIN;
     return rep->val.ll;
 }
 
@@ -313,7 +317,8 @@ long long callReplyGetLongLong(CallReply *rep) {
  */
 double callReplyGetDouble(CallReply *rep) {
     callReplyParse(rep);
-    if (rep->type != REDISMODULE_REPLY_DOUBLE) return LLONG_MIN;
+    if (rep->type != REDISMODULE_REPLY_DOUBLE)
+        return LLONG_MIN;
     return rep->val.d;
 }
 
@@ -322,7 +327,8 @@ double callReplyGetDouble(CallReply *rep) {
  */
 int callReplyGetBool(CallReply *rep) {
     callReplyParse(rep);
-    if (rep->type != REDISMODULE_REPLY_BOOL) return INT_MIN;
+    if (rep->type != REDISMODULE_REPLY_BOOL)
+        return INT_MIN;
     return rep->val.ll;
 }
 
@@ -336,7 +342,7 @@ int callReplyGetBool(CallReply *rep) {
  */
 size_t callReplyGetLen(CallReply *rep) {
     callReplyParse(rep);
-    switch(rep->type) {
+    switch (rep->type) {
         case REDISMODULE_REPLY_STRING:
         case REDISMODULE_REPLY_ERROR:
         case REDISMODULE_REPLY_ARRAY:
@@ -350,8 +356,9 @@ size_t callReplyGetLen(CallReply *rep) {
 }
 
 static CallReply *callReplyGetCollectionElement(CallReply *rep, size_t idx, int elements_per_entry) {
-    if (idx >= rep->len * elements_per_entry) return NULL; // real len is rep->len * elements_per_entry
-    return rep->val.array+idx;
+    if (idx >= rep->len * elements_per_entry)
+        return NULL; // real len is rep->len * elements_per_entry
+    return rep->val.array + idx;
 }
 
 /* Return a reply array element at a given index. Applicable to:
@@ -362,7 +369,8 @@ static CallReply *callReplyGetCollectionElement(CallReply *rep, size_t idx, int 
  */
 CallReply *callReplyGetArrayElement(CallReply *rep, size_t idx) {
     callReplyParse(rep);
-    if (rep->type != REDISMODULE_REPLY_ARRAY) return NULL;
+    if (rep->type != REDISMODULE_REPLY_ARRAY)
+        return NULL;
     return callReplyGetCollectionElement(rep, idx, 1);
 }
 
@@ -374,16 +382,21 @@ CallReply *callReplyGetArrayElement(CallReply *rep, size_t idx) {
  */
 CallReply *callReplyGetSetElement(CallReply *rep, size_t idx) {
     callReplyParse(rep);
-    if (rep->type != REDISMODULE_REPLY_SET) return NULL;
+    if (rep->type != REDISMODULE_REPLY_SET)
+        return NULL;
     return callReplyGetCollectionElement(rep, idx, 1);
 }
 
 static int callReplyGetMapElementInternal(CallReply *rep, size_t idx, CallReply **key, CallReply **val, int type) {
     callReplyParse(rep);
-    if (rep->type != type) return C_ERR;
-    if (idx >= rep->len) return C_ERR;
-    if (key) *key = callReplyGetCollectionElement(rep, idx * 2, 2);
-    if (val) *val = callReplyGetCollectionElement(rep, idx * 2 + 1, 2);
+    if (rep->type != type)
+        return C_ERR;
+    if (idx >= rep->len)
+        return C_ERR;
+    if (key)
+        *key = callReplyGetCollectionElement(rep, idx * 2, 2);
+    if (val)
+        *val = callReplyGetCollectionElement(rep, idx * 2 + 1, 2);
     return C_OK;
 }
 
@@ -442,7 +455,8 @@ int callReplyGetAttributeElement(CallReply *rep, size_t idx, CallReply **key, Ca
  */
 const char *callReplyGetBigNumber(CallReply *rep, size_t *len) {
     callReplyParse(rep);
-    if (rep->type != REDISMODULE_REPLY_BIG_NUMBER) return NULL;
+    if (rep->type != REDISMODULE_REPLY_BIG_NUMBER)
+        return NULL;
     *len = rep->len;
     return rep->val.str;
 }
@@ -461,11 +475,13 @@ const char *callReplyGetBigNumber(CallReply *rep, size_t *len) {
  * The returned value is not NULL terminated and its length is returned by
  * reference through len, which must not be NULL.
  */
-const char *callReplyGetVerbatim(CallReply *rep, size_t *len, const char **format){
+const char *callReplyGetVerbatim(CallReply *rep, size_t *len, const char **format) {
     callReplyParse(rep);
-    if (rep->type != REDISMODULE_REPLY_VERBATIM_STRING) return NULL;
+    if (rep->type != REDISMODULE_REPLY_VERBATIM_STRING)
+        return NULL;
     *len = rep->len;
-    if (format) *format = rep->val.verbatim_str.format;
+    if (format)
+        *format = rep->val.verbatim_str.format;
     return rep->val.verbatim_str.str;
 }
 
@@ -536,7 +552,7 @@ CallReply *callReplyCreateError(sds reply, void *private_data) {
         sdsfree(reply);
     }
     list *deferred_error_list = listCreate();
-    listSetFreeMethod(deferred_error_list, (void (*)(void*))sdsfree);
+    listSetFreeMethod(deferred_error_list, (void (*)(void *))sdsfree);
     listAddNodeTail(deferred_error_list, sdsnew(err_buff));
     return callReplyCreate(err_buff, deferred_error_list, private_data);
 }

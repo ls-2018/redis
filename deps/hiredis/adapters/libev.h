@@ -38,10 +38,10 @@
 
 typedef struct redisLibevEvents {
     redisAsyncContext *context;
-    struct ev_loop *loop;
-    int reading, writing;
-    ev_io rev, wev;
-    ev_timer timer;
+    struct ev_loop    *loop;
+    int                reading, writing;
+    ev_io              rev, wev;
+    ev_timer           timer;
 } redisLibevEvents;
 
 static void redisLibevReadEvent(EV_P_ ev_io *watcher, int revents) {
@@ -50,7 +50,7 @@ static void redisLibevReadEvent(EV_P_ ev_io *watcher, int revents) {
 #endif
     ((void)revents);
 
-    redisLibevEvents *e = (redisLibevEvents*)watcher->data;
+    redisLibevEvents *e = (redisLibevEvents *)watcher->data;
     redisAsyncHandleRead(e->context);
 }
 
@@ -60,64 +60,64 @@ static void redisLibevWriteEvent(EV_P_ ev_io *watcher, int revents) {
 #endif
     ((void)revents);
 
-    redisLibevEvents *e = (redisLibevEvents*)watcher->data;
+    redisLibevEvents *e = (redisLibevEvents *)watcher->data;
     redisAsyncHandleWrite(e->context);
 }
 
 static void redisLibevAddRead(void *privdata) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
+    redisLibevEvents *e = (redisLibevEvents *)privdata;
 #if EV_MULTIPLICITY
     struct ev_loop *loop = e->loop;
 #endif
     if (!e->reading) {
         e->reading = 1;
-        ev_io_start(EV_A_ &e->rev);
+        ev_io_start(EV_A_ & e->rev);
     }
 }
 
 static void redisLibevDelRead(void *privdata) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
+    redisLibevEvents *e = (redisLibevEvents *)privdata;
 #if EV_MULTIPLICITY
     struct ev_loop *loop = e->loop;
 #endif
     if (e->reading) {
         e->reading = 0;
-        ev_io_stop(EV_A_ &e->rev);
+        ev_io_stop(EV_A_ & e->rev);
     }
 }
 
 static void redisLibevAddWrite(void *privdata) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
+    redisLibevEvents *e = (redisLibevEvents *)privdata;
 #if EV_MULTIPLICITY
     struct ev_loop *loop = e->loop;
 #endif
     if (!e->writing) {
         e->writing = 1;
-        ev_io_start(EV_A_ &e->wev);
+        ev_io_start(EV_A_ & e->wev);
     }
 }
 
 static void redisLibevDelWrite(void *privdata) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
+    redisLibevEvents *e = (redisLibevEvents *)privdata;
 #if EV_MULTIPLICITY
     struct ev_loop *loop = e->loop;
 #endif
     if (e->writing) {
         e->writing = 0;
-        ev_io_stop(EV_A_ &e->wev);
+        ev_io_stop(EV_A_ & e->wev);
     }
 }
 
 static void redisLibevStopTimer(void *privdata) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
+    redisLibevEvents *e = (redisLibevEvents *)privdata;
 #if EV_MULTIPLICITY
     struct ev_loop *loop = e->loop;
 #endif
-    ev_timer_stop(EV_A_ &e->timer);
+    ev_timer_stop(EV_A_ & e->timer);
 }
 
 static void redisLibevCleanup(void *privdata) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
+    redisLibevEvents *e = (redisLibevEvents *)privdata;
     redisLibevDelRead(privdata);
     redisLibevDelWrite(privdata);
     redisLibevStopTimer(privdata);
@@ -129,12 +129,12 @@ static void redisLibevTimeout(EV_P_ ev_timer *timer, int revents) {
     ((void)EV_A);
 #endif
     ((void)revents);
-    redisLibevEvents *e = (redisLibevEvents*)timer->data;
+    redisLibevEvents *e = (redisLibevEvents *)timer->data;
     redisAsyncHandleTimeout(e->context);
 }
 
 static void redisLibevSetTimeout(void *privdata, struct timeval tv) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
+    redisLibevEvents *e = (redisLibevEvents *)privdata;
 #if EV_MULTIPLICITY
     struct ev_loop *loop = e->loop;
 #endif
@@ -145,11 +145,11 @@ static void redisLibevSetTimeout(void *privdata, struct timeval tv) {
     }
 
     e->timer.repeat = tv.tv_sec + tv.tv_usec / 1000000.00;
-    ev_timer_again(EV_A_ &e->timer);
+    ev_timer_again(EV_A_ & e->timer);
 }
 
 static int redisLibevAttach(EV_P_ redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
+    redisContext     *c = &(ac->c);
     redisLibevEvents *e;
 
     /* Nothing should be attached when something is already attached */
@@ -157,7 +157,7 @@ static int redisLibevAttach(EV_P_ redisAsyncContext *ac) {
         return REDIS_ERR;
 
     /* Create container for context and r/w events */
-    e = (redisLibevEvents*)hi_calloc(1, sizeof(*e));
+    e = (redisLibevEvents *)hi_calloc(1, sizeof(*e));
     if (e == NULL)
         return REDIS_ERR;
 
@@ -180,8 +180,8 @@ static int redisLibevAttach(EV_P_ redisAsyncContext *ac) {
     ac->ev.data = e;
 
     /* Initialize read/write events */
-    ev_io_init(&e->rev,redisLibevReadEvent,c->fd,EV_READ);
-    ev_io_init(&e->wev,redisLibevWriteEvent,c->fd,EV_WRITE);
+    ev_io_init(&e->rev, redisLibevReadEvent, c->fd, EV_READ);
+    ev_io_init(&e->wev, redisLibevWriteEvent, c->fd, EV_WRITE);
     return REDIS_OK;
 }
 

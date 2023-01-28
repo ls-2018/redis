@@ -57,8 +57,8 @@ malloc_conf_unusuals = [
 ]
 
 all_unusuals = (
-    [os_unusual] + [compilers_unusual] + compiler_flag_unusuals
-    + configure_flag_unusuals + malloc_conf_unusuals
+        [os_unusual] + [compilers_unusual] + compiler_flag_unusuals
+        + configure_flag_unusuals + malloc_conf_unusuals
 )
 
 unusual_combinations_to_test = []
@@ -66,6 +66,8 @@ for i in xrange(MAX_UNUSUAL_OPTIONS + 1):
     unusual_combinations_to_test += combinations(all_unusuals, i)
 
 gcc_multilib_set = False
+
+
 # Formats a job from a combination of flags
 def format_job(combination):
     global gcc_multilib_set
@@ -79,8 +81,8 @@ def format_job(combination):
 
     # Filter out unsupported configurations on OS X.
     if os == 'osx' and ('dss:primary' in malloc_conf or \
-      'percpu_arena:percpu' in malloc_conf or 'background_thread:true' \
-      in malloc_conf):
+                        'percpu_arena:percpu' in malloc_conf or 'background_thread:true' \
+                        in malloc_conf):
         return ""
     if len(malloc_conf) > 0:
         configure_flags.append('--with-malloc-conf=' + ",".join(malloc_conf))
@@ -91,7 +93,7 @@ def format_job(combination):
 
     # We get some spurious errors when -Warray-bounds is enabled.
     env_string = ('{} COMPILER_FLAGS="{}" CONFIGURE_FLAGS="{}" '
-	'EXTRA_CFLAGS="-Werror -Wno-array-bounds"').format(
+                  'EXTRA_CFLAGS="-Werror -Wno-array-bounds"').format(
         compilers, " ".join(compiler_flags), " ".join(configure_flags))
 
     job = ""
@@ -108,6 +110,7 @@ def format_job(combination):
             job += '            - gcc-multilib\n'
             gcc_multilib_set = True
     return job
+
 
 include_rows = ""
 for combination in unusual_combinations_to_test:
@@ -146,4 +149,5 @@ include_rows += '''
 #
 # It currently fails due to: https://github.com/jemalloc/jemalloc/issues/1274
 
-print travis_template % include_rows
+print
+travis_template % include_rows

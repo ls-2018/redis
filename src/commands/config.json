@@ -1,9 +1,9 @@
 {
-    "CONFIG": {
-        "summary": "A container for server configuration commands",
-        "complexity": "Depends on subcommand.",
-        "group": "server",
-        "since": "2.0.0",
-        "arity": -2
-    }
+  "CONFIG": {
+    "summary": "服务器配置命令组",
+    "complexity": "取决于子命令",
+    "group": "server",
+    "since": "2.0.0",
+    "arity": -2
+  }
 }

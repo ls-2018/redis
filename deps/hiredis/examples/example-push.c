@@ -34,10 +34,10 @@
 
 #define KEY_COUNT 5
 
-#define panicAbort(fmt, ...) \
-    do { \
+#define panicAbort(fmt, ...)                                                            \
+    do {                                                                                \
         fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, __LINE__, __func__, __VA_ARGS__); \
-        exit(-1); \
+        exit(-1);                                                                       \
     } while (0)
 
 static void assertReplyAndFree(redisContext *context, redisReply *reply, int type) {
@@ -63,8 +63,7 @@ static void enableClientTracking(redisContext *c) {
 
     if (reply->type != REDIS_REPLY_MAP) {
         fprintf(stderr, "Error: Can't send HELLO 3 command.  Are you sure you're ");
-        fprintf(stderr, "connected to redis-server >= 6.0.0?\nRedis error: %s\n",
-                        reply->type == REDIS_REPLY_ERROR ? reply->str : "(unknown)");
+        fprintf(stderr, "connected to redis-server >= 6.0.0?\nRedis error: %s\n", reply->type == REDIS_REPLY_ERROR ? reply->str : "(unknown)");
         exit(-1);
     }
 
@@ -77,21 +76,17 @@ static void enableClientTracking(redisContext *c) {
 
 void pushReplyHandler(void *privdata, void *r) {
     redisReply *reply = r;
-    int *invalidations = privdata;
+    int        *invalidations = privdata;
 
     /* Sanity check on the invalidation reply */
-    if (reply->type != REDIS_REPLY_PUSH || reply->elements != 2 ||
-        reply->element[1]->type != REDIS_REPLY_ARRAY ||
-        reply->element[1]->element[0]->type != REDIS_REPLY_STRING)
-    {
+    if (reply->type != REDIS_REPLY_PUSH || reply->elements != 2 || reply->element[1]->type != REDIS_REPLY_ARRAY || reply->element[1]->element[0]->type != REDIS_REPLY_STRING) {
         panicAbort("%s", "Can't parse PUSH message!");
     }
 
     /* Increment our invalidation count */
     *invalidations += 1;
 
-    printf("pushReplyHandler(): INVALIDATE '%s' (invalidation count: %d)\n",
-           reply->element[1]->element[0]->str, *invalidations);
+    printf("pushReplyHandler(): INVALIDATE '%s' (invalidation count: %d)\n", reply->element[1]->element[0]->str, *invalidations);
 
     freeReplyObject(reply);
 }
@@ -104,12 +99,12 @@ void privdata_dtor(void *privdata) {
 }
 
 int main(int argc, char **argv) {
-    unsigned int j, invalidations = 0;
+    unsigned int  j, invalidations = 0;
     redisContext *c;
-    redisReply *reply;
+    redisReply   *reply;
 
     const char *hostname = (argc > 1) ? argv[1] : "127.0.0.1";
-    int port = (argc > 2) ? atoi(argv[2]) : 6379;
+    int         port = (argc > 2) ? atoi(argv[2]) : 6379;
 
     redisOptions o = {0};
     REDIS_OPTIONS_SET_TCP(&o, hostname, port);

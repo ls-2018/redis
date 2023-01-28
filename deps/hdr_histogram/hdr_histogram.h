@@ -14,24 +14,23 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-struct hdr_histogram
-{
-    int64_t lowest_discernible_value;
-    int64_t highest_trackable_value;
-    int32_t unit_magnitude;
-    int32_t significant_figures;
-    int32_t sub_bucket_half_count_magnitude;
-    int32_t sub_bucket_half_count;
-    int64_t sub_bucket_mask;
-    int32_t sub_bucket_count;
-    int32_t bucket_count;
-    int64_t min_value;
-    int64_t max_value;
-    int32_t normalizing_index_offset;
-    double conversion_ratio;
-    int32_t counts_len;
-    int64_t total_count;
-    int64_t* counts;
+struct hdr_histogram {
+    int64_t  lowest_discernible_value;
+    int64_t  highest_trackable_value;
+    int32_t  unit_magnitude;
+    int32_t  significant_figures;
+    int32_t  sub_bucket_half_count_magnitude;
+    int32_t  sub_bucket_half_count;
+    int64_t  sub_bucket_mask;
+    int32_t  sub_bucket_count;
+    int32_t  bucket_count;
+    int64_t  min_value;
+    int64_t  max_value;
+    int32_t  normalizing_index_offset;
+    double   conversion_ratio;
+    int32_t  counts_len;
+    int64_t  total_count;
+    int64_t *counts;
 };
 
 #ifdef __cplusplus
@@ -58,18 +57,14 @@ extern "C" {
  * significant_figure value is outside of the allowed range, ENOMEM if malloc
  * failed.
  */
-int hdr_init(
-    int64_t lowest_discernible_value,
-    int64_t highest_trackable_value,
-    int significant_figures,
-    struct hdr_histogram** result);
+int hdr_init(int64_t lowest_discernible_value, int64_t highest_trackable_value, int significant_figures, struct hdr_histogram **result);
 
 /**
  * Free the memory and close the hdr_histogram.
  *
  * @param h The histogram you want to close.
  */
-void hdr_close(struct hdr_histogram* h);
+void hdr_close(struct hdr_histogram *h);
 
 /**
  * Allocate the memory and initialise the hdr_histogram.  This is the equivalent of calling
@@ -77,8 +72,7 @@ void hdr_close(struct hdr_histogram* h);
  *
  * @deprecated use hdr_init.
  */
-int hdr_alloc(int64_t highest_trackable_value, int significant_figures, struct hdr_histogram** result);
-
+int hdr_alloc(int64_t highest_trackable_value, int significant_figures, struct hdr_histogram **result);
 
 /**
  * Reset a histogram to zero - empty out a histogram and re-initialise it
@@ -89,7 +83,7 @@ int hdr_alloc(int64_t highest_trackable_value, int significant_figures, struct h
  * @param h The histogram you want to reset to empty.
  *
  */
-void hdr_reset(struct hdr_histogram* h);
+void hdr_reset(struct hdr_histogram *h);
 
 /**
  * Get the memory size of the hdr_histogram.
@@ -97,7 +91,7 @@ void hdr_reset(struct hdr_histogram* h);
  * @param h "This" pointer
  * @return The amount of memory used by the hdr_histogram in bytes
  */
-size_t hdr_get_memory_size(struct hdr_histogram* h);
+size_t hdr_get_memory_size(struct hdr_histogram *h);
 
 /**
  * Records a value in the histogram, will round this value of to a precision at or better
@@ -108,7 +102,7 @@ size_t hdr_get_memory_size(struct hdr_histogram* h);
  * @return false if the value is larger than the highest_trackable_value and can't be recorded,
  * true otherwise.
  */
-bool hdr_record_value(struct hdr_histogram* h, int64_t value);
+bool hdr_record_value(struct hdr_histogram *h, int64_t value);
 
 /**
  * Records a value in the histogram, will round this value of to a precision at or better
@@ -123,7 +117,7 @@ bool hdr_record_value(struct hdr_histogram* h, int64_t value);
  * @return false if the value is larger than the highest_trackable_value and can't be recorded,
  * true otherwise.
  */
-bool hdr_record_value_atomic(struct hdr_histogram* h, int64_t value);
+bool hdr_record_value_atomic(struct hdr_histogram *h, int64_t value);
 
 /**
  * Records count values in the histogram, will round this value of to a
@@ -136,7 +130,7 @@ bool hdr_record_value_atomic(struct hdr_histogram* h, int64_t value);
  * @return false if any value is larger than the highest_trackable_value and can't be recorded,
  * true otherwise.
  */
-bool hdr_record_values(struct hdr_histogram* h, int64_t value, int64_t count);
+bool hdr_record_values(struct hdr_histogram *h, int64_t value, int64_t count);
 
 /**
  * Records count values in the histogram, will round this value of to a
@@ -153,7 +147,7 @@ bool hdr_record_values(struct hdr_histogram* h, int64_t value, int64_t count);
  * @return false if any value is larger than the highest_trackable_value and can't be recorded,
  * true otherwise.
  */
-bool hdr_record_values_atomic(struct hdr_histogram* h, int64_t value, int64_t count);
+bool hdr_record_values_atomic(struct hdr_histogram *h, int64_t value, int64_t count);
 
 /**
  * Record a value in the histogram and backfill based on an expected interval.
@@ -170,7 +164,7 @@ bool hdr_record_values_atomic(struct hdr_histogram* h, int64_t value, int64_t co
  * @return false if the value is larger than the highest_trackable_value and can't be recorded,
  * true otherwise.
  */
-bool hdr_record_corrected_value(struct hdr_histogram* h, int64_t value, int64_t expected_interval);
+bool hdr_record_corrected_value(struct hdr_histogram *h, int64_t value, int64_t expected_interval);
 
 /**
  * Record a value in the histogram and backfill based on an expected interval.
@@ -191,7 +185,7 @@ bool hdr_record_corrected_value(struct hdr_histogram* h, int64_t value, int64_t 
  * @return false if the value is larger than the highest_trackable_value and can't be recorded,
  * true otherwise.
  */
-bool hdr_record_corrected_value_atomic(struct hdr_histogram* h, int64_t value, int64_t expected_interval);
+bool hdr_record_corrected_value_atomic(struct hdr_histogram *h, int64_t value, int64_t expected_interval);
 
 /**
  * Record a value in the histogram 'count' times.  Applies the same correcting logic
@@ -204,7 +198,7 @@ bool hdr_record_corrected_value_atomic(struct hdr_histogram* h, int64_t value, i
  * @return false if the value is larger than the highest_trackable_value and can't be recorded,
  * true otherwise.
  */
-bool hdr_record_corrected_values(struct hdr_histogram* h, int64_t value, int64_t count, int64_t expected_interval);
+bool hdr_record_corrected_values(struct hdr_histogram *h, int64_t value, int64_t count, int64_t expected_interval);
 
 /**
  * Record a value in the histogram 'count' times.  Applies the same correcting logic
@@ -221,7 +215,7 @@ bool hdr_record_corrected_values(struct hdr_histogram* h, int64_t value, int64_t
  * @return false if the value is larger than the highest_trackable_value and can't be recorded,
  * true otherwise.
  */
-bool hdr_record_corrected_values_atomic(struct hdr_histogram* h, int64_t value, int64_t count, int64_t expected_interval);
+bool hdr_record_corrected_values_atomic(struct hdr_histogram *h, int64_t value, int64_t count, int64_t expected_interval);
 
 /**
  * Adds all of the values from 'from' to 'this' histogram.  Will return the
@@ -233,7 +227,7 @@ bool hdr_record_corrected_values_atomic(struct hdr_histogram* h, int64_t value, 
  * @param from Histogram to copy values from.
  * @return The number of values dropped when copying.
  */
-int64_t hdr_add(struct hdr_histogram* h, const struct hdr_histogram* from);
+int64_t hdr_add(struct hdr_histogram *h, const struct hdr_histogram *from);
 
 /**
  * Adds all of the values from 'from' to 'this' histogram.  Will return the
@@ -245,8 +239,7 @@ int64_t hdr_add(struct hdr_histogram* h, const struct hdr_histogram* from);
  * @param from Histogram to copy values from.
  * @return The number of values dropped when copying.
  */
-int64_t hdr_add_while_correcting_for_coordinated_omission(
-    struct hdr_histogram* h, struct hdr_histogram* from, int64_t expected_interval);
+int64_t hdr_add_while_correcting_for_coordinated_omission(struct hdr_histogram *h, struct hdr_histogram *from, int64_t expected_interval);
 
 /**
  * Get minimum value from the histogram.  Will return 2^63-1 if the histogram
@@ -254,7 +247,7 @@ int64_t hdr_add_while_correcting_for_coordinated_omission(
  *
  * @param h "This" pointer
  */
-int64_t hdr_min(const struct hdr_histogram* h);
+int64_t hdr_min(const struct hdr_histogram *h);
 
 /**
  * Get maximum value from the histogram.  Will return 0 if the histogram
@@ -262,7 +255,7 @@ int64_t hdr_min(const struct hdr_histogram* h);
  *
  * @param h "This" pointer
  */
-int64_t hdr_max(const struct hdr_histogram* h);
+int64_t hdr_max(const struct hdr_histogram *h);
 
 /**
  * Get the value at a specific percentile.
@@ -270,7 +263,7 @@ int64_t hdr_max(const struct hdr_histogram* h);
  * @param h "This" pointer.
  * @param percentile The percentile to get the value for
  */
-int64_t hdr_value_at_percentile(const struct hdr_histogram* h, double percentile);
+int64_t hdr_value_at_percentile(const struct hdr_histogram *h, double percentile);
 
 /**
  * Get the values at the given percentiles.
@@ -290,7 +283,7 @@ int hdr_value_at_percentiles(const struct hdr_histogram *h, const double *percen
  * @param h "This" pointer
  * @return The standard deviation
  */
-double hdr_stddev(const struct hdr_histogram* h);
+double hdr_stddev(const struct hdr_histogram *h);
 
 /**
  * Gets the mean for the values in the histogram.
@@ -298,7 +291,7 @@ double hdr_stddev(const struct hdr_histogram* h);
  * @param h "This" pointer
  * @return The mean
  */
-double hdr_mean(const struct hdr_histogram* h);
+double hdr_mean(const struct hdr_histogram *h);
 
 /**
  * Determine if two values are equivalent with the histogram's resolution.
@@ -310,7 +303,7 @@ double hdr_mean(const struct hdr_histogram* h);
  * @param b second value to compare
  * @return 'true' if values are equivalent with the histogram's resolution.
  */
-bool hdr_values_are_equivalent(const struct hdr_histogram* h, int64_t a, int64_t b);
+bool hdr_values_are_equivalent(const struct hdr_histogram *h, int64_t a, int64_t b);
 
 /**
  * Get the lowest value that is equivalent to the given value within the histogram's resolution.
@@ -321,7 +314,7 @@ bool hdr_values_are_equivalent(const struct hdr_histogram* h, int64_t a, int64_t
  * @param value The given value
  * @return The lowest value that is equivalent to the given value within the histogram's resolution.
  */
-int64_t hdr_lowest_equivalent_value(const struct hdr_histogram* h, int64_t value);
+int64_t hdr_lowest_equivalent_value(const struct hdr_histogram *h, int64_t value);
 
 /**
  * Get the count of recorded values at a specific value
@@ -332,36 +325,32 @@ int64_t hdr_lowest_equivalent_value(const struct hdr_histogram* h, int64_t value
  * @return The total count of values recorded in the histogram within the value range that is
  * {@literal >=} lowestEquivalentValue(<i>value</i>) and {@literal <=} highestEquivalentValue(<i>value</i>)
  */
-int64_t hdr_count_at_value(const struct hdr_histogram* h, int64_t value);
+int64_t hdr_count_at_value(const struct hdr_histogram *h, int64_t value);
 
-int64_t hdr_count_at_index(const struct hdr_histogram* h, int32_t index);
+int64_t hdr_count_at_index(const struct hdr_histogram *h, int32_t index);
 
-int64_t hdr_value_at_index(const struct hdr_histogram* h, int32_t index);
+int64_t hdr_value_at_index(const struct hdr_histogram *h, int32_t index);
 
-struct hdr_iter_percentiles
-{
-    bool seen_last_value;
+struct hdr_iter_percentiles {
+    bool    seen_last_value;
     int32_t ticks_per_half_distance;
-    double percentile_to_iterate_to;
-    double percentile;
+    double  percentile_to_iterate_to;
+    double  percentile;
 };
 
-struct hdr_iter_recorded
-{
+struct hdr_iter_recorded {
     int64_t count_added_in_this_iteration_step;
 };
 
-struct hdr_iter_linear
-{
+struct hdr_iter_linear {
     int64_t value_units_per_bucket;
     int64_t count_added_in_this_iteration_step;
     int64_t next_value_reporting_level;
     int64_t next_value_reporting_level_lowest_equivalent;
 };
 
-struct hdr_iter_log
-{
-    double log_base;
+struct hdr_iter_log {
+    double  log_base;
     int64_t count_added_in_this_iteration_step;
     int64_t next_value_reporting_level;
     int64_t next_value_reporting_level_lowest_equivalent;
@@ -375,9 +364,8 @@ struct hdr_iter_log
  *
  * @
  */
-struct hdr_iter
-{
-    const struct hdr_histogram* h;
+struct hdr_iter {
+    const struct hdr_histogram *h;
     /** raw index into the counts array */
     int32_t counts_index;
     /** snapshot of the length at the time the iterator is created */
@@ -397,13 +385,12 @@ struct hdr_iter
     union
     {
         struct hdr_iter_percentiles percentiles;
-        struct hdr_iter_recorded recorded;
-        struct hdr_iter_linear linear;
-        struct hdr_iter_log log;
+        struct hdr_iter_recorded    recorded;
+        struct hdr_iter_linear      linear;
+        struct hdr_iter_log         log;
     } specifics;
 
-    bool (* _next_fp)(struct hdr_iter* iter);
-
+    bool (*_next_fp)(struct hdr_iter *iter);
 };
 
 /**
@@ -412,39 +399,32 @@ struct hdr_iter
  * @param itr 'This' pointer
  * @param h The histogram to iterate over
  */
-void hdr_iter_init(struct hdr_iter* iter, const struct hdr_histogram* h);
+void hdr_iter_init(struct hdr_iter *iter, const struct hdr_histogram *h);
 
 /**
  * Initialise the iterator for use with percentiles.
  */
-void hdr_iter_percentile_init(struct hdr_iter* iter, const struct hdr_histogram* h, int32_t ticks_per_half_distance);
+void hdr_iter_percentile_init(struct hdr_iter *iter, const struct hdr_histogram *h, int32_t ticks_per_half_distance);
 
 /**
  * Initialise the iterator for use with recorded values.
  */
-void hdr_iter_recorded_init(struct hdr_iter* iter, const struct hdr_histogram* h);
+void hdr_iter_recorded_init(struct hdr_iter *iter, const struct hdr_histogram *h);
 
 /**
  * Initialise the iterator for use with linear values.
  */
-void hdr_iter_linear_init(
-    struct hdr_iter* iter,
-    const struct hdr_histogram* h,
-    int64_t value_units_per_bucket);
+void hdr_iter_linear_init(struct hdr_iter *iter, const struct hdr_histogram *h, int64_t value_units_per_bucket);
 
 /**
  * Update the iterator value units per bucket
  */
-void hdr_iter_linear_set_value_units_per_bucket(struct hdr_iter* iter, int64_t value_units_per_bucket);
+void hdr_iter_linear_set_value_units_per_bucket(struct hdr_iter *iter, int64_t value_units_per_bucket);
 
 /**
  * Initialise the iterator for use with logarithmic values
  */
-void hdr_iter_log_init(
-    struct hdr_iter* iter,
-    const struct hdr_histogram* h,
-    int64_t value_units_first_bucket,
-    double log_base);
+void hdr_iter_log_init(struct hdr_iter *iter, const struct hdr_histogram *h, int64_t value_units_first_bucket, double log_base);
 
 /**
  * Iterate to the next value for the iterator.  If there are no more values
@@ -453,13 +433,9 @@ void hdr_iter_log_init(
  * @param itr 'This' pointer
  * @return 'false' if there are no values remaining for this iterator.
  */
-bool hdr_iter_next(struct hdr_iter* iter);
+bool hdr_iter_next(struct hdr_iter *iter);
 
-typedef enum
-{
-    CLASSIC,
-    CSV
-} format_type;
+typedef enum { CLASSIC, CSV } format_type;
 
 /**
  * Print out a percentile based histogram to the supplied stream.  Note that
@@ -473,15 +449,12 @@ typedef enum
  * @return 0 on success, error code on failure.  EIO if an error occurs writing
  * the output.
  */
-int hdr_percentiles_print(
-    struct hdr_histogram* h, FILE* stream, int32_t ticks_per_half_distance,
-    double value_scale, format_type format);
+int hdr_percentiles_print(struct hdr_histogram *h, FILE *stream, int32_t ticks_per_half_distance, double value_scale, format_type format);
 
 /**
-* Internal allocation methods, used by hdr_dbl_histogram.
-*/
-struct hdr_histogram_bucket_config
-{
+ * Internal allocation methods, used by hdr_dbl_histogram.
+ */
+struct hdr_histogram_bucket_config {
     int64_t lowest_discernible_value;
     int64_t highest_trackable_value;
     int64_t unit_magnitude;
@@ -494,25 +467,21 @@ struct hdr_histogram_bucket_config
     int32_t counts_len;
 };
 
-int hdr_calculate_bucket_config(
-    int64_t lowest_discernible_value,
-    int64_t highest_trackable_value,
-    int significant_figures,
-    struct hdr_histogram_bucket_config* cfg);
+int hdr_calculate_bucket_config(int64_t lowest_discernible_value, int64_t highest_trackable_value, int significant_figures, struct hdr_histogram_bucket_config *cfg);
 
-void hdr_init_preallocated(struct hdr_histogram* h, struct hdr_histogram_bucket_config* cfg);
+void hdr_init_preallocated(struct hdr_histogram *h, struct hdr_histogram_bucket_config *cfg);
 
-int64_t hdr_size_of_equivalent_value_range(const struct hdr_histogram* h, int64_t value);
+int64_t hdr_size_of_equivalent_value_range(const struct hdr_histogram *h, int64_t value);
 
-int64_t hdr_next_non_equivalent_value(const struct hdr_histogram* h, int64_t value);
+int64_t hdr_next_non_equivalent_value(const struct hdr_histogram *h, int64_t value);
 
-int64_t hdr_median_equivalent_value(const struct hdr_histogram* h, int64_t value);
+int64_t hdr_median_equivalent_value(const struct hdr_histogram *h, int64_t value);
 
 /**
  * Used to reset counters after importing data manually into the histogram, used by the logging code
  * and other custom serialisation tools.
  */
-void hdr_reset_internal_counters(struct hdr_histogram* h);
+void hdr_reset_internal_counters(struct hdr_histogram *h);
 
 #ifdef __cplusplus
 }

@@ -1,21 +1,21 @@
 {
-    "COMMAND": {
-        "summary": "Get array of Redis command details",
-        "complexity": "O(N) where N is the total number of Redis commands",
-        "group": "server",
-        "since": "2.8.13",
-        "arity": -1,
-        "function": "commandCommand",
-        "command_flags": [
-            "LOADING",
-            "STALE",
-            "SENTINEL"
-        ],
-        "acl_categories": [
-            "CONNECTION"
-        ],
-        "command_tips": [
-            "NONDETERMINISTIC_OUTPUT_ORDER"
-        ]
-    }
+  "COMMAND": {
+    "summary": "获取redis所有命令的详情数组",
+    "complexity": "O(N),其中N为Redis命令总数",
+    "group": "server",
+    "since": "2.8.13",
+    "arity": -1,
+    "function": "commandCommand",
+    "command_flags": [
+      "LOADING",
+      "STALE",
+      "SENTINEL"
+    ],
+    "acl_categories": [
+      "CONNECTION"
+    ],
+    "command_tips": [
+      "NONDETERMINISTIC_OUTPUT_ORDER"
+    ]
+  }
 }

@@ -1,10 +1,13 @@
 #! /bin/sh
 #
+
 # install - install a program, script, or datafile
 # This comes from X11R5 (mit/util/scripts/install.sh).
 #
+
 # Copyright 1991 by the Massachusetts Institute of Technology
 #
+
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
 # the above copyright notice appear in all copies and that both that
@@ -15,10 +18,12 @@
 # suitability of this software for any purpose.  It is provided "as is"
 # without express or implied warranty.
 #
+
 # Calling this script install-sh is preferred over install.sh, to prevent
 # `make' implicit rules from creating a file called install from it
 # when there is no Makefile.
 #
+
 # This script is compatible with the BSD install script, but was written
 # from scratch.  It can only install one file at a time, a restriction
 # shared with many OS's install programs.
@@ -27,107 +32,132 @@
 # set DOITPROG to echo to test this script
 
 # Don't use :- since 4.3BSD and earlier shells don't like it.
-doit="${DOITPROG-}"
+doit = "${DOITPROG-}"
 
 
 # put in absolute paths if you don't have them in your path; or use env. vars.
 
-mvprog="${MVPROG-mv}"
-cpprog="${CPPROG-cp}"
-chmodprog="${CHMODPROG-chmod}"
-chownprog="${CHOWNPROG-chown}"
-chgrpprog="${CHGRPPROG-chgrp}"
-stripprog="${STRIPPROG-strip}"
-rmprog="${RMPROG-rm}"
-mkdirprog="${MKDIRPROG-mkdir}"
+mvprog = "${MVPROG-mv}"
+cpprog = "${CPPROG-cp}"
+chmodprog = "${CHMODPROG-chmod}"
+chownprog = "${CHOWNPROG-chown}"
+chgrpprog = "${CHGRPPROG-chgrp}"
+stripprog = "${STRIPPROG-strip}"
+rmprog = "${RMPROG-rm}"
+mkdirprog = "${MKDIRPROG-mkdir}"
 
-transformbasename=""
-transform_arg=""
-instcmd="$mvprog"
-chmodcmd="$chmodprog 0755"
-chowncmd=""
-chgrpcmd=""
-stripcmd=""
-rmcmd="$rmprog -f"
-mvcmd="$mvprog"
-src=""
-dst=""
-dir_arg=""
+transformbasename = ""
+transform_arg = ""
+instcmd = "$mvprog"
+chmodcmd = "$chmodprog 0755"
+chowncmd = ""
+chgrpcmd = ""
+stripcmd = ""
+rmcmd = "$rmprog -f"
+mvcmd = "$mvprog"
+src = ""
+dst = ""
+dir_arg = ""
 
 while [ x"$1" != x ]; do
-    case $1 in
-	-c) instcmd="$cpprog"
-	    shift
-	    continue;;
+case
+$1 in
+-c)
+instcmd = "$cpprog"
+shift
+continue;;
 
-	-d) dir_arg=true
-	    shift
-	    continue;;
+-d)
+dir_arg = true
+shift
+continue;;
 
-	-m) chmodcmd="$chmodprog $2"
-	    shift
-	    shift
-	    continue;;
+-m)
+chmodcmd = "$chmodprog $2"
+shift
+        shift
+continue;;
 
-	-o) chowncmd="$chownprog $2"
-	    shift
-	    shift
-	    continue;;
+-o)
+chowncmd = "$chownprog $2"
+shift
+        shift
+continue;;
 
-	-g) chgrpcmd="$chgrpprog $2"
-	    shift
-	    shift
-	    continue;;
+-g)
+chgrpcmd = "$chgrpprog $2"
+shift
+        shift
+continue;;
 
-	-s) stripcmd="$stripprog"
-	    shift
-	    continue;;
+-s)
+stripcmd = "$stripprog"
+shift
+continue;;
 
-	-t=*) transformarg=`echo $1 | sed 's/-t=//'`
-	    shift
-	    continue;;
+-
+t = *
+)
+transformarg =
+`
+echo $1
+| sed 's/-t=//'`
+shift
+continue;;
 
-	-b=*) transformbasename=`echo $1 | sed 's/-b=//'`
-	    shift
-	    continue;;
+-
+b = *
+)
+transformbasename =
+`
+echo $1
+| sed 's/-b=//'`
+shift
+continue;;
 
-	*)  if [ x"$src" = x ]
-	    then
-		src=$1
-	    else
-		# this colon is to work around a 386BSD /bin/sh bug
-		:
-		dst=$1
-	    fi
-	    shift
-	    continue;;
-    esac
-done
+*)  if [ x"$src" = x ]
+then
+        src = $1
+else
+# this colon is to work around a 386BSD /bin/sh bug
+:
+dst = $1
+fi
+        shift
+continue;;
+esac
+        done
 
 if [ x"$src" = x ]
 then
-	echo "install:	no input file specified"
-	exit 1
+        echo
+"install:	no input file specified"
+exit 1
 else
-	true
+true
 fi
 
-if [ x"$dir_arg" != x ]; then
-	dst=$src
-	src=""
-	
-	if [ -d $dst ]; then
-		instcmd=:
-	else
-		instcmd=mkdir
-	fi
+if [ x"$dir_arg" != x ];
+then
+        dst = $src
+src = ""
+
+if [ -
+d $dst
+];
+then
+        instcmd =
+:
+else
+instcmd = mkdir
+fi
 else
 
 # Waiting for this to be detected by the "$instcmd $src $dsttmp" command
-# might cause directories to be created, which would be especially bad 
-# if $src (and thus $dsttmp) contains '*'.
+# might cause directories to be created, which would be especially bad
+# if $src( and thus $dsttmp) contains '*'.
 
-	if [ -f $src -o -d $src ]
+if [ -f $src -o -d $src ]
 	then
 		true
 	else

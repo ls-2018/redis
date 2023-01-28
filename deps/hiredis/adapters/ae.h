@@ -37,70 +37,74 @@
 
 typedef struct redisAeEvents {
     redisAsyncContext *context;
-    aeEventLoop *loop;
-    int fd;
-    int reading, writing;
+    aeEventLoop       *loop;
+    int                fd;
+    int                reading, writing;
 } redisAeEvents;
 
 static void redisAeReadEvent(aeEventLoop *el, int fd, void *privdata, int mask) {
-    ((void)el); ((void)fd); ((void)mask);
+    ((void)el);
+    ((void)fd);
+    ((void)mask);
 
-    redisAeEvents *e = (redisAeEvents*)privdata;
+    redisAeEvents *e = (redisAeEvents *)privdata;
     redisAsyncHandleRead(e->context);
 }
 
 static void redisAeWriteEvent(aeEventLoop *el, int fd, void *privdata, int mask) {
-    ((void)el); ((void)fd); ((void)mask);
+    ((void)el);
+    ((void)fd);
+    ((void)mask);
 
-    redisAeEvents *e = (redisAeEvents*)privdata;
+    redisAeEvents *e = (redisAeEvents *)privdata;
     redisAsyncHandleWrite(e->context);
 }
 
 static void redisAeAddRead(void *privdata) {
-    redisAeEvents *e = (redisAeEvents*)privdata;
-    aeEventLoop *loop = e->loop;
+    redisAeEvents *e = (redisAeEvents *)privdata;
+    aeEventLoop   *loop = e->loop;
     if (!e->reading) {
         e->reading = 1;
-        aeCreateFileEvent(loop,e->fd,AE_READABLE,redisAeReadEvent,e);
+        aeCreateFileEvent(loop, e->fd, AE_READABLE, redisAeReadEvent, e);
     }
 }
 
 static void redisAeDelRead(void *privdata) {
-    redisAeEvents *e = (redisAeEvents*)privdata;
-    aeEventLoop *loop = e->loop;
+    redisAeEvents *e = (redisAeEvents *)privdata;
+    aeEventLoop   *loop = e->loop;
     if (e->reading) {
         e->reading = 0;
-        aeDeleteFileEvent(loop,e->fd,AE_READABLE);
+        aeDeleteFileEvent(loop, e->fd, AE_READABLE);
     }
 }
 
 static void redisAeAddWrite(void *privdata) {
-    redisAeEvents *e = (redisAeEvents*)privdata;
-    aeEventLoop *loop = e->loop;
+    redisAeEvents *e = (redisAeEvents *)privdata;
+    aeEventLoop   *loop = e->loop;
     if (!e->writing) {
         e->writing = 1;
-        aeCreateFileEvent(loop,e->fd,AE_WRITABLE,redisAeWriteEvent,e);
+        aeCreateFileEvent(loop, e->fd, AE_WRITABLE, redisAeWriteEvent, e);
     }
 }
 
 static void redisAeDelWrite(void *privdata) {
-    redisAeEvents *e = (redisAeEvents*)privdata;
-    aeEventLoop *loop = e->loop;
+    redisAeEvents *e = (redisAeEvents *)privdata;
+    aeEventLoop   *loop = e->loop;
     if (e->writing) {
         e->writing = 0;
-        aeDeleteFileEvent(loop,e->fd,AE_WRITABLE);
+        aeDeleteFileEvent(loop, e->fd, AE_WRITABLE);
     }
 }
 
 static void redisAeCleanup(void *privdata) {
-    redisAeEvents *e = (redisAeEvents*)privdata;
+    redisAeEvents *e = (redisAeEvents *)privdata;
     redisAeDelRead(privdata);
     redisAeDelWrite(privdata);
     hi_free(e);
 }
 
 static int redisAeAttach(aeEventLoop *loop, redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
+    redisContext  *c = &(ac->c);
     redisAeEvents *e;
 
     /* Nothing should be attached when something is already attached */
@@ -108,7 +112,7 @@ static int redisAeAttach(aeEventLoop *loop, redisAsyncContext *ac) {
         return REDIS_ERR;
 
     /* Create container for context and r/w events */
-    e = (redisAeEvents*)hi_malloc(sizeof(*e));
+    e = (redisAeEvents *)hi_malloc(sizeof(*e));
     if (e == NULL)
         return REDIS_ERR;
 

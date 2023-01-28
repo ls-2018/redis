@@ -41,8 +41,8 @@
  *
  * Clients will normally take frequently requested objects in memory, removing
  * them when invalidation messages are received. */
-rax *TrackingTable = NULL;
-rax *PrefixTable = NULL;
+rax     *TrackingTable = NULL;
+rax     *PrefixTable = NULL;
 uint64_t TrackingTableTotalItems = 0; /* Total number of IDs stored across
                                          the whole tracking table. This gives
                                          an hint about the total memory we
@@ -53,9 +53,9 @@ robj *TrackingChannelName;
  * represents the list of keys modified, and the list of clients that need
  * to be notified, for a given prefix. */
 typedef struct bcastState {
-    rax *keys;      /* Keys modified in the current event loop cycle. */
-    rax *clients;   /* Clients subscribed to the notification events for this
-                       prefix. */
+    rax *keys;    /* Keys modified in the current event loop cycle. */
+    rax *clients; /* Clients subscribed to the notification events for this
+                     prefix. */
 } bcastState;
 
 /* Remove the tracking state from the client 'c'. Note that there is not much
@@ -69,19 +69,19 @@ void disableTracking(client *c) {
      * from all the prefixes it is registered to. */
     if (c->flags & CLIENT_TRACKING_BCAST) {
         raxIterator ri;
-        raxStart(&ri,c->client_tracking_prefixes);
-        raxSeek(&ri,"^",NULL,0);
-        while(raxNext(&ri)) {
-            bcastState *bs = raxFind(PrefixTable,ri.key,ri.key_len);
+        raxStart(&ri, c->client_tracking_prefixes);
+        raxSeek(&ri, "^", NULL, 0);
+        while (raxNext(&ri)) {
+            bcastState *bs = raxFind(PrefixTable, ri.key, ri.key_len);
             serverAssert(bs != raxNotFound);
-            raxRemove(bs->clients,(unsigned char*)&c,sizeof(c),NULL);
+            raxRemove(bs->clients, (unsigned char *)&c, sizeof(c), NULL);
             /* Was it the last client? Remove the prefix from the
              * table. */
             if (raxSize(bs->clients) == 0) {
                 raxFree(bs->clients);
                 raxFree(bs->keys);
                 zfree(bs);
-                raxRemove(PrefixTable,ri.key,ri.key_len,NULL);
+                raxRemove(PrefixTable, ri.key, ri.key_len, NULL);
             }
         }
         raxStop(&ri);
@@ -92,40 +92,35 @@ void disableTracking(client *c) {
     /* Clear flags and adjust the count. */
     if (c->flags & CLIENT_TRACKING) {
         server.tracking_clients--;
-        c->flags &= ~(CLIENT_TRACKING|CLIENT_TRACKING_BROKEN_REDIR|
-                      CLIENT_TRACKING_BCAST|CLIENT_TRACKING_OPTIN|
-                      CLIENT_TRACKING_OPTOUT|CLIENT_TRACKING_CACHING|
-                      CLIENT_TRACKING_NOLOOP);
+        c->flags &= ~(CLIENT_TRACKING | CLIENT_TRACKING_BROKEN_REDIR | CLIENT_TRACKING_BCAST | CLIENT_TRACKING_OPTIN | CLIENT_TRACKING_OPTOUT | CLIENT_TRACKING_CACHING | CLIENT_TRACKING_NOLOOP);
     }
 }
 
 static int stringCheckPrefix(unsigned char *s1, size_t s1_len, unsigned char *s2, size_t s2_len) {
     size_t min_length = s1_len < s2_len ? s1_len : s2_len;
-    return memcmp(s1,s2,min_length) == 0;   
+    return memcmp(s1, s2, min_length) == 0;
 }
 
 /* Check if any of the provided prefixes collide with one another or
- * with an existing prefix for the client. A collision is defined as two 
- * prefixes that will emit an invalidation for the same key. If no prefix 
- * collision is found, 1 is return, otherwise 0 is returned and the client 
+ * with an existing prefix for the client. A collision is defined as two
+ * prefixes that will emit an invalidation for the same key. If no prefix
+ * collision is found, 1 is return, otherwise 0 is returned and the client
  * has an error emitted describing the error. */
 int checkPrefixCollisionsOrReply(client *c, robj **prefixes, size_t numprefix) {
     for (size_t i = 0; i < numprefix; i++) {
         /* Check input list has no overlap with existing prefixes. */
         if (c->client_tracking_prefixes) {
             raxIterator ri;
-            raxStart(&ri,c->client_tracking_prefixes);
-            raxSeek(&ri,"^",NULL,0);
-            while(raxNext(&ri)) {
-                if (stringCheckPrefix(ri.key,ri.key_len,
-                    prefixes[i]->ptr,sdslen(prefixes[i]->ptr))) 
-                {
-                    sds collision = sdsnewlen(ri.key,ri.key_len);
-                    addReplyErrorFormat(c,
+            raxStart(&ri, c->client_tracking_prefixes);
+            raxSeek(&ri, "^", NULL, 0);
+            while (raxNext(&ri)) {
+                if (stringCheckPrefix(ri.key, ri.key_len, prefixes[i]->ptr, sdslen(prefixes[i]->ptr))) {
+                    sds collision = sdsnewlen(ri.key, ri.key_len);
+                    addReplyErrorFormat(
+                        c,
                         "Prefix '%s' overlaps with an existing prefix '%s'. "
                         "Prefixes for a single client must not overlap.",
-                        (unsigned char *)prefixes[i]->ptr,
-                        (unsigned char *)collision);
+                        (unsigned char *)prefixes[i]->ptr, (unsigned char *)collision);
                     sdsfree(collision);
                     raxStop(&ri);
                     return 0;
@@ -135,14 +130,12 @@ int checkPrefixCollisionsOrReply(client *c, robj **prefixes, size_t numprefix) {
         }
         /* Check input has no overlap with itself. */
         for (size_t j = i + 1; j < numprefix; j++) {
-            if (stringCheckPrefix(prefixes[i]->ptr,sdslen(prefixes[i]->ptr),
-                prefixes[j]->ptr,sdslen(prefixes[j]->ptr)))
-            {
-                addReplyErrorFormat(c,
+            if (stringCheckPrefix(prefixes[i]->ptr, sdslen(prefixes[i]->ptr), prefixes[j]->ptr, sdslen(prefixes[j]->ptr))) {
+                addReplyErrorFormat(
+                    c,
                     "Prefix '%s' overlaps with another provided prefix '%s'. "
                     "Prefixes for a single client must not overlap.",
-                    (unsigned char *)prefixes[i]->ptr,
-                    (unsigned char *)prefixes[j]->ptr);
+                    (unsigned char *)prefixes[i]->ptr, (unsigned char *)prefixes[j]->ptr);
                 return i;
             }
         }
@@ -153,20 +146,19 @@ int checkPrefixCollisionsOrReply(client *c, robj **prefixes, size_t numprefix) {
 /* Set the client 'c' to track the prefix 'prefix'. If the client 'c' is
  * already registered for the specified prefix, no operation is performed. */
 void enableBcastTrackingForPrefix(client *c, char *prefix, size_t plen) {
-    bcastState *bs = raxFind(PrefixTable,(unsigned char*)prefix,plen);
+    bcastState *bs = raxFind(PrefixTable, (unsigned char *)prefix, plen);
     /* If this is the first client subscribing to such prefix, create
      * the prefix in the table. */
     if (bs == raxNotFound) {
         bs = zmalloc(sizeof(*bs));
         bs->keys = raxNew();
         bs->clients = raxNew();
-        raxInsert(PrefixTable,(unsigned char*)prefix,plen,bs,NULL);
+        raxInsert(PrefixTable, (unsigned char *)prefix, plen, bs, NULL);
     }
-    if (raxTryInsert(bs->clients,(unsigned char*)&c,sizeof(c),NULL,NULL)) {
+    if (raxTryInsert(bs->clients, (unsigned char *)&c, sizeof(c), NULL, NULL)) {
         if (c->client_tracking_prefixes == NULL)
             c->client_tracking_prefixes = raxNew();
-        raxInsert(c->client_tracking_prefixes,
-                  (unsigned char*)prefix,plen,NULL,NULL);
+        raxInsert(c->client_tracking_prefixes, (unsigned char *)prefix, plen, NULL, NULL);
     }
 }
 
@@ -178,11 +170,10 @@ void enableBcastTrackingForPrefix(client *c, char *prefix, size_t plen) {
  * inform it of the condition. Multiple clients can redirect the invalidation
  * messages to the same client ID. */
 void enableTracking(client *c, uint64_t redirect_to, uint64_t options, robj **prefix, size_t numprefix) {
-    if (!(c->flags & CLIENT_TRACKING)) server.tracking_clients++;
+    if (!(c->flags & CLIENT_TRACKING))
+        server.tracking_clients++;
     c->flags |= CLIENT_TRACKING;
-    c->flags &= ~(CLIENT_TRACKING_BROKEN_REDIR|CLIENT_TRACKING_BCAST|
-                  CLIENT_TRACKING_OPTIN|CLIENT_TRACKING_OPTOUT|
-                  CLIENT_TRACKING_NOLOOP);
+    c->flags &= ~(CLIENT_TRACKING_BROKEN_REDIR | CLIENT_TRACKING_BCAST | CLIENT_TRACKING_OPTIN | CLIENT_TRACKING_OPTOUT | CLIENT_TRACKING_NOLOOP);
     c->client_tracking_redirection = redirect_to;
 
     /* This may be the first client we ever enable. Create the tracking
@@ -190,22 +181,22 @@ void enableTracking(client *c, uint64_t redirect_to, uint64_t options, robj **pr
     if (TrackingTable == NULL) {
         TrackingTable = raxNew();
         PrefixTable = raxNew();
-        TrackingChannelName = createStringObject("__redis__:invalidate",20);
+        TrackingChannelName = createStringObject("__redis__:invalidate", 20);
     }
 
     /* For broadcasting, set the list of prefixes in the client. */
     if (options & CLIENT_TRACKING_BCAST) {
         c->flags |= CLIENT_TRACKING_BCAST;
-        if (numprefix == 0) enableBcastTrackingForPrefix(c,"",0);
+        if (numprefix == 0)
+            enableBcastTrackingForPrefix(c, "", 0);
         for (size_t j = 0; j < numprefix; j++) {
             sds sdsprefix = prefix[j]->ptr;
-            enableBcastTrackingForPrefix(c,sdsprefix,sdslen(sdsprefix));
+            enableBcastTrackingForPrefix(c, sdsprefix, sdslen(sdsprefix));
         }
     }
 
     /* Set the remaining flags that don't need any special handling. */
-    c->flags |= options & (CLIENT_TRACKING_OPTIN|CLIENT_TRACKING_OPTOUT|
-                           CLIENT_TRACKING_NOLOOP);
+    c->flags |= options & (CLIENT_TRACKING_OPTIN | CLIENT_TRACKING_OPTOUT | CLIENT_TRACKING_NOLOOP);
 }
 
 /* This function is called after the execution of a readonly command in the
@@ -220,10 +211,11 @@ void trackingRememberKeys(client *c) {
     uint64_t optin = c->flags & CLIENT_TRACKING_OPTIN;
     uint64_t optout = c->flags & CLIENT_TRACKING_OPTOUT;
     uint64_t caching_given = c->flags & CLIENT_TRACKING_CACHING;
-    if ((optin && !caching_given) || (optout && caching_given)) return;
+    if ((optin && !caching_given) || (optout && caching_given))
+        return;
 
     getKeysResult result = GETKEYS_RESULT_INIT;
-    int numkeys = getKeysFromCommand(c->cmd,c->argv,c->argc,&result);
+    int           numkeys = getKeysFromCommand(c->cmd, c->argv, c->argc, &result);
     if (!numkeys) {
         getKeysFreeResult(&result);
         return;
@@ -237,17 +229,16 @@ void trackingRememberKeys(client *c) {
 
     keyReference *keys = result.keys;
 
-    for(int j = 0; j < numkeys; j++) {
-        int idx = keys[j].pos;
-        sds sdskey = c->argv[idx]->ptr;
-        rax *ids = raxFind(TrackingTable,(unsigned char*)sdskey,sdslen(sdskey));
+    for (int j = 0; j < numkeys; j++) {
+        int  idx = keys[j].pos;
+        sds  sdskey = c->argv[idx]->ptr;
+        rax *ids = raxFind(TrackingTable, (unsigned char *)sdskey, sdslen(sdskey));
         if (ids == raxNotFound) {
             ids = raxNew();
-            int inserted = raxTryInsert(TrackingTable,(unsigned char*)sdskey,
-                                        sdslen(sdskey),ids, NULL);
+            int inserted = raxTryInsert(TrackingTable, (unsigned char *)sdskey, sdslen(sdskey), ids, NULL);
             serverAssert(inserted == 1);
         }
-        if (raxTryInsert(ids,(unsigned char*)&c->id,sizeof(c->id),NULL,NULL))
+        if (raxTryInsert(ids, (unsigned char *)&c->id, sizeof(c->id), NULL, NULL))
             TrackingTableTotalItems++;
     }
     getKeysFreeResult(&result);
@@ -267,17 +258,21 @@ void trackingRememberKeys(client *c) {
  *   that all keys are now invalid. */
 void sendTrackingMessage(client *c, char *keyname, size_t keylen, int proto) {
     int using_redirection = 0;
+    // 1 如果 client_tracking_redirection 不为空,则开启了转发模式
     if (c->client_tracking_redirection) {
+        // 2 找到转发的客户端实例
         client *redir = lookupClientByID(c->client_tracking_redirection);
         if (!redir) {
+            // 3 如果转发客户端关闭了,则必须通知原客户端
             c->flags |= CLIENT_TRACKING_BROKEN_REDIR;
             /* We need to signal to the original connection that we
              * are unable to send invalidation messages to the redirected
              * connection, because the client no longer exist. */
             if (c->resp > 2) {
-                addReplyPushLen(c,2);
-                addReplyBulkCBuffer(c,"tracking-redir-broken",21);
-                addReplyLongLong(c,c->client_tracking_redirection);
+                // 4 如果是 RESP3 则发PUSH
+                addReplyPushLen(c, 2);
+                addReplyBulkCBuffer(c, "tracking-redir-broken", 21);
+                addReplyLongLong(c, c->client_tracking_redirection);
             }
             return;
         }
@@ -290,13 +285,16 @@ void sendTrackingMessage(client *c, char *keyname, size_t keylen, int proto) {
      * in Pub/Sub mode, we can support the feature with RESP 2 as well,
      * by sending Pub/Sub messages in the __redis__:invalidate channel. */
     if (c->resp > 2) {
-        addReplyPushLen(c,2);
-        addReplyBulkCBuffer(c,"invalidate",10);
-    } else if (using_redirection && c->flags & CLIENT_PUBSUB) {
+        // 5 转发模式,往 TrackingChannelName 信道中发送消息
+        addReplyPushLen(c, 2);
+        addReplyBulkCBuffer(c, "invalidate", 10);
+    }
+    else if (using_redirection && c->flags & CLIENT_PUBSUB) {
         /* We use a static object to speedup things, however we assume
          * that addReplyPubsubMessage() will not take a reference. */
-        addReplyPubsubMessage(c,TrackingChannelName,NULL);
-    } else {
+        addReplyPubsubMessage(c, TrackingChannelName, NULL);
+    }
+    else {
         /* If are here, the client is not using RESP3, nor is
          * redirecting to another client. We can't send anything to
          * it since RESP2 does not support push messages in the same
@@ -306,10 +304,12 @@ void sendTrackingMessage(client *c, char *keyname, size_t keylen, int proto) {
 
     /* Send the "value" part, which is the array of keys. */
     if (proto) {
-        addReplyProto(c,keyname,keylen);
-    } else {
-        addReplyArrayLen(c,1);
-        addReplyBulkCBuffer(c,keyname,keylen);
+        // 6 发送键等信息,和上边4,5操作连在一起的.
+        addReplyProto(c, keyname, keylen);
+    }
+    else {
+        addReplyArrayLen(c, 1);
+        addReplyBulkCBuffer(c, keyname, keylen);
     }
     updateClientMemUsage(c);
 }
@@ -322,18 +322,19 @@ void sendTrackingMessage(client *c, char *keyname, size_t keylen, int proto) {
  * clients subscribed to each prefix. */
 void trackingRememberKeyToBroadcast(client *c, char *keyname, size_t keylen) {
     raxIterator ri;
-    raxStart(&ri,PrefixTable);
-    raxSeek(&ri,"^",NULL,0);
-    while(raxNext(&ri)) {
-        if (ri.key_len > keylen) continue;
-        if (ri.key_len != 0 && memcmp(ri.key,keyname,ri.key_len) != 0)
+    raxStart(&ri, PrefixTable);
+    raxSeek(&ri, "^", NULL, 0);
+    while (raxNext(&ri)) {
+        if (ri.key_len > keylen)
+            continue;
+        if (ri.key_len != 0 && memcmp(ri.key, keyname, ri.key_len) != 0)
             continue;
         bcastState *bs = ri.data;
         /* We insert the client pointer as associated value in the radix
          * tree. This way we know who was the client that did the last
          * change to the key, and can avoid sending the notification in the
          * case the client is in NOLOOP mode. */
-        raxInsert(bs->keys,(unsigned char*)keyname,keylen,c,NULL);
+        raxInsert(bs->keys, (unsigned char *)keyname, keylen, c, NULL);
     }
     raxStop(&ri);
 }
@@ -355,86 +356,91 @@ void trackingRememberKeyToBroadcast(client *c, char *keyname, size_t keylen) {
  * just to notify the clients that are in the table for this key, that would
  * otherwise miss the fact we are no longer tracking the key for them. */
 void trackingInvalidateKey(client *c, robj *keyobj, int bcast) {
-    if (TrackingTable == NULL) return;
+    if (TrackingTable == NULL)
+        return;
 
-    unsigned char *key = (unsigned char*)keyobj->ptr;
-    size_t keylen = sdslen(keyobj->ptr);
+    unsigned char *key = (unsigned char *)keyobj->ptr;
+    size_t         keylen = sdslen(keyobj->ptr);
 
     if (bcast && raxSize(PrefixTable) > 0)
-        trackingRememberKeyToBroadcast(c,(char *)key,keylen);
-
-    rax *ids = raxFind(TrackingTable,key,keylen);
-    if (ids == raxNotFound) return;
-
+        trackingRememberKeyToBroadcast(c, (char *)key, keylen);
+    // 省略,如果广播模式的记录基数树不为空,则先处理广播模式
+    // 1 根据键的指针去 TrackingTable 查找
+    rax *ids = raxFind(TrackingTable, key, keylen);
+    if (ids == raxNotFound)
+        return;
+    // 2 使用迭代器遍历
     raxIterator ri;
-    raxStart(&ri,ids);
-    raxSeek(&ri,"^",NULL,0);
-    while(raxNext(&ri)) {
+    raxStart(&ri, ids);
+    raxSeek(&ri, "^", NULL, 0);
+    while (raxNext(&ri)) {
         uint64_t id;
-        memcpy(&id,ri.key,sizeof(id));
+        memcpy(&id, ri.key, sizeof(id));
+        // 3 根据 clientId 查找 client 实例
         client *target = lookupClientByID(id);
         /* Note that if the client is in BCAST mode, we don't want to
          * send invalidation messages that were pending in the case
          * previously the client was not in BCAST mode. This can happen if
          * TRACKING is enabled normally, and then the client switches to
          * BCAST mode. */
-        if (target == NULL ||
-            !(target->flags & CLIENT_TRACKING)||
-            target->flags & CLIENT_TRACKING_BCAST)
-        {
+        // 4 如果未开启 track 或者是广播模式则跳过.
+        if (target == NULL || !(target->flags & CLIENT_TRACKING) || target->flags & CLIENT_TRACKING_BCAST) {
             continue;
         }
 
         /* If the client enabled the NOLOOP mode, don't send notifications
          * about keys changed by the client itself. */
-        if (target->flags & CLIENT_TRACKING_NOLOOP &&
-            target == c)
-        {
+        // 5 如果开启了 NOLOOP 并且是导致key发生变化的client则跳过.
+        if (target->flags & CLIENT_TRACKING_NOLOOP && target == c) {
             continue;
         }
 
         /* If target is current client, we need schedule key invalidation.
          * As the invalidation messages may be interleaved with command
          * response and should after command response */
-        if (target == server.current_client){
+        if (target == server.current_client) {
             incrRefCount(keyobj);
             listAddNodeTail(server.tracking_pending_keys, keyobj);
-        } else {
-            sendTrackingMessage(target,(char *)keyobj->ptr,sdslen(keyobj->ptr),0);
+        }
+        else {
+            // 6 发送失效消息
+            sendTrackingMessage(target, (char *)keyobj->ptr, sdslen(keyobj->ptr), 0);
         }
     }
     raxStop(&ri);
 
     /* Free the tracking table: we'll create the radix tree and populate it
      * again if more keys will be modified in this caching slot. */
+    // 7 减少数据统计,根据sdskey删除对应的记录
     TrackingTableTotalItems -= raxSize(ids);
     raxFree(ids);
-    raxRemove(TrackingTable,(unsigned char*)key,keylen,NULL);
+    raxRemove(TrackingTable, (unsigned char *)key, keylen, NULL);
 }
 
 void trackingHandlePendingKeyInvalidations() {
-    if (!listLength(server.tracking_pending_keys)) return;
+    if (!listLength(server.tracking_pending_keys))
+        return;
 
     listNode *ln;
-    listIter li;
+    listIter  li;
 
-    listRewind(server.tracking_pending_keys,&li);
+    listRewind(server.tracking_pending_keys, &li);
     while ((ln = listNext(&li)) != NULL) {
         robj *key = listNodeValue(ln);
         /* current_client maybe freed, so we need to send invalidation
          * message only when current_client is still alive */
         if (server.current_client != NULL)
-            sendTrackingMessage(server.current_client,(char *)key->ptr,sdslen(key->ptr),0);
+            sendTrackingMessage(server.current_client, (char *)key->ptr, sdslen(key->ptr), 0);
         decrRefCount(key);
     }
     listEmpty(server.tracking_pending_keys);
 }
 
 /* This function is called when one or all the Redis databases are
- * flushed. Caching keys are not specific for each DB but are global: 
- * currently what we do is send a special notification to clients with 
- * tracking enabled, sending a RESP NULL, which means, "all the keys", 
- * in order to avoid flooding clients with many invalidation messages 
+ * flushed. Caching keys are not specific for each DB but are global:
+ * currently what we do is send a special notification to clients with
+ * tracking enabled, sending a RESP NULL, which means, "all the keys",
+ * in order to avoid flooding clients with many invalidation messages
  * for all the keys they may hold.
  */
 void freeTrackingRadixTreeCallback(void *rt) {
@@ -442,19 +448,19 @@ void freeTrackingRadixTreeCallback(void *rt) {
 }
 
 void freeTrackingRadixTree(rax *rt) {
-    raxFreeWithCallback(rt,freeTrackingRadixTreeCallback);
+    raxFreeWithCallback(rt, freeTrackingRadixTreeCallback);
 }
 
 /* A RESP NULL is sent to indicate that all keys are invalid */
 void trackingInvalidateKeysOnFlush(int async) {
     if (server.tracking_clients) {
         listNode *ln;
-        listIter li;
-        listRewind(server.clients,&li);
+        listIter  li;
+        listRewind(server.clients, &li);
         while ((ln = listNext(&li)) != NULL) {
             client *c = listNodeValue(ln);
             if (c->flags & CLIENT_TRACKING) {
-                sendTrackingMessage(c,shared.null[c->resp]->ptr,sdslen(shared.null[c->resp]->ptr),1);
+                sendTrackingMessage(c, shared.null[c->resp]->ptr, sdslen(shared.null[c->resp]->ptr), 1);
             }
         }
     }
@@ -463,7 +469,8 @@ void trackingInvalidateKeysOnFlush(int async) {
     if (TrackingTable) {
         if (async) {
             freeTrackingRadixTreeAsync(TrackingTable);
-        } else {
+        }
+        else {
             freeTrackingRadixTree(TrackingTable);
         }
         TrackingTable = raxNew();
@@ -483,8 +490,10 @@ void trackingInvalidateKeysOnFlush(int async) {
  * modified. */
 void trackingLimitUsedSlots(void) {
     static unsigned int timeout_counter = 0;
-    if (TrackingTable == NULL) return;
-    if (server.tracking_table_max_keys == 0) return; /* No limits set. */
+    if (TrackingTable == NULL)
+        return;
+    if (server.tracking_table_max_keys == 0)
+        return; /* No limits set. */
     size_t max_keys = server.tracking_table_max_keys;
     if (raxSize(TrackingTable) <= max_keys) {
         timeout_counter = 0;
@@ -494,18 +503,19 @@ void trackingLimitUsedSlots(void) {
     /* We have to invalidate a few keys to reach the limit again. The effort
      * we do here is proportional to the number of times we entered this
      * function and found that we are still over the limit. */
-    int effort = 100 * (timeout_counter+1);
+    int effort = 100 * (timeout_counter + 1);
 
     /* We just remove one key after another by using a random walk. */
     raxIterator ri;
-    raxStart(&ri,TrackingTable);
-    while(effort > 0) {
+    raxStart(&ri, TrackingTable);
+    while (effort > 0) {
         effort--;
-        raxSeek(&ri,"^",NULL,0);
-        raxRandomWalk(&ri,0);
-        if (raxEOF(&ri)) break;
-        robj *keyobj = createStringObject((char*)ri.key,ri.key_len);
-        trackingInvalidateKey(NULL,keyobj,0);
+        raxSeek(&ri, "^", NULL, 0);
+        raxRandomWalk(&ri, 0);
+        if (raxEOF(&ri))
+            break;
+        robj *keyobj = createStringObject((char *)ri.key, ri.key_len);
+        trackingInvalidateKey(NULL, keyobj, 0);
         decrRefCount(keyobj);
         if (raxSize(TrackingTable) <= max_keys) {
             timeout_counter = 0;
@@ -528,41 +538,45 @@ void trackingLimitUsedSlots(void) {
  * If the resulting array would be empty, NULL is returned instead. */
 sds trackingBuildBroadcastReply(client *c, rax *keys) {
     raxIterator ri;
-    uint64_t count;
+    uint64_t    count;
 
     if (c == NULL) {
         count = raxSize(keys);
-    } else {
+    }
+    else {
         count = 0;
-        raxStart(&ri,keys);
-        raxSeek(&ri,"^",NULL,0);
-        while(raxNext(&ri)) {
-            if (ri.data != c) count++;
+        raxStart(&ri, keys);
+        raxSeek(&ri, "^", NULL, 0);
+        while (raxNext(&ri)) {
+            if (ri.data != c)
+                count++;
         }
         raxStop(&ri);
 
-        if (count == 0) return NULL;
+        if (count == 0)
+            return NULL;
     }
 
     /* Create the array reply with the list of keys once, then send
-    * it to all the clients subscribed to this prefix. */
-    char buf[32];
-    size_t len = ll2string(buf,sizeof(buf),count);
-    sds proto = sdsempty();
-    proto = sdsMakeRoomFor(proto,count*15);
-    proto = sdscatlen(proto,"*",1);
-    proto = sdscatlen(proto,buf,len);
-    proto = sdscatlen(proto,"\r\n",2);
-    raxStart(&ri,keys);
-    raxSeek(&ri,"^",NULL,0);
-    while(raxNext(&ri)) {
-        if (c && ri.data == c) continue;
-        len = ll2string(buf,sizeof(buf),ri.key_len);
-        proto = sdscatlen(proto,"$",1);
-        proto = sdscatlen(proto,buf,len);
-        proto = sdscatlen(proto,"\r\n",2);
-        proto = sdscatlen(proto,ri.key,ri.key_len);
-        proto = sdscatlen(proto,"\r\n",2);
+     * it to all the clients subscribed to this prefix. */
+    char   buf[32];
+    size_t len = ll2string(buf, sizeof(buf), count);
+    sds    proto = sdsempty();
+    proto = sdsMakeRoomFor(proto, count * 15);
+    proto = sdscatlen(proto, "*", 1);
+    proto = sdscatlen(proto, buf, len);
+    proto = sdscatlen(proto, "\r\n", 2);
+    raxStart(&ri, keys);
+    raxSeek(&ri, "^", NULL, 0);
+    while (raxNext(&ri)) {
+        if (c && ri.data == c)
+            continue;
+        len = ll2string(buf, sizeof(buf), ri.key_len);
+        proto = sdscatlen(proto, "$", 1);
+        proto = sdscatlen(proto, buf, len);
+        proto = sdscatlen(proto, "\r\n", 2);
+        proto = sdscatlen(proto, ri.key, ri.key_len);
+        proto = sdscatlen(proto, "\r\n", 2);
     }
     raxStop(&ri);
     return proto;
@@ -575,35 +589,37 @@ void trackingBroadcastInvalidationMessages(void) {
     raxIterator ri, ri2;
 
     /* Return ASAP if there is nothing to do here. */
-    if (TrackingTable == NULL || !server.tracking_clients) return;
+    if (TrackingTable == NULL || !server.tracking_clients)
+        return;
 
-    raxStart(&ri,PrefixTable);
-    raxSeek(&ri,"^",NULL,0);
+    raxStart(&ri, PrefixTable);
+    raxSeek(&ri, "^", NULL, 0);
 
     /* For each prefix... */
-    while(raxNext(&ri)) {
+    while (raxNext(&ri)) {
         bcastState *bs = ri.data;
 
         if (raxSize(bs->keys)) {
             /* Generate the common protocol for all the clients that are
              * not using the NOLOOP option. */
-            sds proto = trackingBuildBroadcastReply(NULL,bs->keys);
+            sds proto = trackingBuildBroadcastReply(NULL, bs->keys);
 
             /* Send this array of keys to every client in the list. */
-            raxStart(&ri2,bs->clients);
-            raxSeek(&ri2,"^",NULL,0);
-            while(raxNext(&ri2)) {
+            raxStart(&ri2, bs->clients);
+            raxSeek(&ri2, "^", NULL, 0);
+            while (raxNext(&ri2)) {
                 client *c;
-                memcpy(&c,ri2.key,sizeof(c));
+                memcpy(&c, ri2.key, sizeof(c));
                 if (c->flags & CLIENT_TRACKING_NOLOOP) {
                     /* This client may have certain keys excluded. */
-                    sds adhoc = trackingBuildBroadcastReply(c,bs->keys);
+                    sds adhoc = trackingBuildBroadcastReply(c, bs->keys);
                     if (adhoc) {
-                        sendTrackingMessage(c,adhoc,sdslen(adhoc),1);
+                        sendTrackingMessage(c, adhoc, sdslen(adhoc), 1);
                         sdsfree(adhoc);
                     }
-                } else {
-                    sendTrackingMessage(c,proto,sdslen(proto),1);
+                }
+                else {
+                    sendTrackingMessage(c, proto, sdslen(proto), 1);
                 }
             }
             raxStop(&ri2);
@@ -626,11 +642,13 @@ uint64_t trackingGetTotalItems(void) {
 }
 
 uint64_t trackingGetTotalKeys(void) {
-    if (TrackingTable == NULL) return 0;
+    if (TrackingTable == NULL)
+        return 0;
     return raxSize(TrackingTable);
 }
 
 uint64_t trackingGetTotalPrefixes(void) {
-    if (PrefixTable == NULL) return 0;
+    if (PrefixTable == NULL)
+        return 0;
     return raxSize(PrefixTable);
 }

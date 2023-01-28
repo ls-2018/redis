@@ -1,35 +1,35 @@
 {
-    "INFO": {
-        "summary": "Get array of specific Redis command details, or all when no argument is given.",
-        "complexity": "O(N) where N is the number of commands to look up",
-        "group": "server",
-        "since": "2.8.13",
-        "arity": -2,
-        "container": "COMMAND",
-        "function": "commandInfoCommand",
-        "history": [
-            [
-                "7.0.0",
-                "Allowed to be called with no argument to get info on all commands."
-            ]
-        ],
-        "command_flags": [
-            "LOADING",
-            "STALE"
-        ],
-        "acl_categories": [
-            "CONNECTION"
-        ],
-        "command_tips": [
-            "NONDETERMINISTIC_OUTPUT_ORDER"
-        ],
-        "arguments": [
-            {
-                "name": "command-name",
-                "type": "string",
-                "optional": true,
-                "multiple": true
-            }
-        ]
-    }
+  "INFO": {
+    "summary": "获取特定的Redis命令细节数组,或者所有当没有给出参数.",
+    "complexity": "O(N)其中N是要查找的命令数",
+    "group": "server",
+    "since": "2.8.13",
+    "arity": -2,
+    "container": "COMMAND",
+    "function": "commandInfoCommand",
+    "history": [
+      [
+        "7.0.0",
+        "允许在没有参数的情况下调用以获取所有命令的信息."
+      ]
+    ],
+    "command_flags": [
+      "LOADING",
+      "STALE"
+    ],
+    "acl_categories": [
+      "CONNECTION"
+    ],
+    "command_tips": [
+      "NONDETERMINISTIC_OUTPUT_ORDER"
+    ],
+    "arguments": [
+      {
+        "name": "command-name",
+        "type": "string",
+        "optional": true,
+        "multiple": true
+      }
+    ]
+  }
 }

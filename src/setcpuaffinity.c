@@ -26,9 +26,11 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
 #ifdef __linux__
 #include <sched.h>
 #endif
@@ -44,10 +46,11 @@
 #include <pthread.h>
 #include <sched.h>
 #endif
+
 #include "config.h"
 
 #ifdef USE_SETCPUAFFINITY
-static const char *next_token(const char *q,  int sep) {
+static const char *next_token(const char *q, int sep) {
     if (q)
         q = strchr(q, sep);
     if (q)
@@ -72,11 +75,11 @@ static int next_num(const char *str, char **end, int *result) {
  * example of this function: "0,2,3", "0,2-3", "0-20:2". */
 void setcpuaffinity(const char *cpulist) {
     const char *p, *q;
-    char *end = NULL;
+    char       *end = NULL;
 #ifdef __linux__
     cpu_set_t cpuset;
 #endif
-#if defined (__FreeBSD__) || defined(__DragonFly__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
     cpuset_t cpuset;
 #endif
 #ifdef __NetBSD__
@@ -94,7 +97,7 @@ void setcpuaffinity(const char *cpulist) {
 
     q = cpulist;
     while (p = q, q = next_token(q, ','), p) {
-        int a, b, s;
+        int         a, b, s;
         const char *c1, *c2;
 
         if (next_num(p, &end, &a) != 0)
@@ -136,7 +139,7 @@ void setcpuaffinity(const char *cpulist) {
 
     if (end && *end)
         return;
-
+//将当前线程绑定至特定CPU
 #ifdef __linux__
     sched_setaffinity(0, sizeof(cpuset), &cpuset);
 #endif

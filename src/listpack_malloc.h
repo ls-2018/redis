@@ -38,7 +38,9 @@
 
 #ifndef LISTPACK_ALLOC_H
 #define LISTPACK_ALLOC_H
+
 #include "zmalloc.h"
+
 #define lp_malloc zmalloc
 #define lp_realloc zrealloc
 #define lp_free zfree

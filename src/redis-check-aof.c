@@ -46,23 +46,26 @@ typedef enum {
 } input_file_type;
 
 aofManifest *aofManifestCreate(void);
+
 void aofManifestFree(aofManifest *am);
+
 aofManifest *aofLoadManifestFromFile(sds am_filepath);
 
-#define ERROR(...) { \
-    char __buf[1024]; \
-    snprintf(__buf, sizeof(__buf), __VA_ARGS__); \
-    snprintf(error, sizeof(error), "0x%16llx: %s", (long long)epos, __buf); \
-}
+#define ERROR(...)                                                              \
+    {                                                                           \
+        char __buf[1024];                                                       \
+        snprintf(__buf, sizeof(__buf), __VA_ARGS__);                            \
+        snprintf(error, sizeof(error), "0x%16llx: %s", (long long)epos, __buf); \
+    }
 
-static char error[1044];
-static off_t epos;
+static char      error[1044];
+static off_t     epos;
 static long long line = 1;
-static time_t to_timestamp = 0;
+static time_t    to_timestamp = 0;
 
 int consumeNewline(char *buf) {
-    if (strncmp(buf,"\r\n",2) != 0) {
-        ERROR("Expected \\r\\n, got: %02x%02x",buf[0],buf[1]);
+    if (strncmp(buf, "\r\n", 2) != 0) {
+        ERROR("Expected \\r\\n, got: %02x%02x", buf[0], buf[1]);
         return 0;
     }
     line += 1;
@@ -72,76 +75,78 @@ int consumeNewline(char *buf) {
 int readLong(FILE *fp, char prefix, long *target) {
     char buf[128], *eptr;
     epos = ftello(fp);
-    if (fgets(buf,sizeof(buf),fp) == NULL) {
+    if (fgets(buf, sizeof(buf), fp) == NULL) {
         return 0;
     }
     if (buf[0] != prefix) {
-        ERROR("Expected prefix '%c', got: '%c'",prefix,buf[0]);
+        ERROR("Expected prefix '%c', got: '%c'", prefix, buf[0]);
         return 0;
     }
-    *target = strtol(buf+1,&eptr,10);
+    *target = strtol(buf + 1, &eptr, 10);
     return consumeNewline(eptr);
 }
 
 int readBytes(FILE *fp, char *target, long length) {
     long real;
     epos = ftello(fp);
-    real = fread(target,1,length,fp);
+    real = fread(target, 1, length, fp);
     if (real != length) {
-        ERROR("Expected to read %ld bytes, got %ld bytes",length,real);
+        ERROR("Expected to read %ld bytes, got %ld bytes", length, real);
         return 0;
     }
     return 1;
 }
 
-int readString(FILE *fp, char** target) {
+int readString(FILE *fp, char **target) {
     long len;
     *target = NULL;
-    if (!readLong(fp,'$',&len)) {
+    if (!readLong(fp, '$', &len)) {
         return 0;
     }
 
     if (len < 0 || len > LONG_MAX - 2) {
-        ERROR("Expected to read string of %ld bytes, which is not in the suitable range",len);
+        ERROR("Expected to read string of %ld bytes, which is not in the suitable range", len);
         return 0;
     }
 
     /* Increase length to also consume \r\n */
     len += 2;
-    *target = (char*)zmalloc(len);
-    if (!readBytes(fp,*target,len)) {
+    *target = (char *)zmalloc(len);
+    if (!readBytes(fp, *target, len)) {
         zfree(*target);
         *target = NULL;
         return 0;
     }
-    if (!consumeNewline(*target+len-2)) {
+    if (!consumeNewline(*target + len - 2)) {
         zfree(*target);
         *target = NULL;
         return 0;
     }
-    (*target)[len-2] = '\0';
+    (*target)[len - 2] = '\0';
     return 1;
 }
 
 int readArgc(FILE *fp, long *target) {
-    return readLong(fp,'*',target);
+    return readLong(fp, '*', target);
 }
 
-/* Used to decode a RESP record in the AOF file to obtain the original 
- * redis command, and also check whether the command is MULTI/EXEC. If the 
- * command is MULTI, the parameter out_multi will be incremented by one, and 
- * if the command is EXEC, the parameter out_multi will be decremented 
- * by one. The parameter out_multi will be used by the upper caller to determine 
+/* Used to decode a RESP record in the AOF file to obtain the original
+ * redis command, and also check whether the command is MULTI/EXEC. If the
+ * command is MULTI, the parameter out_multi will be incremented by one, and
+ * if the command is EXEC, the parameter out_multi will be decremented
+ * by one. The parameter out_multi will be used by the upper caller to determine
  * whether the AOF file contains unclosed transactions.
  **/
 int processRESP(FILE *fp, char *filename, int *out_multi) {
-    long argc;
+    long  argc;
     char *str;
 
-    if (!readArgc(fp, &argc)) return 0;
+    if (!readArgc(fp, &argc))
+        return 0;
 
     for (int i = 0; i < argc; i++) {
-        if (!readString(fp, &str)) return 0;
+        if (!readString(fp, &str))
+            return 0;
         if (i == 0) {
             if (strcasecmp(str, "multi") == 0) {
                 if ((*out_multi)++) {
@@ -149,7 +154,8 @@ int processRESP(FILE *fp, char *filename, int *out_multi) {
                     zfree(str);
                     return 0;
                 }
-            } else if (strcasecmp(str, "exec") == 0) {
+            }
+            else if (strcasecmp(str, "exec") == 0) {
                 if (--(*out_multi)) {
                     ERROR("Unexpected EXEC in AOF %s", filename);
                     zfree(str);
@@ -163,13 +169,13 @@ int processRESP(FILE *fp, char *filename, int *out_multi) {
     return 1;
 }
 
-/* Used to parse an annotation in the AOF file, the annotation starts with '#' 
- * in AOF. Currently AOF only contains timestamp annotations, but this function 
- * can easily be extended to handle other annotations. 
- * 
+/* Used to parse an annotation in the AOF file, the annotation starts with '#'
+ * in AOF. Currently AOF only contains timestamp annotations, but this function
+ * can easily be extended to handle other annotations.
+ *
  * The processing rule of time annotation is that once the timestamp is found to
- * be greater than 'to_timestamp', the AOF after the annotation is truncated. 
- * Note that in Multi Part AOF, this truncation is only allowed when the last_file 
+ * be greater than 'to_timestamp', the AOF after the annotation is truncated.
+ * Note that in Multi Part AOF, this truncation is only allowed when the last_file
  * parameter is 1.
  **/
 int processAnnotations(FILE *fp, char *filename, int last_file) {
@@ -184,30 +190,33 @@ int processAnnotations(FILE *fp, char *filename, int last_file) {
     if (to_timestamp && strncmp(buf, "#TS:", 4) == 0) {
         char *endptr;
         errno = 0;
-        time_t ts = strtol(buf+4, &endptr, 10);
+        time_t ts = strtol(buf + 4, &endptr, 10);
         if (errno != 0 || *endptr != '\r') {
             printf("Invalid timestamp annotation\n");
             exit(1);
         }
-        if (ts <= to_timestamp) return 1;
+        if (ts <= to_timestamp)
+            return 1;
         if (epos == 0) {
-            printf("AOF %s has nothing before timestamp %ld, "
-                    "aborting...\n", filename, to_timestamp);
+            printf(
+                "AOF %s has nothing before timestamp %ld, "
+                "aborting...\n",
+                filename, to_timestamp);
             exit(1);
         }
         if (!last_file) {
-            printf("Failed to truncate AOF %s to timestamp %ld to offset %ld because it is not the last file.\n",
-                filename, to_timestamp, (long int)epos);
-            printf("If you insist, please delete all files after this file according to the manifest "
+            printf("Failed to truncate AOF %s to timestamp %ld to offset %ld because it is not the last file.\n", filename, to_timestamp, (long int)epos);
+            printf(
+                "If you insist, please delete all files after this file according to the manifest "
                 "file and delete the corresponding records in manifest file manually. Then re-run redis-check-aof.\n");
             exit(1);
         }
         /* Truncate remaining AOF if exceeding 'to_timestamp' */
         if (ftruncate(fileno(fp), epos) == -1) {
-            printf("Failed to truncate AOF %s to timestamp %ld\n",
-                    filename, to_timestamp);
+            printf("Failed to truncate AOF %s to timestamp %ld\n", filename, to_timestamp);
             exit(1);
-        } else {
+        }
+        else {
             return 0;
         }
     }
@@ -217,12 +226,12 @@ int processAnnotations(FILE *fp, char *filename, int last_file) {
 /* Used to check the validity of a single AOF file. The AOF file can be:
  * 1. Old-style AOF
  * 2. Old-style RDB-preamble AOF
- * 3. BASE or INCR in Multi Part AOF 
+ * 3. BASE or INCR in Multi Part AOF
  * */
 int checkSingleAof(char *aof_filename, char *aof_filepath, int last_file, int fix, int preamble) {
     off_t pos = 0, diff;
-    int multi = 0;
-    char buf[2];
+    int   multi = 0;
+    char  buf[2];
 
     FILE *fp = fopen(aof_filepath, "r+");
     if (fp == NULL) {
@@ -231,7 +240,7 @@ int checkSingleAof(char *aof_filename, char *aof_filepath, int last_file, int fi
     }
 
     struct redis_stat sb;
-    if (redis_fstat(fileno(fp),&sb) == -1) {
+    if (redis_fstat(fileno(fp), &sb) == -1) {
         printf("Cannot stat file: %s, aborting...\n", aof_filename);
         exit(1);
     }
@@ -246,13 +255,15 @@ int checkSingleAof(char *aof_filename, char *aof_filepath, int last_file, int fi
         if (redis_check_rdb_main(2, argv, fp) == C_ERR) {
             printf("RDB preamble of AOF file is not sane, aborting.\n");
             exit(1);
-        } else {
+        }
+        else {
             printf("RDB preamble is OK, proceeding with AOF tail...\n");
         }
     }
 
-    while(1) {
-        if (!multi) pos = ftello(fp);
+    while (1) {
+        if (!multi)
+            pos = ftello(fp);
         if (fgets(buf, sizeof(buf), fp) == NULL) {
             if (feof(fp)) {
                 break;
@@ -265,15 +276,18 @@ int checkSingleAof(char *aof_filename, char *aof_filepath, int last_file, int fi
             printf("Failed to fseek in AOF %s: %s", aof_filename, strerror(errno));
             exit(1);
         }
-    
+
         if (buf[0] == '#') {
             if (!processAnnotations(fp, aof_filepath, last_file)) {
                 fclose(fp);
                 return AOF_CHECK_TIMESTAMP_TRUNCATED;
             }
-        } else if (buf[0] == '*'){
-            if (!processRESP(fp, aof_filepath, &multi)) break;
-        } else {
+        }
+        else if (buf[0] == '*') {
+            if (!processRESP(fp, aof_filepath, &multi))
+                break;
+        }
+        else {
             printf("AOF %s format error\n", aof_filename);
             break;
         }
@@ -287,7 +301,7 @@ int checkSingleAof(char *aof_filename, char *aof_filepath, int last_file, int fi
         printf("%s\n", error);
     }
 
-    diff = size-pos;
+    diff = size - pos;
 
     /* In truncate-to-timestamp mode, just exit if there is nothing to truncate. */
     if (diff == 0 && to_timestamp) {
@@ -296,8 +310,7 @@ int checkSingleAof(char *aof_filename, char *aof_filepath, int last_file, int fi
         return AOF_CHECK_OK;
     }
 
-    printf("AOF analyzed: filename=%s, size=%lld, ok_up_to=%lld, ok_up_to_line=%lld, diff=%lld\n",
-        aof_filename, (long long) size, (long long) pos, line, (long long) diff);
+    printf("AOF analyzed: filename=%s, size=%lld, ok_up_to=%lld, ok_up_to_line=%lld, diff=%lld\n", aof_filename, (long long)size, (long long)pos, line, (long long)diff);
     if (diff > 0) {
         if (fix) {
             if (!last_file) {
@@ -306,8 +319,7 @@ int checkSingleAof(char *aof_filename, char *aof_filepath, int last_file, int fi
             }
 
             char buf[2];
-            printf("This will shrink the AOF %s from %lld bytes, with %lld bytes, to %lld bytes\n",
-                aof_filename, (long long)size, (long long)diff, (long long)pos);
+            printf("This will shrink the AOF %s from %lld bytes, with %lld bytes, to %lld bytes\n", aof_filename, (long long)size, (long long)diff, (long long)pos);
             printf("Continue? [y/N]: ");
             if (fgets(buf, sizeof(buf), stdin) == NULL || strncasecmp(buf, "y", 1) != 0) {
                 printf("Aborting...\n");
@@ -316,11 +328,13 @@ int checkSingleAof(char *aof_filename, char *aof_filepath, int last_file, int fi
             if (ftruncate(fileno(fp), pos) == -1) {
                 printf("Failed to truncate AOF %s\n", aof_filename);
                 exit(1);
-            } else {
+            }
+            else {
                 fclose(fp);
                 return AOF_CHECK_TRUNCATED;
             }
-        } else {
+        }
+        else {
             printf("AOF %s is not valid. Use the --fix option to try fixing it.\n", aof_filename);
             exit(1);
         }
@@ -352,14 +366,13 @@ int fileIsRDB(char *filepath) {
         return 0;
     }
 
-    if (size >= 8) {    /* There must be at least room for the RDB header. */
+    if (size >= 8) { /* There must be at least room for the RDB header. */
         char sig[5];
-        int rdb_file = fread(sig, sizeof(sig), 1, fp) == 1 &&
-                            memcmp(sig, "REDIS", sizeof(sig)) == 0;
+        int  rdb_file = fread(sig, sizeof(sig), 1, fp) == 1 && memcmp(sig, "REDIS", sizeof(sig)) == 0;
         if (rdb_file) {
             fclose(fp);
             return 1;
-        } 
+        }
     }
 
     fclose(fp);
@@ -368,8 +381,9 @@ int fileIsRDB(char *filepath) {
 
 /* Used to determine whether the file is a manifest file. */
 #define MANIFEST_MAX_LINE 1024
+
 int fileIsManifest(char *filepath) {
-    int is_manifest = 0;
+    int   is_manifest = 0;
     FILE *fp = fopen(filepath, "r");
     if (fp == NULL) {
         printf("Cannot open file %s: %s\n", filepath, strerror(errno));
@@ -388,12 +402,13 @@ int fileIsManifest(char *filepath) {
         return 0;
     }
 
-    char buf[MANIFEST_MAX_LINE+1];
+    char buf[MANIFEST_MAX_LINE + 1];
     while (1) {
-        if (fgets(buf, MANIFEST_MAX_LINE+1, fp) == NULL) {
+        if (fgets(buf, MANIFEST_MAX_LINE + 1, fp) == NULL) {
             if (feof(fp)) {
                 break;
-            } else {
+            }
+            else {
                 printf("Cannot read file: %s\n", filepath);
                 exit(1);
             }
@@ -402,7 +417,8 @@ int fileIsManifest(char *filepath) {
         /* Skip comments lines */
         if (buf[0] == '#') {
             continue;
-        } else if (!memcmp(buf, "file", strlen("file"))) {
+        }
+        else if (!memcmp(buf, "file", strlen("file"))) {
             is_manifest = 1;
         }
     }
@@ -414,30 +430,32 @@ int fileIsManifest(char *filepath) {
 /* Get the format of the file to be checked. It can be:
  * AOF_RESP: Old-style AOF
  * AOF_RDB_PREAMBLE: Old-style RDB-preamble AOF
- * AOF_MULTI_PART: manifest in Multi Part AOF 
- * 
- * redis-check-aof tool will automatically perform different 
+ * AOF_MULTI_PART: manifest in Multi Part AOF
+ *
+ * redis-check-aof tool will automatically perform different
  * verification logic according to different file formats.
  * */
 input_file_type getInputFileType(char *filepath) {
     if (fileIsManifest(filepath)) {
         return AOF_MULTI_PART;
-    } else if (fileIsRDB(filepath)) {
+    }
+    else if (fileIsRDB(filepath)) {
         return AOF_RDB_PREAMBLE;
-    } else {
+    }
+    else {
         return AOF_RESP;
     }
 }
 
-/* Check if Multi Part AOF is valid. It will check the BASE file and INCR files 
- * at once according to the manifest instructions (this is somewhat similar to 
+/* Check if Multi Part AOF is valid. It will check the BASE file and INCR files
+ * at once according to the manifest instructions (this is somewhat similar to
  * redis' AOF loading).
- * 
+ *
  * When the verification is successful, we can guarantee:
  * 1. The manifest file format is valid
  * 2. Both BASE AOF and INCR AOFs format are valid
  * 3. No BASE or INCR AOFs files are missing
- * 
+ *
  * Note that in Multi Part AOF, we only allow truncation for the last AOF file.
  * */
 void checkMultiPartAof(char *dirpath, char *manifest_filepath, int fix) {
@@ -447,8 +465,10 @@ void checkMultiPartAof(char *dirpath, char *manifest_filepath, int fix) {
     printf("Start checking Multi Part AOF\n");
     aofManifest *am = aofLoadManifestFromFile(manifest_filepath);
 
-    if (am->base_aof_info) total_num++;
-    if (am->incr_aof_list) total_num += listLength(am->incr_aof_list);
+    if (am->base_aof_info)
+        total_num++;
+    if (am->incr_aof_list)
+        total_num += listLength(am->incr_aof_list);
 
     if (am->base_aof_info) {
         sds aof_filename = am->base_aof_info->file_name;
@@ -456,16 +476,18 @@ void checkMultiPartAof(char *dirpath, char *manifest_filepath, int fix) {
         last_file = ++aof_num == total_num;
         int aof_preable = fileIsRDB(aof_filepath);
 
-        printf("Start to check BASE AOF (%s format).\n", aof_preable ? "RDB":"RESP");
+        printf("Start to check BASE AOF (%s format).\n", aof_preable ? "RDB" : "RESP");
         ret = checkSingleAof(aof_filename, aof_filepath, last_file, fix, aof_preable);
         if (ret == AOF_CHECK_OK) {
             printf("BASE AOF %s is valid\n", aof_filename);
-        } else if (ret == AOF_CHECK_EMPTY) {
+        }
+        else if (ret == AOF_CHECK_EMPTY) {
             printf("BASE AOF %s is empty\n", aof_filename);
-        } else if (ret == AOF_CHECK_TIMESTAMP_TRUNCATED) {
-            printf("Successfully truncated AOF %s to timestamp %ld\n",
-                aof_filename, to_timestamp);
-        } else if (ret == AOF_CHECK_TRUNCATED) {
+        }
+        else if (ret == AOF_CHECK_TIMESTAMP_TRUNCATED) {
+            printf("Successfully truncated AOF %s to timestamp %ld\n", aof_filename, to_timestamp);
+        }
+        else if (ret == AOF_CHECK_TRUNCATED) {
             printf("Successfully truncated AOF %s\n", aof_filename);
         }
         sdsfree(aof_filepath);
@@ -473,24 +495,26 @@ void checkMultiPartAof(char *dirpath, char *manifest_filepath, int fix) {
 
     if (listLength(am->incr_aof_list)) {
         listNode *ln;
-        listIter li;
+        listIter  li;
 
         printf("Start to check INCR files.\n");
         listRewind(am->incr_aof_list, &li);
         while ((ln = listNext(&li)) != NULL) {
-            aofInfo *ai = (aofInfo*)ln->value;
-            sds aof_filename = (char*)ai->file_name;
-            sds aof_filepath = makePath(dirpath, aof_filename);
+            aofInfo *ai = (aofInfo *)ln->value;
+            sds      aof_filename = (char *)ai->file_name;
+            sds      aof_filepath = makePath(dirpath, aof_filename);
             last_file = ++aof_num == total_num;
             ret = checkSingleAof(aof_filename, aof_filepath, last_file, fix, 0);
             if (ret == AOF_CHECK_OK) {
                 printf("INCR AOF %s is valid\n", aof_filename);
-            } else if (ret == AOF_CHECK_EMPTY) {
+            }
+            else if (ret == AOF_CHECK_EMPTY) {
                 printf("INCR AOF %s is empty\n", aof_filename);
-            } else if (ret == AOF_CHECK_TIMESTAMP_TRUNCATED) {
-                printf("Successfully truncated AOF %s to timestamp %ld\n",
-                    aof_filename, to_timestamp);
-            } else if (ret == AOF_CHECK_TRUNCATED) {
+            }
+            else if (ret == AOF_CHECK_TIMESTAMP_TRUNCATED) {
+                printf("Successfully truncated AOF %s to timestamp %ld\n", aof_filename, to_timestamp);
+            }
+            else if (ret == AOF_CHECK_TRUNCATED) {
                 printf("Successfully truncated AOF %s\n", aof_filename);
             }
             sdsfree(aof_filepath);
@@ -501,7 +525,7 @@ void checkMultiPartAof(char *dirpath, char *manifest_filepath, int fix) {
     printf("All AOF files and manifest are valid\n");
 }
 
-/* Check if old style AOF is valid. Internally, it will identify whether 
+/* Check if old style AOF is valid. Internally, it will identify whether
  * the AOF is in RDB-preamble format, and will eventually call `checkSingleAof`
  * to do the check. */
 void checkOldStyleAof(char *filepath, int fix, int preamble) {
@@ -509,34 +533,40 @@ void checkOldStyleAof(char *filepath, int fix, int preamble) {
     int ret = checkSingleAof(filepath, filepath, 1, fix, preamble);
     if (ret == AOF_CHECK_OK) {
         printf("AOF %s is valid\n", filepath);
-    } else if (ret == AOF_CHECK_EMPTY) {
+    }
+    else if (ret == AOF_CHECK_EMPTY) {
         printf("AOF %s is empty\n", filepath);
-    } else if (ret == AOF_CHECK_TIMESTAMP_TRUNCATED) {
-        printf("Successfully truncated AOF %s to timestamp %ld\n",
-            filepath, to_timestamp);
-    } else if (ret == AOF_CHECK_TRUNCATED) {
+    }
+    else if (ret == AOF_CHECK_TIMESTAMP_TRUNCATED) {
+        printf("Successfully truncated AOF %s to timestamp %ld\n", filepath, to_timestamp);
+    }
+    else if (ret == AOF_CHECK_TRUNCATED) {
         printf("Successfully truncated AOF %s\n", filepath);
     }
 }
 
 int redis_check_aof_main(int argc, char **argv) {
     char *filepath;
-    char temp_filepath[PATH_MAX + 1];
+    char  temp_filepath[PATH_MAX + 1];
     char *dirpath;
-    int fix = 0;
+    int   fix = 0;
 
     if (argc < 2) {
         goto invalid_args;
-    } else if (argc == 2) {
+    }
+    else if (argc == 2) {
         filepath = argv[1];
-    } else if (argc == 3) {
+    }
+    else if (argc == 3) {
         if (!strcmp(argv[1], "--fix")) {
             filepath = argv[2];
             fix = 1;
-        } else {
+        }
+        else {
             goto invalid_args;
         }
-    } else if (argc == 4) {
+    }
+    else if (argc == 4) {
         if (!strcmp(argv[1], "--truncate-to-timestamp")) {
             char *endptr;
             errno = 0;
@@ -546,10 +576,12 @@ int redis_check_aof_main(int argc, char **argv) {
                 exit(1);
             }
             filepath = argv[3];
-        } else {
+        }
+        else {
             goto invalid_args;
         }
-    } else {
+    }
+    else {
         goto invalid_args;
     }
 
@@ -560,21 +592,20 @@ int redis_check_aof_main(int argc, char **argv) {
     /* Select the corresponding verification method according to the input file type. */
     input_file_type type = getInputFileType(filepath);
     switch (type) {
-    case AOF_MULTI_PART:
-        checkMultiPartAof(dirpath, filepath, fix);
-        break;
-    case AOF_RESP:
-        checkOldStyleAof(filepath, fix, 0);
-        break;
-    case AOF_RDB_PREAMBLE:
-        checkOldStyleAof(filepath, fix, 1);
-        break;
+        case AOF_MULTI_PART:
+            checkMultiPartAof(dirpath, filepath, fix);
+            break;
+        case AOF_RESP:
+            checkOldStyleAof(filepath, fix, 0);
+            break;
+        case AOF_RDB_PREAMBLE:
+            checkOldStyleAof(filepath, fix, 1);
+            break;
     }
 
     exit(0);
 
 invalid_args:
-    printf("Usage: %s [--fix|--truncate-to-timestamp $timestamp] <file.manifest|file.aof>\n",
-        argv[0]);
+    printf("Usage: %s [--fix|--truncate-to-timestamp $timestamp] <file.manifest|file.aof>\n", argv[0]);
     exit(1);
 }

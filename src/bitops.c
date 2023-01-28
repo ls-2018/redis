@@ -1,32 +1,3 @@
-/* Bit operations.
- *
- * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *   * Redistributions of source code must retain the above copyright notice,
- *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
- *     to endorse or promote products derived from this software without
- *     specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
 
 #include "server.h"
 
@@ -34,24 +5,30 @@
  * Helpers and low level bit functions.
  * -------------------------------------------------------------------------- */
 
-/* Count number of bits set in the binary array pointed by 's' and long
- * 'count' bytes. The implementation of this function is required to
- * work with an input string length up to 512 MB or more (server.proto_max_bulk_len) */
+// 计算长度为 count 的二进制数组指针 s 被设置为 1 的位数量
+// 这个函数只能在最大为 512 MB 的字符串上使用或更多(server.proto_max_bulk_len)
 long long redisPopcount(void *s, long count) {
-    long long bits = 0;
+    long long      bits = 0;
     unsigned char *p = s;
-    uint32_t *p4;
-    static const unsigned char bitsinbyte[256] = {0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,4,5,5,6,5,6,6,7,5,6,6,7,6,7,7,8};
+    uint32_t      *p4;
+    // 通过查表来计算,对于 1 字节所能表示的值来说
+    // 这些值的二进制表示所带有的 1 的数量
+    // 比如整数 3 的二进制表示 0011 ,带有两个 1
+    // 正好是查表 bitsinbyte[3] == 2
+    static const unsigned char bitsinbyte[256] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4,
+                                                  4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5,
+                                                  4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
 
     /* Count initial bytes not aligned to 32 bit. */
-    while((unsigned long)p & 3 && count) {
+    while ((unsigned long)p & 3 && count) {
         bits += bitsinbyte[*p++];
         count--;
     }
 
     /* Count bits 28 bytes at a time */
-    p4 = (uint32_t*)p;
-    while(count>=28) {
+    // 每次统计 28 字节
+    p4 = (uint32_t *)p;
+    while (count >= 28) {
         uint32_t aux1, aux2, aux3, aux4, aux5, aux6, aux7;
 
         aux1 = *p4++;
@@ -77,17 +54,13 @@ long long redisPopcount(void *s, long count) {
         aux6 = (aux6 & 0x33333333) + ((aux6 >> 2) & 0x33333333);
         aux7 = aux7 - ((aux7 >> 1) & 0x55555555);
         aux7 = (aux7 & 0x33333333) + ((aux7 >> 2) & 0x33333333);
-        bits += ((((aux1 + (aux1 >> 4)) & 0x0F0F0F0F) +
-                    ((aux2 + (aux2 >> 4)) & 0x0F0F0F0F) +
-                    ((aux3 + (aux3 >> 4)) & 0x0F0F0F0F) +
-                    ((aux4 + (aux4 >> 4)) & 0x0F0F0F0F) +
-                    ((aux5 + (aux5 >> 4)) & 0x0F0F0F0F) +
-                    ((aux6 + (aux6 >> 4)) & 0x0F0F0F0F) +
-                    ((aux7 + (aux7 >> 4)) & 0x0F0F0F0F))* 0x01010101) >> 24;
+        bits += ((((aux1 + (aux1 >> 4)) & 0x0F0F0F0F) + ((aux2 + (aux2 >> 4)) & 0x0F0F0F0F) + ((aux3 + (aux3 >> 4)) & 0x0F0F0F0F) + ((aux4 + (aux4 >> 4)) & 0x0F0F0F0F) + ((aux5 + (aux5 >> 4)) & 0x0F0F0F0F) + ((aux6 + (aux6 >> 4)) & 0x0F0F0F0F) + ((aux7 + (aux7 >> 4)) & 0x0F0F0F0F)) * 0x01010101) >> 24;
     }
     /* Count the remaining bytes. */
-    p = (unsigned char*)p4;
-    while(count--) bits += bitsinbyte[*p++];
+    // 不足 28 字节的,剩下的每个字节通过查表来完成
+
+    p = (unsigned char *)p4;
+    while (count--) bits += bitsinbyte[*p++];
     return bits;
 }
 
@@ -101,10 +74,10 @@ long long redisPopcount(void *s, long count) {
 long long redisBitpos(void *s, unsigned long count, int bit) {
     unsigned long *l;
     unsigned char *c;
-    unsigned long skipval, word = 0, one;
-    long long pos = 0; /* Position of bit, to return to the caller. */
-    unsigned long j;
-    int found;
+    unsigned long  skipval, word = 0, one;
+    long long      pos = 0; /* Position of bit, to return to the caller. */
+    unsigned long  j;
+    int            found;
 
     /* Process whole words first, seeking for first word that is not
      * all ones or all zeros respectively if we are looking for zeros
@@ -117,9 +90,9 @@ long long redisBitpos(void *s, unsigned long count, int bit) {
 
     /* Skip initial bits not aligned to sizeof(unsigned long) byte by byte. */
     skipval = bit ? 0 : UCHAR_MAX;
-    c = (unsigned char*) s;
+    c = (unsigned char *)s;
     found = 0;
-    while((unsigned long)c & (sizeof(*l)-1) && count) {
+    while ((unsigned long)c & (sizeof(*l) - 1) && count) {
         if (*c != skipval) {
             found = 1;
             break;
@@ -130,14 +103,15 @@ long long redisBitpos(void *s, unsigned long count, int bit) {
     }
 
     /* Skip bits with full word step. */
-    l = (unsigned long*) c;
+    l = (unsigned long *)c;
     if (!found) {
         skipval = bit ? 0 : ULONG_MAX;
         while (count >= sizeof(*l)) {
-            if (*l != skipval) break;
+            if (*l != skipval)
+                break;
             l++;
             count -= sizeof(*l);
-            pos += sizeof(*l)*8;
+            pos += sizeof(*l) * 8;
         }
     }
 
@@ -148,7 +122,7 @@ long long redisBitpos(void *s, unsigned long count, int bit) {
      *
      * Note that the loading is designed to work even when the bytes left
      * (count) are less than a full word. We pad it with zero on the right. */
-    c = (unsigned char*)l;
+    c = (unsigned char *)l;
     for (j = 0; j < sizeof(*l); j++) {
         word <<= 8;
         if (count) {
@@ -163,7 +137,8 @@ long long redisBitpos(void *s, unsigned long count, int bit) {
      * return -1 to signal that there is not a single "1" in the whole
      * string. This can't happen when we are looking for "0" as we assume
      * that the right of the string is zero padded. */
-    if (bit == 1 && word == 0) return -1;
+    if (bit == 1 && word == 0)
+        return -1;
 
     /* Last word left, scan bit by bit. The first thing we need is to
      * have a single "1" set in the most significant position in an
@@ -173,8 +148,9 @@ long long redisBitpos(void *s, unsigned long count, int bit) {
     one >>= 1;       /* All bits set to 1 but the MSB. */
     one = ~one;      /* All bits set to 0 but the MSB. */
 
-    while(one) {
-        if (((one & word) != 0) == bit) return pos;
+    while (one) {
+        if (((one & word) != 0) == bit)
+            return pos;
         pos++;
         one >>= 1;
     }
@@ -210,7 +186,7 @@ void setUnsignedBitfield(unsigned char *p, uint64_t offset, uint64_t bits, uint6
     uint64_t byte, bit, byteval, bitval, j;
 
     for (j = 0; j < bits; j++) {
-        bitval = (value & ((uint64_t)1<<(bits-1-j))) != 0;
+        bitval = (value & ((uint64_t)1 << (bits - 1 - j))) != 0;
         byte = offset >> 3;
         bit = 7 - (offset & 0x7);
         byteval = p[byte];
@@ -223,7 +199,7 @@ void setUnsignedBitfield(unsigned char *p, uint64_t offset, uint64_t bits, uint6
 
 void setSignedBitfield(unsigned char *p, uint64_t offset, uint64_t bits, int64_t value) {
     uint64_t uv = value; /* Casting will add UINT64_MAX + 1 if v is negative. */
-    setUnsignedBitfield(p,offset,bits,uv);
+    setUnsignedBitfield(p, offset, bits, uv);
 }
 
 uint64_t getUnsignedBitfield(unsigned char *p, uint64_t offset, uint64_t bits) {
@@ -234,7 +210,7 @@ uint64_t getUnsignedBitfield(unsigned char *p, uint64_t offset, uint64_t bits) {
         bit = 7 - (offset & 0x7);
         byteval = p[byte];
         bitval = (byteval >> bit) & 1;
-        value = (value<<1) | bitval;
+        value = (value << 1) | bitval;
         offset++;
     }
     return value;
@@ -242,7 +218,11 @@ uint64_t getUnsignedBitfield(unsigned char *p, uint64_t offset, uint64_t bits) {
 
 int64_t getSignedBitfield(unsigned char *p, uint64_t offset, uint64_t bits) {
     int64_t value;
-    union {uint64_t u; int64_t i;} conv;
+    union
+    {
+        uint64_t u;
+        int64_t  i;
+    } conv;
 
     /* Converting from unsigned to signed is undefined when the value does
      * not fit, however here we assume two's complement and the original value
@@ -251,13 +231,13 @@ int64_t getSignedBitfield(unsigned char *p, uint64_t offset, uint64_t bits) {
      *
      * Note that two's complement is mandatory for exact-width types
      * according to the C99 standard. */
-    conv.u = getUnsignedBitfield(p,offset,bits);
+    conv.u = getUnsignedBitfield(p, offset, bits);
     value = conv.i;
 
     /* If the top significant bit is 1, propagate it to all the
      * higher bits for two's complement representation of signed
      * integers. */
-    if (bits < 64 && (value & ((uint64_t)1 << (bits-1))))
+    if (bits < 64 && (value & ((uint64_t)1 << (bits - 1))))
         value |= ((uint64_t)-1) << bits;
     return value;
 }
@@ -286,24 +266,27 @@ int64_t getSignedBitfield(unsigned char *p, uint64_t offset, uint64_t bits) {
 #define BFOVERFLOW_FAIL 2 /* Used by the BITFIELD command implementation. */
 
 int checkUnsignedBitfieldOverflow(uint64_t value, int64_t incr, uint64_t bits, int owtype, uint64_t *limit) {
-    uint64_t max = (bits == 64) ? UINT64_MAX : (((uint64_t)1<<bits)-1);
-    int64_t maxincr = max-value;
-    int64_t minincr = -value;
+    uint64_t max = (bits == 64) ? UINT64_MAX : (((uint64_t)1 << bits) - 1);
+    int64_t  maxincr = max - value;
+    int64_t  minincr = -value;
 
     if (value > max || (incr > 0 && incr > maxincr)) {
         if (limit) {
             if (owtype == BFOVERFLOW_WRAP) {
                 goto handle_wrap;
-            } else if (owtype == BFOVERFLOW_SAT) {
+            }
+            else if (owtype == BFOVERFLOW_SAT) {
                 *limit = max;
             }
         }
         return 1;
-    } else if (incr < 0 && incr < minincr) {
+    }
+    else if (incr < 0 && incr < minincr) {
         if (limit) {
             if (owtype == BFOVERFLOW_WRAP) {
                 goto handle_wrap;
-            } else if (owtype == BFOVERFLOW_SAT) {
+            }
+            else if (owtype == BFOVERFLOW_SAT) {
                 *limit = 0;
             }
         }
@@ -311,43 +294,44 @@ int checkUnsignedBitfieldOverflow(uint64_t value, int64_t incr, uint64_t bits, i
     }
     return 0;
 
-handle_wrap:
-    {
-        uint64_t mask = ((uint64_t)-1) << bits;
-        uint64_t res = value+incr;
+handle_wrap : {
+    uint64_t mask = ((uint64_t)-1) << bits;
+    uint64_t res = value + incr;
 
-        res &= ~mask;
-        *limit = res;
-    }
+    res &= ~mask;
+    *limit = res;
+}
     return 1;
 }
 
 int checkSignedBitfieldOverflow(int64_t value, int64_t incr, uint64_t bits, int owtype, int64_t *limit) {
-    int64_t max = (bits == 64) ? INT64_MAX : (((int64_t)1<<(bits-1))-1);
-    int64_t min = (-max)-1;
+    int64_t max = (bits == 64) ? INT64_MAX : (((int64_t)1 << (bits - 1)) - 1);
+    int64_t min = (-max) - 1;
 
     /* Note that maxincr and minincr could overflow, but we use the values
      * only after checking 'value' range, so when we use it no overflow
      * happens. 'uint64_t' cast is there just to prevent undefined behavior on
      * overflow */
-    int64_t maxincr = (uint64_t)max-value;
-    int64_t minincr = min-value;
+    int64_t maxincr = (uint64_t)max - value;
+    int64_t minincr = min - value;
 
-    if (value > max || (bits != 64 && incr > maxincr) || (value >= 0 && incr > 0 && incr > maxincr))
-    {
+    if (value > max || (bits != 64 && incr > maxincr) || (value >= 0 && incr > 0 && incr > maxincr)) {
         if (limit) {
             if (owtype == BFOVERFLOW_WRAP) {
                 goto handle_wrap;
-            } else if (owtype == BFOVERFLOW_SAT) {
+            }
+            else if (owtype == BFOVERFLOW_SAT) {
                 *limit = max;
             }
         }
         return 1;
-    } else if (value < min || (bits != 64 && incr < minincr) || (value < 0 && incr < 0 && incr < minincr)) {
+    }
+    else if (value < min || (bits != 64 && incr < minincr) || (value < 0 && incr < 0 && incr < minincr)) {
         if (limit) {
             if (owtype == BFOVERFLOW_WRAP) {
                 goto handle_wrap;
-            } else if (owtype == BFOVERFLOW_SAT) {
+            }
+            else if (owtype == BFOVERFLOW_SAT) {
                 *limit = min;
             }
         }
@@ -355,25 +339,25 @@ int checkSignedBitfieldOverflow(int64_t value, int64_t incr, uint64_t bits, int 
     }
     return 0;
 
-handle_wrap:
-    {
-        uint64_t msb = (uint64_t)1 << (bits-1);
-        uint64_t a = value, b = incr, c;
-        c = a+b; /* Perform addition as unsigned so that's defined. */
+handle_wrap : {
+    uint64_t msb = (uint64_t)1 << (bits - 1);
+    uint64_t a = value, b = incr, c;
+    c = a + b; /* Perform addition as unsigned so that's defined. */
 
-        /* If the sign bit is set, propagate to all the higher order
-         * bits, to cap the negative value. If it's clear, mask to
-         * the positive integer limit. */
-        if (bits < 64) {
-            uint64_t mask = ((uint64_t)-1) << bits;
-            if (c & msb) {
-                c |= mask;
-            } else {
-                c &= ~mask;
-            }
+    /* If the sign bit is set, propagate to all the higher order
+     * bits, to cap the negative value. If it's clear, mask to
+     * the positive integer limit. */
+    if (bits < 64) {
+        uint64_t mask = ((uint64_t)-1) << bits;
+        if (c & msb) {
+            c |= mask;
         }
-        *limit = c;
+        else {
+            c &= ~mask;
+        }
     }
+    *limit = c;
+}
     return 1;
 }
 
@@ -384,8 +368,7 @@ void printBits(unsigned char *p, unsigned long count) {
 
     for (j = 0; j < count; j++) {
         byte = p[j];
-        for (i = 0x80; i > 0; i /= 2)
-            printf("%c", (byte & i) ? '1' : '0');
+        for (i = 0x80; i > 0; i /= 2) printf("%c", (byte & i) ? '1' : '0');
         printf("|");
     }
     printf("\n");
@@ -395,44 +378,44 @@ void printBits(unsigned char *p, unsigned long count) {
  * Bits related string commands: GETBIT, SETBIT, BITCOUNT, BITOP.
  * -------------------------------------------------------------------------- */
 
-#define BITOP_AND   0
-#define BITOP_OR    1
-#define BITOP_XOR   2
-#define BITOP_NOT   3
+#define BITOP_AND 0
+#define BITOP_OR 1
+#define BITOP_XOR 2
+#define BITOP_NOT 3
 
 #define BITFIELDOP_GET 0
 #define BITFIELDOP_SET 1
 #define BITFIELDOP_INCRBY 2
 
-/* This helper function used by GETBIT / SETBIT parses the bit offset argument
- * making sure an error is returned if it is negative or if it overflows
- * Redis 512 MB limit for the string value or more (server.proto_max_bulk_len).
- *
+/*
+ * 辅佐函数,被 GETBIT 、 SETBIT 所使用
+// 用于检查字符串的大小有否超过 512 MB 或者更过(server.proto_max_bulk_len).
  * If the 'hash' argument is true, and 'bits is positive, then the command
  * will also parse bit offsets prefixed by "#". In such a case the offset
  * is multiplied by 'bits'. This is useful for the BITFIELD command. */
 int getBitOffsetFromArgument(client *c, robj *o, uint64_t *offset, int hash, int bits) {
     long long loffset;
-    char *err = "bit offset is not an integer or out of range";
-    char *p = o->ptr;
-    size_t plen = sdslen(p);
-    int usehash = 0;
+    char     *err = "bit offset is not an integer or out of range";
+    char     *p = o->ptr;
+    size_t    plen = sdslen(p);
+    int       usehash = 0;
 
     /* Handle #<offset> form. */
-    if (p[0] == '#' && hash && bits > 0) usehash = 1;
+    if (p[0] == '#' && hash && bits > 0)
+        usehash = 1;
 
-    if (string2ll(p+usehash,plen-usehash,&loffset) == 0) {
-        addReplyError(c,err);
+    if (string2ll(p + usehash, plen - usehash, &loffset) == 0) {
+        addReplyError(c, err);
         return C_ERR;
     }
 
     /* Adjust the offset by 'bits' for #<offset> form. */
-    if (usehash) loffset *= bits;
+    if (usehash)
+        loffset *= bits;
 
     /* Limit offset to server.proto_max_bulk_len (512MB in bytes by default) */
-    if (loffset < 0 || (!mustObeyClient(c) && (loffset >> 3) >= server.proto_max_bulk_len))
-    {
-        addReplyError(c,err);
+    if (loffset < 0 || (!mustObeyClient(c) && (loffset >> 3) >= server.proto_max_bulk_len)) {
+        addReplyError(c, err);
         return C_ERR;
     }
 
@@ -448,25 +431,23 @@ int getBitOffsetFromArgument(client *c, robj *o, uint64_t *offset, int hash, int
  *
  * On error C_ERR is returned and an error is sent to the client. */
 int getBitfieldTypeFromArgument(client *c, robj *o, int *sign, int *bits) {
-    char *p = o->ptr;
-    char *err = "Invalid bitfield type. Use something like i16 u8. Note that u64 is not supported but i64 is.";
+    char     *p = o->ptr;
+    char     *err = "Invalid bitfield type. Use something like i16 u8. Note that u64 is not supported but i64 is.";
     long long llbits;
 
     if (p[0] == 'i') {
         *sign = 1;
-    } else if (p[0] == 'u') {
+    }
+    else if (p[0] == 'u') {
         *sign = 0;
-    } else {
-        addReplyError(c,err);
+    }
+    else {
+        addReplyError(c, err);
         return C_ERR;
     }
 
-    if ((string2ll(p+1,strlen(p+1),&llbits)) == 0 ||
-        llbits < 1 ||
-        (*sign == 1 && llbits > 64) ||
-        (*sign == 0 && llbits > 63))
-    {
-        addReplyError(c,err);
+    if ((string2ll(p + 1, strlen(p + 1), &llbits)) == 0 || llbits < 1 || (*sign == 1 && llbits > 64) || (*sign == 0 && llbits > 63)) {
+        addReplyError(c, err);
         return C_ERR;
     }
     *bits = llbits;
@@ -480,19 +461,29 @@ int getBitfieldTypeFromArgument(client *c, robj *o, int *sign, int *bits) {
  * an error is sent to the client. */
 robj *lookupStringForBitCommand(client *c, uint64_t maxbit, int *dirty) {
     size_t byte = maxbit >> 3;
-    robj *o = lookupKeyWrite(c->db,c->argv[1]);
-    if (checkType(c,o,OBJ_STRING)) return NULL;
-    if (dirty) *dirty = 0;
+    // 查找字符串对象
+    robj *o = lookupKeyWrite(c->db, c->argv[1]);
+    if (checkType(c, o, OBJ_STRING))
+        return NULL;
+    if (dirty)
+        *dirty = 0;
 
     if (o == NULL) {
-        o = createObject(OBJ_STRING,sdsnewlen(NULL, byte+1));
-        dbAdd(c->db,c->argv[1],o);
-        if (dirty) *dirty = 1;
-    } else {
-        o = dbUnshareStringValue(c->db,c->argv[1],o);
+        // 对象不存在,创建一个空字符串对象
+
+        o = createObject(OBJ_STRING, sdsnewlen(NULL, byte + 1));
+        // 并添加到数据库
+
+        dbAdd(c->db, c->argv[1], o);
+        if (dirty)
+            *dirty = 1;
+    }
+    else {
+        o = dbUnshareStringValue(c->db, c->argv[1], o);
         size_t oldlen = sdslen(o->ptr);
-        o->ptr = sdsgrowzero(o->ptr,byte+1);
-        if (dirty && oldlen != sdslen(o->ptr)) *dirty = 1;
+        o->ptr = sdsgrowzero(o->ptr, byte + 1);
+        if (dirty && oldlen != sdslen(o->ptr))
+            *dirty = 1;
     }
     return o;
 }
@@ -516,46 +507,61 @@ unsigned char *getObjectReadOnlyString(robj *o, long *len, char *llbuf) {
 
     /* Set the 'p' pointer to the string, that can be just a stack allocated
      * array if our string was integer encoded. */
+    // 检查对象的编码,并在有需要时转换值的类型
+
     if (o && o->encoding == OBJ_ENCODING_INT) {
-        p = (unsigned char*) llbuf;
-        if (len) *len = ll2string(llbuf,LONG_STR_SIZE,(long)o->ptr);
-    } else if (o) {
-        p = (unsigned char*) o->ptr;
-        if (len) *len = sdslen(o->ptr);
-    } else {
-        if (len) *len = 0;
+        p = (unsigned char *)llbuf;
+        if (len)
+            *len = ll2string(llbuf, LONG_STR_SIZE, (long)o->ptr);
+    }
+    else if (o) {
+        p = (unsigned char *)o->ptr;
+        if (len)
+            *len = sdslen(o->ptr);
+    }
+    else {
+        if (len)
+            *len = 0;
     }
     return p;
 }
 
 /* SETBIT key offset bitvalue */
 void setbitCommand(client *c) {
-    robj *o;
-    char *err = "bit is not an integer or out of range";
+    robj    *o;
+    char    *err = "bit is not an integer or out of range";
     uint64_t bitoffset;
-    ssize_t byte, bit;
-    int byteval, bitval;
-    long on;
+    ssize_t  byte, bit;
+    int      byteval, bitval;
+    long     on;
 
-    if (getBitOffsetFromArgument(c,c->argv[2],&bitoffset,0,0) != C_OK)
+    if (getBitOffsetFromArgument(c, c->argv[2], &bitoffset, 0, 0) != C_OK)
         return;
 
-    if (getLongFromObjectOrReply(c,c->argv[3],&on,err) != C_OK)
+    if (getLongFromObjectOrReply(c, c->argv[3], &on, err) != C_OK)
         return;
 
     /* Bits can only be set or cleared... */
     if (on & ~1) {
-        addReplyError(c,err);
+        addReplyError(c, err);
         return;
     }
 
     int dirty;
-    if ((o = lookupStringForBitCommand(c,bitoffset,&dirty)) == NULL) return;
+    if ((o = lookupStringForBitCommand(c, bitoffset, &dirty)) == NULL)
+        return;
 
-    /* Get current values */
+    // 计算容纳 offset 参数所指定的偏移量所需的字节数
+    // 如果 o 对象的字节不够长的话,就扩展它
+    // 长度的计算公式是 bitoffset >> 3 + 1
+    // 比如 30 >> 3 + 1 = 4 ,也即是为了设置 offset 30 ,
+    // 我们需要创建一个 4 字节（32 位长的 SDS）
     byte = bitoffset >> 3;
-    byteval = ((uint8_t*)o->ptr)[byte];
+    // 将指针定位到要设置的位所在的字节上
+    byteval = ((uint8_t *)o->ptr)[byte];
+    // 定位到要设置的位上面
     bit = 7 - (bitoffset & 0x7);
+    // 记录位现在的值
     bitval = byteval & (1 << bit);
 
     /* Either it is newly created, changed length, or the bit changes before and after.
@@ -563,86 +569,102 @@ void setbitCommand(client *c) {
      * So we need to use `!!` to convert it to 0 or 1 for comparison. */
     if (dirty || (!!bitval != on)) {
         /* Update byte with new bit value. */
+        // 更新字节中的位,设置它的值为 on 参数的值
+
         byteval &= ~(1 << bit);
         byteval |= ((on & 0x1) << bit);
-        ((uint8_t*)o->ptr)[byte] = byteval;
-        signalModifiedKey(c,c->db,c->argv[1]);
-        notifyKeyspaceEvent(NOTIFY_STRING,"setbit",c->argv[1],c->db->id);
+        ((uint8_t *)o->ptr)[byte] = byteval;
+        // 发送数据库修改通知
+        signalModifiedKey(c, c->db, c->argv[1]);
+        notifyKeyspaceEvent(NOTIFY_STRING, "setbit", c->argv[1], c->db->id);
         server.dirty++;
     }
 
-    /* Return original value. */
+    // 向客户端返回位原来的值
     addReply(c, bitval ? shared.cone : shared.czero);
 }
 
 /* GETBIT key offset */
 void getbitCommand(client *c) {
-    robj *o;
-    char llbuf[32];
+    robj    *o;
+    char     llbuf[32];
     uint64_t bitoffset;
-    size_t byte, bit;
-    size_t bitval = 0;
-
-    if (getBitOffsetFromArgument(c,c->argv[2],&bitoffset,0,0) != C_OK)
+    size_t   byte, bit;
+    size_t   bitval = 0;
+    // 获取 offset 参数
+    if (getBitOffsetFromArgument(c, c->argv[2], &bitoffset, 0, 0) != C_OK)
         return;
-
-    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
-        checkType(c,o,OBJ_STRING)) return;
-
+    // 查找对象,并进行类型检查
+    if ((o = lookupKeyReadOrReply(c, c->argv[1], shared.czero)) == NULL || checkType(c, o, OBJ_STRING))
+        return;
+    // 计算出 offset 所指定的位所在的字节
     byte = bitoffset >> 3;
+    // 计算出位所在的位置
     bit = 7 - (bitoffset & 0x7);
+    // 取出位
     if (sdsEncodedObject(o)) {
+        // 字符串编码,直接取值
         if (byte < sdslen(o->ptr))
-            bitval = ((uint8_t*)o->ptr)[byte] & (1 << bit);
-    } else {
-        if (byte < (size_t)ll2string(llbuf,sizeof(llbuf),(long)o->ptr))
+            bitval = ((uint8_t *)o->ptr)[byte] & (1 << bit);
+    }
+    else {
+        // 整数编码,先转换成字符串,再取值
+        if (byte < (size_t)ll2string(llbuf, sizeof(llbuf), (long)o->ptr))
             bitval = llbuf[byte] & (1 << bit);
     }
-
+    // 返回位
     addReply(c, bitval ? shared.cone : shared.czero);
 }
 
 /* BITOP op_name target_key src_key1 src_key2 src_key3 ... src_keyN */
 REDIS_NO_SANITIZE("alignment")
-void bitopCommand(client *c) {
-    char *opname = c->argv[1]->ptr;
-    robj *o, *targetkey = c->argv[2];
-    unsigned long op, j, numkeys;
-    robj **objects;      /* Array of source objects. */
-    unsigned char **src; /* Array of source strings pointers. */
-    unsigned long *len, maxlen = 0; /* Array of length of src strings,
-                                       and max len. */
-    unsigned long minlen = 0;    /* Min len among the input keys. */
-    unsigned char *res = NULL; /* Resulting string. */
 
-    /* Parse the operation name. */
-    if ((opname[0] == 'a' || opname[0] == 'A') && !strcasecmp(opname,"and"))
+void bitopCommand(client *c) {
+    char           *opname = c->argv[1]->ptr;
+    robj           *o, *targetkey = c->argv[2];
+    unsigned long   op, j, numkeys;
+    robj          **objects;         /* Array of source objects. */
+    unsigned char **src;             /* Array of source strings pointers. */
+    unsigned long  *len, maxlen = 0; /* Array of length of src strings,
+                                        and max len. */
+    unsigned long  minlen = 0;       /* Min len among the input keys. */
+    unsigned char *res = NULL;       /* Resulting string. */
+
+    // 读入 op 参数,确定要执行的操作
+    if ((opname[0] == 'a' || opname[0] == 'A') && !strcasecmp(opname, "and"))
         op = BITOP_AND;
-    else if((opname[0] == 'o' || opname[0] == 'O') && !strcasecmp(opname,"or"))
+    else if ((opname[0] == 'o' || opname[0] == 'O') && !strcasecmp(opname, "or"))
         op = BITOP_OR;
-    else if((opname[0] == 'x' || opname[0] == 'X') && !strcasecmp(opname,"xor"))
+    else if ((opname[0] == 'x' || opname[0] == 'X') && !strcasecmp(opname, "xor"))
         op = BITOP_XOR;
-    else if((opname[0] == 'n' || opname[0] == 'N') && !strcasecmp(opname,"not"))
+    else if ((opname[0] == 'n' || opname[0] == 'N') && !strcasecmp(opname, "not"))
         op = BITOP_NOT;
     else {
-        addReplyErrorObject(c,shared.syntaxerr);
+        addReplyErrorObject(c, shared.syntaxerr);
         return;
     }
 
     /* Sanity check: NOT accepts only a single key argument. */
+    // NOT 操作只能接受单个 key 输入
     if (op == BITOP_NOT && c->argc != 4) {
-        addReplyError(c,"BITOP NOT must be called with a single source key.");
+        addReplyError(c, "BITOP NOT must be called with a single source key.");
         return;
     }
 
     /* Lookup keys, and store pointers to the string objects into an array. */
+    // 查找输入键,并将它们放入一个数组里面
     numkeys = c->argc - 3;
-    src = zmalloc(sizeof(unsigned char*) * numkeys);
+    // 字符串数组,保存 sds 值
+    src = zmalloc(sizeof(unsigned char *) * numkeys);
+    // 长度数组,保存 sds 的长度
     len = zmalloc(sizeof(long) * numkeys);
-    objects = zmalloc(sizeof(robj*) * numkeys);
+    // 对象数组,保存字符串对象
+    objects = zmalloc(sizeof(robj *) * numkeys);
     for (j = 0; j < numkeys; j++) {
-        o = lookupKeyRead(c->db,c->argv[j+3]);
+        // 查找对象
+        o = lookupKeyRead(c->db, c->argv[j + 3]);
         /* Handle non-existing keys as empty strings. */
+        // 不存在的键被视为空字符串
         if (o == NULL) {
             objects[j] = NULL;
             src[j] = NULL;
@@ -651,7 +673,8 @@ void bitopCommand(client *c) {
             continue;
         }
         /* Return an error if one of the keys is not a string. */
-        if (checkType(c,o,OBJ_STRING)) {
+        // 键不是字符串类型,返回错误,放弃执行操作
+        if (checkType(c, o, OBJ_STRING)) {
             unsigned long i;
             for (i = 0; i < j; i++) {
                 if (objects[i])
@@ -662,16 +685,27 @@ void bitopCommand(client *c) {
             zfree(objects);
             return;
         }
+        // 记录对象
         objects[j] = getDecodedObject(o);
+        // 记录 sds
         src[j] = objects[j]->ptr;
+        // 记录 sds 长度
         len[j] = sdslen(objects[j]->ptr);
-        if (len[j] > maxlen) maxlen = len[j];
-        if (j == 0 || len[j] < minlen) minlen = len[j];
+
+        // 记录目前最长 sds 的长度
+        if (len[j] > maxlen)
+            maxlen = len[j];
+
+        // 记录目前最短 sds 的长度
+        if (j == 0 || len[j] < minlen)
+            minlen = len[j];
     }
 
     /* Compute the bit operation, if at least one string is not empty. */
+    // 如果有至少一个非空字符串,那么执行计算
     if (maxlen) {
-        res = (unsigned char*) sdsnewlen(NULL,maxlen);
+        // 根据最大长度,创建一个 sds ,该 sds 的所有位都被设置为 0
+        res = (unsigned char *)sdsnewlen(NULL, maxlen);
         unsigned char output, byte;
         unsigned long i;
 
@@ -680,95 +714,112 @@ void bitopCommand(client *c) {
          * vanilla algorithm. On ARM we skip the fast path since it will
          * result in GCC compiling the code using multiple-words load/store
          * operations that are not supported even in ARM >= v6. */
+        // 在键的数量比较少时,进行优化
         j = 0;
-        #ifndef USE_ALIGNED_ACCESS
-        if (minlen >= sizeof(unsigned long)*4 && numkeys <= 16) {
+#ifndef USE_ALIGNED_ACCESS
+        if (minlen >= sizeof(unsigned long) * 4 && numkeys <= 16) {
             unsigned long *lp[16];
-            unsigned long *lres = (unsigned long*) res;
+            unsigned long *lres = (unsigned long *)res;
 
-            memcpy(lp,src,sizeof(unsigned long*)*numkeys);
-            memcpy(res,src[0],minlen);
-
+            memcpy(lp, src, sizeof(unsigned long *) * numkeys);
+            memcpy(res, src[0], minlen);
             /* Different branches per different operations for speed (sorry). */
+            // 当要处理的位大于等于 32 位时
+            // 每次载入 4*8 = 32 个位,然后对这些位进行计算,利用缓存,进行加速
             if (op == BITOP_AND) {
-                while(minlen >= sizeof(unsigned long)*4) {
+                while (minlen >= sizeof(unsigned long) * 4) {
                     for (i = 1; i < numkeys; i++) {
                         lres[0] &= lp[i][0];
                         lres[1] &= lp[i][1];
                         lres[2] &= lp[i][2];
                         lres[3] &= lp[i][3];
-                        lp[i]+=4;
+                        lp[i] += 4;
                     }
-                    lres+=4;
-                    j += sizeof(unsigned long)*4;
-                    minlen -= sizeof(unsigned long)*4;
+                    lres += 4;
+                    j += sizeof(unsigned long) * 4;
+                    minlen -= sizeof(unsigned long) * 4;
                 }
-            } else if (op == BITOP_OR) {
-                while(minlen >= sizeof(unsigned long)*4) {
+            }
+            else if (op == BITOP_OR) {
+                while (minlen >= sizeof(unsigned long) * 4) {
                     for (i = 1; i < numkeys; i++) {
                         lres[0] |= lp[i][0];
                         lres[1] |= lp[i][1];
                         lres[2] |= lp[i][2];
                         lres[3] |= lp[i][3];
-                        lp[i]+=4;
+                        lp[i] += 4;
                     }
-                    lres+=4;
-                    j += sizeof(unsigned long)*4;
-                    minlen -= sizeof(unsigned long)*4;
+                    lres += 4;
+                    j += sizeof(unsigned long) * 4;
+                    minlen -= sizeof(unsigned long) * 4;
                 }
-            } else if (op == BITOP_XOR) {
-                while(minlen >= sizeof(unsigned long)*4) {
+            }
+            else if (op == BITOP_XOR) {
+                while (minlen >= sizeof(unsigned long) * 4) {
                     for (i = 1; i < numkeys; i++) {
                         lres[0] ^= lp[i][0];
                         lres[1] ^= lp[i][1];
                         lres[2] ^= lp[i][2];
                         lres[3] ^= lp[i][3];
-                        lp[i]+=4;
+                        lp[i] += 4;
                     }
-                    lres+=4;
-                    j += sizeof(unsigned long)*4;
-                    minlen -= sizeof(unsigned long)*4;
+                    lres += 4;
+                    j += sizeof(unsigned long) * 4;
+                    minlen -= sizeof(unsigned long) * 4;
                 }
-            } else if (op == BITOP_NOT) {
-                while(minlen >= sizeof(unsigned long)*4) {
+            }
+            else if (op == BITOP_NOT) {
+                while (minlen >= sizeof(unsigned long) * 4) {
                     lres[0] = ~lres[0];
                     lres[1] = ~lres[1];
                     lres[2] = ~lres[2];
                     lres[3] = ~lres[3];
-                    lres+=4;
-                    j += sizeof(unsigned long)*4;
-                    minlen -= sizeof(unsigned long)*4;
+                    lres += 4;
+                    j += sizeof(unsigned long) * 4;
+                    minlen -= sizeof(unsigned long) * 4;
                 }
             }
         }
-        #endif
+#endif
 
         /* j is set to the next byte to process by the previous loop. */
+        // 以正常方式执行位运算
         for (; j < maxlen; j++) {
             output = (len[0] <= j) ? 0 : src[0][j];
-            if (op == BITOP_NOT) output = ~output;
+            if (op == BITOP_NOT)
+                output = ~output;
+            // 遍历所有输入键,对所有输入的 scr[i][j] 字节进行运算
+
             for (i = 1; i < numkeys; i++) {
                 int skip = 0;
+                // 如果数组的长度不足,那么相应的字节被假设为 0
+
                 byte = (len[i] <= j) ? 0 : src[i][j];
-                switch(op) {
-                case BITOP_AND:
-                    output &= byte;
-                    skip = (output == 0);
-                    break;
-                case BITOP_OR:
-                    output |= byte;
-                    skip = (output == 0xff);
-                    break;
-                case BITOP_XOR: output ^= byte; break;
+                switch (op) {
+                    case BITOP_AND:
+                        output &= byte;
+                        skip = (output == 0);
+                        break;
+                    case BITOP_OR:
+                        output |= byte;
+                        skip = (output == 0xff);
+                        break;
+                    case BITOP_XOR:
+                        output ^= byte;
+                        break;
                 }
 
                 if (skip) {
                     break;
                 }
             }
+            // 保存输出
+
             res[j] = output;
         }
     }
+    // 释放资源
+
     for (j = 0; j < numkeys; j++) {
         if (objects[j])
             decrRefCount(objects[j]);
@@ -779,113 +830,134 @@ void bitopCommand(client *c) {
 
     /* Store the computed value into the target key */
     if (maxlen) {
-        o = createObject(OBJ_STRING,res);
-        setKey(c,c->db,targetkey,o,0);
-        notifyKeyspaceEvent(NOTIFY_STRING,"set",targetkey,c->db->id);
+        // 保存结果到指定键
+        o = createObject(OBJ_STRING, res);
+        setKey(c, c->db, targetkey, o, 0);
+        notifyKeyspaceEvent(NOTIFY_STRING, "set", targetkey, c->db->id);
         decrRefCount(o);
         server.dirty++;
-    } else if (dbDelete(c->db,targetkey)) {
-        signalModifiedKey(c,c->db,targetkey);
-        notifyKeyspaceEvent(NOTIFY_GENERIC,"del",targetkey,c->db->id);
+    }
+    else if (dbDelete(c->db, targetkey)) {
+        // 输入为空,没有产生结果,仅仅删除指定键
+        signalModifiedKey(c, c->db, targetkey);
+        notifyKeyspaceEvent(NOTIFY_GENERIC, "del", targetkey, c->db->id);
         server.dirty++;
     }
-    addReplyLongLong(c,maxlen); /* Return the output string length in bytes. */
+    addReplyLongLong(c, maxlen); /* Return the output string length in bytes. */
 }
 
 /* BITCOUNT key [start end [BIT|BYTE]] */
 void bitcountCommand(client *c) {
-    robj *o;
-    long long start, end;
-    long strlen;
+    robj          *o;
+    long long      start, end;
+    long           strlen;
     unsigned char *p;
-    char llbuf[LONG_STR_SIZE];
-    int isbit = 0;
-    unsigned char first_byte_neg_mask = 0, last_byte_neg_mask = 0;
+    char           llbuf[LONG_STR_SIZE];
+    int            isbit = 0;
+    unsigned char  first_byte_neg_mask = 0, last_byte_neg_mask = 0;
 
     /* Lookup, check for type, and return 0 for non existing keys. */
-    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
-        checkType(c,o,OBJ_STRING)) return;
-    p = getObjectReadOnlyString(o,&strlen,llbuf);
+    // 查找 key
+
+    if ((o = lookupKeyReadOrReply(c, c->argv[1], shared.czero)) == NULL || checkType(c, o, OBJ_STRING))
+        return;
+    p = getObjectReadOnlyString(o, &strlen, llbuf);
 
     /* Parse start/end range if any. */
+    // 如果给定了 start 和 end 参数,那么读入它们
     if (c->argc == 4 || c->argc == 5) {
         long long totlen = strlen;
         /* Make sure we will not overflow */
         serverAssert(totlen <= LLONG_MAX >> 3);
-        if (getLongLongFromObjectOrReply(c,c->argv[2],&start,NULL) != C_OK)
+        if (getLongLongFromObjectOrReply(c, c->argv[2], &start, NULL) != C_OK)
             return;
-        if (getLongLongFromObjectOrReply(c,c->argv[3],&end,NULL) != C_OK)
+        if (getLongLongFromObjectOrReply(c, c->argv[3], &end, NULL) != C_OK)
             return;
         /* Convert negative indexes */
         if (start < 0 && end < 0 && start > end) {
-            addReply(c,shared.czero);
+            addReply(c, shared.czero);
             return;
         }
         if (c->argc == 5) {
-            if (!strcasecmp(c->argv[4]->ptr,"bit")) isbit = 1;
-            else if (!strcasecmp(c->argv[4]->ptr,"byte")) isbit = 0;
+            if (!strcasecmp(c->argv[4]->ptr, "bit"))
+                isbit = 1;
+            else if (!strcasecmp(c->argv[4]->ptr, "byte"))
+                isbit = 0;
             else {
-                addReplyErrorObject(c,shared.syntaxerr);
+                addReplyErrorObject(c, shared.syntaxerr);
                 return;
             }
         }
-        if (isbit) totlen <<= 3;
-        if (start < 0) start = totlen+start;
-        if (end < 0) end = totlen+end;
-        if (start < 0) start = 0;
-        if (end < 0) end = 0;
-        if (end >= totlen) end = totlen-1;
+        if (isbit)
+            totlen <<= 3;
+        if (start < 0)
+            start = totlen + start;
+        if (end < 0)
+            end = totlen + end;
+        if (start < 0)
+            start = 0;
+        if (end < 0)
+            end = 0;
+        if (end >= totlen)
+            end = totlen - 1;
         if (isbit && start <= end) {
             /* Before converting bit offset to byte offset, create negative masks
              * for the edges. */
-            first_byte_neg_mask = ~((1<<(8-(start&7)))-1) & 0xFF;
-            last_byte_neg_mask = (1<<(7-(end&7)))-1;
+            first_byte_neg_mask = ~((1 << (8 - (start & 7))) - 1) & 0xFF;
+            last_byte_neg_mask = (1 << (7 - (end & 7))) - 1;
             start >>= 3;
             end >>= 3;
         }
-    } else if (c->argc == 2) {
+    }
+    else if (c->argc == 2) {
         /* The whole string. */
         start = 0;
-        end = strlen-1;
-    } else {
+        end = strlen - 1;
+    }
+    else {
         /* Syntax error. */
-        addReplyErrorObject(c,shared.syntaxerr);
+        addReplyErrorObject(c, shared.syntaxerr);
         return;
     }
 
     /* Precondition: end >= 0 && end < strlen, so the only condition where
      * zero can be returned is: start > end. */
     if (start > end) {
-        addReply(c,shared.czero);
-    } else {
-        long bytes = (long)(end-start+1);
-        long long count = redisPopcount(p+start,bytes);
+        // 超出范围的 case ,略过
+        addReply(c, shared.czero);
+    }
+    else {
+        long      bytes = (long)(end - start + 1);
+        long long count = redisPopcount(p + start, bytes);
         if (first_byte_neg_mask != 0 || last_byte_neg_mask != 0) {
             unsigned char firstlast[2] = {0, 0};
             /* We may count bits of first byte and last byte which are out of
-            * range. So we need to subtract them. Here we use a trick. We set
-            * bits in the range to zero. So these bit will not be excluded. */
-            if (first_byte_neg_mask != 0) firstlast[0] = p[start] & first_byte_neg_mask;
-            if (last_byte_neg_mask != 0) firstlast[1] = p[end] & last_byte_neg_mask;
-            count -= redisPopcount(firstlast,2);
+             * range. So we need to subtract them. Here we use a trick. We set
+             * bits in the range to zero. So these bit will not be excluded. */
+            if (first_byte_neg_mask != 0)
+                firstlast[0] = p[start] & first_byte_neg_mask;
+            if (last_byte_neg_mask != 0)
+                firstlast[1] = p[end] & last_byte_neg_mask;
+            count -= redisPopcount(firstlast, 2);
         }
-        addReplyLongLong(c,count);
+        // 遍历数组,统计值为 1 的位的数量
+        addReplyLongLong(c, count);
     }
 }
 
 /* BITPOS key bit [start [end [BIT|BYTE]]] */
 void bitposCommand(client *c) {
-    robj *o;
-    long long start, end;
-    long bit, strlen;
+    robj          *o;
+    long long      start, end;
+    long           bit, strlen;
     unsigned char *p;
-    char llbuf[LONG_STR_SIZE];
-    int isbit = 0, end_given = 0;
-    unsigned char first_byte_neg_mask = 0, last_byte_neg_mask = 0;
+    char           llbuf[LONG_STR_SIZE];
+    int            isbit = 0, end_given = 0;
+    unsigned char  first_byte_neg_mask = 0, last_byte_neg_mask = 0;
 
     /* Parse the bit argument to understand what we are looking for, set
      * or clear bits. */
-    if (getLongFromObjectOrReply(c,c->argv[2],&bit,NULL) != C_OK)
+    if (getLongFromObjectOrReply(c, c->argv[2], &bit, NULL) != C_OK)
         return;
     if (bit != 0 && bit != 1) {
         addReplyError(c, "The bit argument must be 1 or 0.");
@@ -895,58 +967,72 @@ void bitposCommand(client *c) {
     /* If the key does not exist, from our point of view it is an infinite
      * array of 0 bits. If the user is looking for the first clear bit return 0,
      * If the user is looking for the first set bit, return -1. */
-    if ((o = lookupKeyRead(c->db,c->argv[1])) == NULL) {
+    if ((o = lookupKeyRead(c->db, c->argv[1])) == NULL) {
         addReplyLongLong(c, bit ? -1 : 0);
         return;
     }
-    if (checkType(c,o,OBJ_STRING)) return;
-    p = getObjectReadOnlyString(o,&strlen,llbuf);
+    if (checkType(c, o, OBJ_STRING))
+        return;
+    p = getObjectReadOnlyString(o, &strlen, llbuf);
 
     /* Parse start/end range if any. */
     if (c->argc == 4 || c->argc == 5 || c->argc == 6) {
         long long totlen = strlen;
         /* Make sure we will not overflow */
         serverAssert(totlen <= LLONG_MAX >> 3);
-        if (getLongLongFromObjectOrReply(c,c->argv[3],&start,NULL) != C_OK)
+        if (getLongLongFromObjectOrReply(c, c->argv[3], &start, NULL) != C_OK)
             return;
         if (c->argc == 6) {
-            if (!strcasecmp(c->argv[5]->ptr,"bit")) isbit = 1;
-            else if (!strcasecmp(c->argv[5]->ptr,"byte")) isbit = 0;
+            if (!strcasecmp(c->argv[5]->ptr, "bit"))
+                isbit = 1;
+            else if (!strcasecmp(c->argv[5]->ptr, "byte"))
+                isbit = 0;
             else {
-                addReplyErrorObject(c,shared.syntaxerr);
+                addReplyErrorObject(c, shared.syntaxerr);
                 return;
             }
         }
         if (c->argc >= 5) {
-            if (getLongLongFromObjectOrReply(c,c->argv[4],&end,NULL) != C_OK)
+            if (getLongLongFromObjectOrReply(c, c->argv[4], &end, NULL) != C_OK)
                 return;
             end_given = 1;
-        } else {
-            if (isbit) end = (totlen<<3) + 7;
-            else end = totlen-1;
         }
-        if (isbit) totlen <<= 3;
+        else {
+            if (isbit)
+                end = (totlen << 3) + 7;
+            else
+                end = totlen - 1;
+        }
+        if (isbit)
+            totlen <<= 3;
         /* Convert negative indexes */
-        if (start < 0) start = totlen+start;
-        if (end < 0) end = totlen+end;
-        if (start < 0) start = 0;
-        if (end < 0) end = 0;
-        if (end >= totlen) end = totlen-1;
+        if (start < 0)
+            start = totlen + start;
+        if (end < 0)
+            end = totlen + end;
+        if (start < 0)
+            start = 0;
+        if (end < 0)
+            end = 0;
+        if (end >= totlen)
+            end = totlen - 1;
         if (isbit && start <= end) {
             /* Before converting bit offset to byte offset, create negative masks
              * for the edges. */
-            first_byte_neg_mask = ~((1<<(8-(start&7)))-1) & 0xFF;
-            last_byte_neg_mask = (1<<(7-(end&7)))-1;
+            first_byte_neg_mask = ~((1 << (8 - (start & 7))) - 1) & 0xFF;
+            last_byte_neg_mask = (1 << (7 - (end & 7))) - 1;
             start >>= 3;
             end >>= 3;
         }
-    } else if (c->argc == 3) {
+    }
+    else if (c->argc == 3) {
         /* The whole string. */
         start = 0;
-        end = strlen-1;
-    } else {
+        end = strlen - 1;
+    }
+    else {
         /* Syntax error. */
-        addReplyErrorObject(c,shared.syntaxerr);
+        addReplyErrorObject(c, shared.syntaxerr);
         return;
     }
 
@@ -954,36 +1040,45 @@ void bitposCommand(client *c) {
      * not contain a 0 nor a 1. */
     if (start > end) {
         addReplyLongLong(c, -1);
-    } else {
-        long bytes = end-start+1;
-        long long pos;
+    }
+    else {
+        long          bytes = end - start + 1;
+        long long     pos;
         unsigned char tmpchar;
         if (first_byte_neg_mask) {
-            if (bit) tmpchar = p[start] & ~first_byte_neg_mask;
-            else tmpchar = p[start] | first_byte_neg_mask;
+            if (bit)
+                tmpchar = p[start] & ~first_byte_neg_mask;
+            else
+                tmpchar = p[start] | first_byte_neg_mask;
             /* Special case, there is only one byte */
             if (last_byte_neg_mask && bytes == 1) {
-                if (bit) tmpchar = tmpchar & ~last_byte_neg_mask;
-                else tmpchar = tmpchar | last_byte_neg_mask;
+                if (bit)
+                    tmpchar = tmpchar & ~last_byte_neg_mask;
+                else
+                    tmpchar = tmpchar | last_byte_neg_mask;
             }
-            pos = redisBitpos(&tmpchar,1,bit);
+            pos = redisBitpos(&tmpchar, 1, bit);
             /* If there are no more bytes or we get valid pos, we can exit early */
-            if (bytes == 1 || (pos != -1 && pos != 8)) goto result;
+            if (bytes == 1 || (pos != -1 && pos != 8))
+                goto result;
             start++;
             bytes--;
         }
         /* If the last byte has not bits in the range, we should exclude it */
         long curbytes = bytes - (last_byte_neg_mask ? 1 : 0);
         if (curbytes > 0) {
-            pos = redisBitpos(p+start,curbytes,bit);
+            pos = redisBitpos(p + start, curbytes, bit);
             /* If there is no more bytes or we get valid pos, we can exit early */
-            if (bytes == curbytes || (pos != -1 && pos != (long long)curbytes<<3)) goto result;
+            if (bytes == curbytes || (pos != -1 && pos != (long long)curbytes << 3))
+                goto result;
             start += curbytes;
             bytes -= curbytes;
         }
-        if (bit) tmpchar = p[end] & ~last_byte_neg_mask;
-        else tmpchar = p[end] | last_byte_neg_mask;
-        pos = redisBitpos(&tmpchar,1,bit);
+        if (bit)
+            tmpchar = p[end] & ~last_byte_neg_mask;
+        else
+            tmpchar = p[end] | last_byte_neg_mask;
+        pos = redisBitpos(&tmpchar, 1, bit);
 
     result:
         /* If we are looking for clear bits, and the user specified an exact
@@ -993,12 +1088,13 @@ void bitposCommand(client *c) {
          * So if redisBitpos() returns the first bit outside the range,
          * we return -1 to the caller, to mean, in the specified range there
          * is not a single "0" bit. */
-        if (end_given && bit == 0 && pos == (long long)bytes<<3) {
-            addReplyLongLong(c,-1);
+        if (end_given && bit == 0 && pos == (long long)bytes << 3) {
+            addReplyLongLong(c, -1);
             return;
         }
-        if (pos != -1) pos += (long long)start<<3; /* Adjust for the bytes we skipped. */
-        addReplyLongLong(c,pos);
+        if (pos != -1)
+            pos += (long long)start << 3; /* Adjust for the bytes we skipped. */
+        addReplyLongLong(c, pos);
     }
 }
 
@@ -1012,72 +1108,73 @@ void bitposCommand(client *c) {
  * OVERFLOW [WRAP|SAT|FAIL]
  */
 
-#define BITFIELD_FLAG_NONE      0
-#define BITFIELD_FLAG_READONLY  (1<<0)
+#define BITFIELD_FLAG_NONE 0
+#define BITFIELD_FLAG_READONLY (1 << 0)
 
 struct bitfieldOp {
-    uint64_t offset;    /* Bitfield offset. */
-    int64_t i64;        /* Increment amount (INCRBY) or SET value */
-    int opcode;         /* Operation id. */
-    int owtype;         /* Overflow type to use. */
-    int bits;           /* Integer bitfield bits width. */
-    int sign;           /* True if signed, otherwise unsigned op. */
+    uint64_t offset; /* Bitfield offset. */
+    int64_t  i64;    /* Increment amount (INCRBY) or SET value */
+    int      opcode; /* Operation id. */
+    int      owtype; /* Overflow type to use. */
+    int      bits;   /* Integer bitfield bits width. */
+    int      sign;   /* True if signed, otherwise unsigned op. */
 };
 
 /* This implements both the BITFIELD command and the BITFIELD_RO command
  * when flags is set to BITFIELD_FLAG_READONLY: in this case only the
  * GET subcommand is allowed, other subcommands will return an error. */
 void bitfieldGeneric(client *c, int flags) {
-    robj *o;
-    uint64_t bitoffset;
-    int j, numops = 0, changes = 0, dirty = 0;
-    struct bitfieldOp *ops = NULL; /* Array of ops to execute at end. */
-    int owtype = BFOVERFLOW_WRAP; /* Overflow type. */
-    int readonly = 1;
-    uint64_t highest_write_offset = 0;
+    robj              *o;
+    uint64_t           bitoffset;
+    int                j, numops = 0, changes = 0, dirty = 0;
+    struct bitfieldOp *ops = NULL;               /* Array of ops to execute at end. */
+    int                owtype = BFOVERFLOW_WRAP; /* Overflow type. */
+    int                readonly = 1;
+    uint64_t           highest_write_offset = 0;
 
     for (j = 2; j < c->argc; j++) {
-        int remargs = c->argc-j-1; /* Remaining args other than current. */
-        char *subcmd = c->argv[j]->ptr; /* Current command name. */
-        int opcode; /* Current operation code. */
-        long long i64 = 0;  /* Signed SET value. */
-        int sign = 0; /* Signed or unsigned type? */
-        int bits = 0; /* Bitfield width in bits. */
+        int       remargs = c->argc - j - 1; /* Remaining args other than current. */
+        char     *subcmd = c->argv[j]->ptr;  /* Current command name. */
+        int       opcode;                    /* Current operation code. */
+        long long i64 = 0;                   /* Signed SET value. */
+        int       sign = 0;                  /* Signed or unsigned type? */
+        int       bits = 0;                  /* Bitfield width in bits. */
 
-        if (!strcasecmp(subcmd,"get") && remargs >= 2)
+        if (!strcasecmp(subcmd, "get") && remargs >= 2)
             opcode = BITFIELDOP_GET;
-        else if (!strcasecmp(subcmd,"set") && remargs >= 3)
+        else if (!strcasecmp(subcmd, "set") && remargs >= 3)
             opcode = BITFIELDOP_SET;
-        else if (!strcasecmp(subcmd,"incrby") && remargs >= 3)
+        else if (!strcasecmp(subcmd, "incrby") && remargs >= 3)
             opcode = BITFIELDOP_INCRBY;
-        else if (!strcasecmp(subcmd,"overflow") && remargs >= 1) {
-            char *owtypename = c->argv[j+1]->ptr;
+        else if (!strcasecmp(subcmd, "overflow") && remargs >= 1) {
+            char *owtypename = c->argv[j + 1]->ptr;
             j++;
-            if (!strcasecmp(owtypename,"wrap"))
+            if (!strcasecmp(owtypename, "wrap"))
                 owtype = BFOVERFLOW_WRAP;
-            else if (!strcasecmp(owtypename,"sat"))
+            else if (!strcasecmp(owtypename, "sat"))
                 owtype = BFOVERFLOW_SAT;
-            else if (!strcasecmp(owtypename,"fail"))
+            else if (!strcasecmp(owtypename, "fail"))
                 owtype = BFOVERFLOW_FAIL;
             else {
-                addReplyError(c,"Invalid OVERFLOW type specified");
+                addReplyError(c, "Invalid OVERFLOW type specified");
                 zfree(ops);
                 return;
             }
             continue;
-        } else {
-            addReplyErrorObject(c,shared.syntaxerr);
+        }
+        else {
+            addReplyErrorObject(c, shared.syntaxerr);
             zfree(ops);
             return;
         }
 
         /* Get the type and offset arguments, common to all the ops. */
-        if (getBitfieldTypeFromArgument(c,c->argv[j+1],&sign,&bits) != C_OK) {
+        if (getBitfieldTypeFromArgument(c, c->argv[j + 1], &sign, &bits) != C_OK) {
             zfree(ops);
             return;
         }
 
-        if (getBitOffsetFromArgument(c,c->argv[j+2],&bitoffset,1,bits) != C_OK){
+        if (getBitOffsetFromArgument(c, c->argv[j + 2], &bitoffset, 1, bits) != C_OK) {
             zfree(ops);
             return;
         }
@@ -1087,14 +1184,14 @@ void bitfieldGeneric(client *c, int flags) {
             if (highest_write_offset < bitoffset + bits - 1)
                 highest_write_offset = bitoffset + bits - 1;
             /* INCRBY and SET require another argument. */
-            if (getLongLongFromObjectOrReply(c,c->argv[j+3],&i64,NULL) != C_OK){
+            if (getLongLongFromObjectOrReply(c, c->argv[j + 3], &i64, NULL) != C_OK) {
                 zfree(ops);
                 return;
             }
         }
 
         /* Populate the array of operations we'll process. */
-        ops = zrealloc(ops,sizeof(*ops)*(numops+1));
+        ops = zrealloc(ops, sizeof(*ops) * (numops + 1));
         ops[numops].offset = bitoffset;
         ops[numops].i64 = i64;
         ops[numops].opcode = opcode;
@@ -1109,12 +1206,13 @@ void bitfieldGeneric(client *c, int flags) {
     if (readonly) {
         /* Lookup for read is ok if key doesn't exit, but errors
          * if it's not a string. */
-        o = lookupKeyRead(c->db,c->argv[1]);
-        if (o != NULL && checkType(c,o,OBJ_STRING)) {
+        o = lookupKeyRead(c->db, c->argv[1]);
+        if (o != NULL && checkType(c, o, OBJ_STRING)) {
             zfree(ops);
             return;
         }
-    } else {
+    }
+    else {
         if (flags & BITFIELD_FLAG_READONLY) {
             zfree(ops);
             addReplyError(c, "BITFIELD_RO only supports the GET subcommand");
@@ -1123,23 +1221,20 @@ void bitfieldGeneric(client *c, int flags) {
 
         /* Lookup by making room up to the farthest bit reached by
          * this operation. */
-        if ((o = lookupStringForBitCommand(c,
-            highest_write_offset,&dirty)) == NULL) {
+        if ((o = lookupStringForBitCommand(c, highest_write_offset, &dirty)) == NULL) {
             zfree(ops);
             return;
         }
     }
 
-    addReplyArrayLen(c,numops);
+    addReplyArrayLen(c, numops);
 
     /* Actually process the operations. */
     for (j = 0; j < numops; j++) {
-        struct bitfieldOp *thisop = ops+j;
+        struct bitfieldOp *thisop = ops + j;
 
         /* Execute the operation. */
-        if (thisop->opcode == BITFIELDOP_SET ||
-            thisop->opcode == BITFIELDOP_INCRBY)
-        {
+        if (thisop->opcode == BITFIELDOP_SET || thisop->opcode == BITFIELDOP_INCRBY) {
             /* SET and INCRBY: We handle both with the same code path
              * for simplicity. SET return value is the previous value so
              * we need fetch & store as well. */
@@ -1149,108 +1244,109 @@ void bitfieldGeneric(client *c, int flags) {
              * the integers and the used variables types are different. */
             if (thisop->sign) {
                 int64_t oldval, newval, wrapped, retval;
-                int overflow;
+                int     overflow;
 
-                oldval = getSignedBitfield(o->ptr,thisop->offset,
-                        thisop->bits);
+                oldval = getSignedBitfield(o->ptr, thisop->offset, thisop->bits);
 
                 if (thisop->opcode == BITFIELDOP_INCRBY) {
-                    overflow = checkSignedBitfieldOverflow(oldval,
-                            thisop->i64,thisop->bits,thisop->owtype,&wrapped);
+                    overflow = checkSignedBitfieldOverflow(oldval, thisop->i64, thisop->bits, thisop->owtype, &wrapped);
                     newval = overflow ? wrapped : oldval + thisop->i64;
                     retval = newval;
-                } else {
+                }
+                else {
                     newval = thisop->i64;
-                    overflow = checkSignedBitfieldOverflow(newval,
-                            0,thisop->bits,thisop->owtype,&wrapped);
-                    if (overflow) newval = wrapped;
+                    overflow = checkSignedBitfieldOverflow(newval, 0, thisop->bits, thisop->owtype, &wrapped);
+                    if (overflow)
+                        newval = wrapped;
                     retval = oldval;
                 }
 
                 /* On overflow of type is "FAIL", don't write and return
                  * NULL to signal the condition. */
                 if (!(overflow && thisop->owtype == BFOVERFLOW_FAIL)) {
-                    addReplyLongLong(c,retval);
-                    setSignedBitfield(o->ptr,thisop->offset,
-                                      thisop->bits,newval);
+                    addReplyLongLong(c, retval);
+                    setSignedBitfield(o->ptr, thisop->offset, thisop->bits, newval);
 
                     if (dirty || (oldval != newval))
                         changes++;
-                } else {
-                    addReplyNull(c);
                 }
-            } else {
-                uint64_t oldval, newval, wrapped, retval;
-                int overflow;
-
-                oldval = getUnsignedBitfield(o->ptr,thisop->offset,
-                        thisop->bits);
-
-                if (thisop->opcode == BITFIELDOP_INCRBY) {
-                    newval = oldval + thisop->i64;
-                    overflow = checkUnsignedBitfieldOverflow(oldval,
-                            thisop->i64,thisop->bits,thisop->owtype,&wrapped);
-                    if (overflow) newval = wrapped;
-                    retval = newval;
-                } else {
-                    newval = thisop->i64;
-                    overflow = checkUnsignedBitfieldOverflow(newval,
-                            0,thisop->bits,thisop->owtype,&wrapped);
-                    if (overflow) newval = wrapped;
-                    retval = oldval;
-                }
-                /* On overflow of type is "FAIL", don't write and return
-                 * NULL to signal the condition. */
-                if (!(overflow && thisop->owtype == BFOVERFLOW_FAIL)) {
-                    addReplyLongLong(c,retval);
-                    setUnsignedBitfield(o->ptr,thisop->offset,
-                                        thisop->bits,newval);
-
-                    if (dirty || (oldval != newval))
-                        changes++;
-                } else {
+                else {
                     addReplyNull(c);
                 }
             }
-        } else {
+            else {
+                uint64_t oldval, newval, wrapped, retval;
+                int      overflow;
+
+                oldval = getUnsignedBitfield(o->ptr, thisop->offset, thisop->bits);
+
+                if (thisop->opcode == BITFIELDOP_INCRBY) {
+                    newval = oldval + thisop->i64;
+                    overflow = checkUnsignedBitfieldOverflow(oldval, thisop->i64, thisop->bits, thisop->owtype, &wrapped);
+                    if (overflow)
+                        newval = wrapped;
+                    retval = newval;
+                }
+                else {
+                    newval = thisop->i64;
+                    overflow = checkUnsignedBitfieldOverflow(newval, 0, thisop->bits, thisop->owtype, &wrapped);
+                    if (overflow)
+                        newval = wrapped;
+                    retval = oldval;
+                }
+                /* On overflow of type is "FAIL", don't write and return
+                 * NULL to signal the condition. */
+                if (!(overflow && thisop->owtype == BFOVERFLOW_FAIL)) {
+                    addReplyLongLong(c, retval);
+                    setUnsignedBitfield(o->ptr, thisop->offset, thisop->bits, newval);
+
+                    if (dirty || (oldval != newval))
+                        changes++;
+                }
+                else {
+                    addReplyNull(c);
+                }
+            }
+        }
+        else {
             /* GET */
-            unsigned char buf[9];
-            long strlen = 0;
+            unsigned char  buf[9];
+            long           strlen = 0;
             unsigned char *src = NULL;
-            char llbuf[LONG_STR_SIZE];
+            char           llbuf[LONG_STR_SIZE];
 
             if (o != NULL)
-                src = getObjectReadOnlyString(o,&strlen,llbuf);
+                src = getObjectReadOnlyString(o, &strlen, llbuf);
 
             /* For GET we use a trick: before executing the operation
              * copy up to 9 bytes to a local buffer, so that we can easily
              * execute up to 64 bit operations that are at actual string
              * object boundaries. */
-            memset(buf,0,9);
-            int i;
+            memset(buf, 0, 9);
+            int      i;
             uint64_t byte = thisop->offset >> 3;
             for (i = 0; i < 9; i++) {
-                if (src == NULL || i+byte >= (uint64_t)strlen) break;
-                buf[i] = src[i+byte];
+                if (src == NULL || i + byte >= (uint64_t)strlen)
+                    break;
+                buf[i] = src[i + byte];
             }
 
             /* Now operate on the copied buffer which is guaranteed
              * to be zero-padded. */
             if (thisop->sign) {
-                int64_t val = getSignedBitfield(buf,thisop->offset-(byte*8),
-                                            thisop->bits);
-                addReplyLongLong(c,val);
-            } else {
-                uint64_t val = getUnsignedBitfield(buf,thisop->offset-(byte*8),
-                                            thisop->bits);
-                addReplyLongLong(c,val);
+                int64_t val = getSignedBitfield(buf, thisop->offset - (byte * 8), thisop->bits);
+                addReplyLongLong(c, val);
+            }
+            else {
+                uint64_t val = getUnsignedBitfield(buf, thisop->offset - (byte * 8), thisop->bits);
+                addReplyLongLong(c, val);
             }
         }
     }
 
     if (changes) {
-        signalModifiedKey(c,c->db,c->argv[1]);
-        notifyKeyspaceEvent(NOTIFY_STRING,"setbit",c->argv[1],c->db->id);
+        signalModifiedKey(c, c->db, c->argv[1]);
+        notifyKeyspaceEvent(NOTIFY_STRING, "setbit", c->argv[1], c->db->id);
         server.dirty += changes;
     }
     zfree(ops);

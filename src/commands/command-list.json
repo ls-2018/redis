@@ -1,46 +1,46 @@
 {
-    "LIST": {
-        "summary": "Get an array of Redis command names",
-        "complexity": "O(N) where N is the total number of Redis commands",
-        "group": "server",
-        "since": "7.0.0",
-        "arity": -2,
-        "container": "COMMAND",
-        "function": "commandListCommand",
-        "command_flags": [
-            "LOADING",
-            "STALE"
-        ],
-        "acl_categories": [
-            "CONNECTION"
-        ],
-        "command_tips": [
-            "NONDETERMINISTIC_OUTPUT_ORDER"
-        ],
+  "LIST": {
+    "summary": "获取一组Redis命令名",
+    "complexity": "O(N),其中N为Redis命令总数",
+    "group": "server",
+    "since": "7.0.0",
+    "arity": -2,
+    "container": "COMMAND",
+    "function": "commandListCommand",
+    "command_flags": [
+      "LOADING",
+      "STALE"
+    ],
+    "acl_categories": [
+      "CONNECTION"
+    ],
+    "command_tips": [
+      "NONDETERMINISTIC_OUTPUT_ORDER"
+    ],
+    "arguments": [
+      {
+        "name": "filterby",
+        "token": "FILTERBY",
+        "type": "oneof",
+        "optional": true,
         "arguments": [
-            {
-                "name": "filterby",
-                "token": "FILTERBY",
-                "type": "oneof",
-                "optional": true,
-                "arguments": [
-                    {
-                        "name": "module-name",
-                        "type": "string",
-                        "token": "MODULE"
-                    },
-                    {
-                        "name": "category",
-                        "type": "string",
-                        "token": "ACLCAT"
-                    },
-                    {
-                        "name": "pattern",
-                        "type": "pattern",
-                        "token": "PATTERN"
-                    }
-                ]
-            }
+          {
+            "name": "module-name",
+            "type": "string",
+            "token": "MODULE"
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "token": "ACLCAT"
+          },
+          {
+            "name": "pattern",
+            "type": "pattern",
+            "token": "PATTERN"
+          }
         ]
-    }
+      }
+    ]
+  }
 }

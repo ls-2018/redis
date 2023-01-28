@@ -69,20 +69,18 @@ static inline int connHasRefs(connection *conn) {
     return conn->refs;
 }
 
-/* Helper for connection implementations to call handlers:
- * 1. Increment refs to protect the connection.
- * 2. Execute the handler (if set).
- * 3. Decrement refs and perform deferred close, if refs==0.
- */
+// 当客户端链接 建立好以后,执行回调函数
 static inline int callHandler(connection *conn, ConnectionCallbackFunc handler) {
     connIncrRefs(conn);
-    if (handler) handler(conn);
+    if (handler)
+        handler(conn);
     connDecrRefs(conn);
     if (conn->flags & CONN_FLAG_CLOSE_SCHEDULED) {
-        if (!connHasRefs(conn)) connClose(conn);
+        if (!connHasRefs(conn))
+            connClose(conn);
         return 0;
     }
     return 1;
 }
 
-#endif  /* __REDIS_CONNHELPERS_H */
+#endif /* __REDIS_CONNHELPERS_H */

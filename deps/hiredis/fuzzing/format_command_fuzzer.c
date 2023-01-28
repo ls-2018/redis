@@ -41,7 +41,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     if (size < 3)
         return 0;
 
-    new_str = malloc(size+1);
+    new_str = malloc(size + 1);
     if (new_str == NULL)
         return 0;
 

@@ -1,5 +1,5 @@
 /* CLI (command line interface) common methods
- * 
+ *
  * Copyright (c) 2020, Redis Labs
  * All rights reserved.
  *
@@ -36,17 +36,18 @@
 #include <errno.h>
 #include <hiredis.h>
 #include <sdscompat.h> /* Use hiredis' sds compat header that maps sds calls to their hi_ variants */
-#include <sds.h> /* use sds.h from hiredis, so that only one set of sds functions will be present in the binary */
+#include <sds.h>       /* use sds.h from hiredis, so that only one set of sds functions will be present in the binary */
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+
 #ifdef USE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <hiredis_ssl.h>
 #endif
 
-#define UNUSED(V) ((void) V)
+#define UNUSED(V) ((void)V)
 
 /* Wrapper around redisSecureConnection to avoid hiredis_ssl dependencies if
  * not building with TLS support.
@@ -69,7 +70,8 @@ int cliSecureConnection(redisContext *c, cliSSLconfig config, const char **err) 
                 *err = "Invalid CA Certificate File/Directory";
                 goto error;
             }
-        } else {
+        }
+        else {
             if (!SSL_CTX_set_default_verify_paths(ssl_ctx)) {
                 *err = "Failed to use default CA paths";
                 goto error;
@@ -116,9 +118,9 @@ error:
     ssl_ctx = NULL;
     return REDIS_ERR;
 #else
-    (void) config;
-    (void) c;
-    (void) err;
+    (void)config;
+    (void)c;
+    (void)err;
     return REDIS_OK;
 #endif
 }
@@ -137,8 +139,7 @@ error:
  * in the buffer (leftovers from hiredis operations) it will be written
  * as well.
  */
-ssize_t cliWriteConn(redisContext *c, const char *buf, size_t buf_len)
-{
+ssize_t cliWriteConn(redisContext *c, const char *buf, size_t buf_len) {
     int done = 0;
 
     /* Append data to buffer which is *usually* expected to be empty
@@ -153,7 +154,7 @@ ssize_t cliWriteConn(redisContext *c, const char *buf, size_t buf_len)
          * buffer to its original state.
          */
         if (sdslen(c->obuf) > buf_len)
-            sdsrange(c->obuf, 0, -(buf_len+1));
+            sdsrange(c->obuf, 0, -(buf_len + 1));
         else
             sdsclear(c->obuf);
 
@@ -177,7 +178,7 @@ ssize_t cliWriteConn(redisContext *c, const char *buf, size_t buf_len)
      * written.
      */
     if (sdslen(c->obuf) > buf_len) {
-        sdsrange(c->obuf, 0, -(buf_len+1));
+        sdsrange(c->obuf, 0, -(buf_len + 1));
         return 0;
     }
 
@@ -191,8 +192,7 @@ ssize_t cliWriteConn(redisContext *c, const char *buf, size_t buf_len)
 
 /* Wrapper around OpenSSL (libssl and libcrypto) initialisation
  */
-int cliSecureInit()
-{
+int cliSecureInit() {
 #ifdef USE_OPENSSL
     ERR_load_crypto_strings();
     SSL_load_error_strings();
@@ -204,17 +204,18 @@ int cliSecureInit()
 /* Create an sds from stdin */
 sds readArgFromStdin(void) {
     char buf[1024];
-    sds arg = sdsempty();
+    sds  arg = sdsempty();
 
-    while(1) {
-        int nread = read(fileno(stdin),buf,1024);
+    while (1) {
+        int nread = read(fileno(stdin), buf, 1024);
 
-        if (nread == 0) break;
+        if (nread == 0)
+            break;
         else if (nread == -1) {
             perror("Reading from standard input");
             exit(1);
         }
-        arg = sdscatlen(arg,buf,nread);
+        arg = sdscatlen(arg, buf, nread);
     }
     return arg;
 }
@@ -226,7 +227,7 @@ sds readArgFromStdin(void) {
  * The caller should free the resulting array of sds strings with
  * sdsfreesplitres().
  */
-sds *getSdsArrayFromArgv(int argc,char **argv, int quoted) {
+sds *getSdsArrayFromArgv(int argc, char **argv, int quoted) {
     sds *res = sds_malloc(sizeof(sds) * argc);
 
     for (int j = 0; j < argc; j++) {
@@ -238,7 +239,8 @@ sds *getSdsArrayFromArgv(int argc,char **argv, int quoted) {
                 return NULL;
             }
             res[j] = unquoted;
-        } else {
+        }
+        else {
             res[j] = sdsnew(argv[j]);
         }
     }
@@ -248,9 +250,9 @@ sds *getSdsArrayFromArgv(int argc,char **argv, int quoted) {
 
 /* Unquote a null-terminated string and return it as a binary-safe sds. */
 sds unquoteCString(char *str) {
-    int count;
+    int  count;
     sds *unquoted = sdssplitargs(str, &count);
-    sds res = NULL;
+    sds  res = NULL;
 
     if (unquoted && count == 1) {
         res = unquoted[0];
@@ -263,7 +265,6 @@ sds unquoteCString(char *str) {
     return res;
 }
 
-
 /* URL-style percent decoding. */
 #define isHexChar(c) (isdigit(c) || ((c) >= 'a' && (c) <= 'f'))
 #define decodeHexChar(c) (isdigit(c) ? (c) - '0' : (c) - 'a' + 10)
@@ -271,7 +272,7 @@ sds unquoteCString(char *str) {
 
 static sds percentDecode(const char *pe, size_t len) {
     const char *end = pe + len;
-    sds ret = sdsempty();
+    sds         ret = sdsempty();
     const char *curr = pe;
 
     while (curr < end) {
@@ -290,7 +291,8 @@ static sds percentDecode(const char *pe, size_t len) {
             char c = decodeHex(h, l);
             ret = sdscatlen(ret, &c, 1);
             curr++;
-        } else {
+        }
+        else {
             ret = sdscatlen(ret, curr++, 1);
         }
     }
@@ -306,7 +308,7 @@ static sds percentDecode(const char *pe, size_t len) {
  *   path:      ["/" [<db>]]
  *
  *  [1]: https://www.iana.org/assignments/uri-schemes/prov/redis */
-void parseRedisUri(const char *uri, const char* tool_name, cliConnInfo *connInfo, int *tls_flag) {
+void parseRedisUri(const char *uri, const char *tool_name, cliConnInfo *connInfo, int *tls_flag) {
 #ifdef USE_OPENSSL
     UNUSED(tool_name);
 #else
@@ -325,19 +327,22 @@ void parseRedisUri(const char *uri, const char* tool_name, cliConnInfo *connInfo
         *tls_flag = 1;
         curr += strlen(tlsscheme);
 #else
-        fprintf(stderr,"rediss:// is only supported when %s is compiled with OpenSSL\n", tool_name);
+        fprintf(stderr, "rediss:// is only supported when %s is compiled with OpenSSL\n", tool_name);
         exit(1);
 #endif
-    } else if (!strncasecmp(scheme, curr, strlen(scheme))) {
+    }
+    else if (!strncasecmp(scheme, curr, strlen(scheme))) {
         curr += strlen(scheme);
-    } else {
-        fprintf(stderr,"Invalid URI scheme\n");
+    }
+    else {
+        fprintf(stderr, "Invalid URI scheme\n");
         exit(1);
     }
-    if (curr == end) return;
+    if (curr == end)
+        return;
 
     /* Extract user info. */
-    if ((userinfo = strchr(curr,'@'))) {
+    if ((userinfo = strchr(curr, '@'))) {
         if ((username = strchr(curr, ':')) && username < userinfo) {
             connInfo->user = percentDecode(curr, username - curr);
             curr = username + 1;
@@ -346,7 +351,8 @@ void parseRedisUri(const char *uri, const char* tool_name, cliConnInfo *connInfo
         connInfo->auth = percentDecode(curr, userinfo - curr);
         curr = userinfo + 1;
     }
-    if (curr == end) return;
+    if (curr == end)
+        return;
 
     /* Extract host and port. */
     path = strchr(curr, '/');
@@ -360,39 +366,53 @@ void parseRedisUri(const char *uri, const char* tool_name, cliConnInfo *connInfo
         connInfo->hostip = sdsnewlen(curr, host - curr + 1);
     }
     curr = path ? path + 1 : end;
-    if (curr == end) return;
+    if (curr == end)
+        return;
 
     /* Extract database number. */
     connInfo->input_dbnum = atoi(curr);
 }
 
-void freeCliConnInfo(cliConnInfo connInfo){
-    if (connInfo.hostip) sdsfree(connInfo.hostip);
-    if (connInfo.auth) sdsfree(connInfo.auth);
-    if (connInfo.user) sdsfree(connInfo.user);
+void freeCliConnInfo(cliConnInfo connInfo) {
+    if (connInfo.hostip)
+        sdsfree(connInfo.hostip);
+    if (connInfo.auth)
+        sdsfree(connInfo.auth);
+    if (connInfo.user)
+        sdsfree(connInfo.user);
 }
 
 /*
  * Escape a Unicode string for JSON output (--json), following RFC 7159:
  * https://datatracker.ietf.org/doc/html/rfc7159#section-7
-*/
+ */
 sds escapeJsonString(sds s, const char *p, size_t len) {
-    s = sdscatlen(s,"\"",1);
-    while(len--) {
-        switch(*p) {
-        case '\\':
-        case '"':
-            s = sdscatprintf(s,"\\%c",*p);
-            break;
-        case '\n': s = sdscatlen(s,"\\n",2); break;
-        case '\f': s = sdscatlen(s,"\\f",2); break;
-        case '\r': s = sdscatlen(s,"\\r",2); break;
-        case '\t': s = sdscatlen(s,"\\t",2); break;
-        case '\b': s = sdscatlen(s,"\\b",2); break;
-        default:
-            s = sdscatprintf(s,*(unsigned char *)p <= 0x1f ? "\\u%04x" : "%c",*p);
+    s = sdscatlen(s, "\"", 1);
+    while (len--) {
+        switch (*p) {
+            case '\\':
+            case '"':
+                s = sdscatprintf(s, "\\%c", *p);
+                break;
+            case '\n':
+                s = sdscatlen(s, "\\n", 2);
+                break;
+            case '\f':
+                s = sdscatlen(s, "\\f", 2);
+                break;
+            case '\r':
+                s = sdscatlen(s, "\\r", 2);
+                break;
+            case '\t':
+                s = sdscatlen(s, "\\t", 2);
+                break;
+            case '\b':
+                s = sdscatlen(s, "\\b", 2);
+                break;
+            default:
+                s = sdscatprintf(s, *(unsigned char *)p <= 0x1f ? "\\u%04x" : "%c", *p);
         }
         p++;
     }
-    return sdscatlen(s,"\"",1);
+    return sdscatlen(s, "\"", 1);
 }

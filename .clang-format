@@ -1,0 +1,75 @@
+SortIncludes: Never
+#基础样式
+BasedOnStyle: Google
+#指针的*的挨着哪边
+PointerAlignment: Left
+#访问修饰符前的空格
+AccessModifierOffset: -4
+# 缩进宽度
+IndentWidth: 4
+# 连续的空行保留几行
+MaxEmptyLinesToKeep: 1
+# 圆括号的换行方式
+BreakBeforeBraces: Custom
+# 是否允许短方法单行
+AllowShortFunctionsOnASingleLine: None
+# 支持一行的if
+AllowShortIfStatementsOnASingleLine: false
+# 在未封闭(括号的开始和结束不在同一行)的括号中的代码是否对齐
+AlignAfterOpenBracket: AlwaysBreak
+# switch的case缩进
+IndentCaseLabels: true
+# 针对OC的block的缩进宽度
+ObjCBlockIndentWidth: 4
+# 针对OC,属性名后加空格
+ObjCSpaceAfterProperty: true
+# 每行字符的长度
+ColumnLimit: 360
+# 注释对齐
+AlignTrailingComments: true
+# 括号后加空格
+SpaceAfterCStyleCast: false
+# 换行的时候对齐操作符
+AlignOperands: true
+# 中括号两边空格 []
+SpacesInSquareBrackets: false
+# 容器类的空格 例如 OC的字典
+SpacesInContainerLiterals: true
+# 在构造函数初始化时按逗号断行,并以冒号对齐
+BreakConstructorInitializersBeforeComma: true
+# 函数参数换行
+AllowAllParametersOfDeclarationOnNextLine: false
+#在续行(#     下一行)时的缩进长度
+ContinuationIndentWidth: 4
+# tab键盘的宽度
+TabWidth: 4
+# 赋值运算符前加空格
+SpaceBeforeAssignmentOperators: true
+# 行尾的注释前加1个空格
+SpacesBeforeTrailingComments: 1
+# 大括号换行,只有当BreakBeforeBraces设置为Custom时才有效
+BraceWrapping:
+  # class定义后面
+  AfterClass: false
+  # 控制语句后面
+  AfterControlStatement: "false"
+  # enum定义后面
+  AfterEnum: false
+  # 函数定义后面
+  AfterFunction: false
+  # 命名空间定义后面
+  AfterNamespace: false
+  # ObjC定义后面
+  AfterObjCDeclaration: false
+  # struct定义后面
+  AfterStruct: false
+  # union定义后面
+  AfterUnion: true
+  # catch之前
+  BeforeCatch: true
+  # else之前
+  BeforeElse: true
+  # 缩进大括号
+  IndentBraces: false
+
+##  原文链接：https://blog.csdn.net/sam2009944096/article/details/100589454

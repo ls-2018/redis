@@ -37,20 +37,15 @@
 #include <string.h>
 
 /* Client state change callback. */
-void clientChangeCallback(RedisModuleCtx *ctx, RedisModuleEvent e, uint64_t sub, void *data)
-{
+void clientChangeCallback(RedisModuleCtx *ctx, RedisModuleEvent e, uint64_t sub, void *data) {
     REDISMODULE_NOT_USED(ctx);
     REDISMODULE_NOT_USED(e);
 
     RedisModuleClientInfo *ci = data;
-    printf("Client %s event for client #%llu %s:%d\n",
-        (sub == REDISMODULE_SUBEVENT_CLIENT_CHANGE_CONNECTED) ?
-            "connection" : "disconnection",
-        (unsigned long long)ci->id,ci->addr,ci->port);
+    printf("Client %s event for client #%llu %s:%d\n", (sub == REDISMODULE_SUBEVENT_CLIENT_CHANGE_CONNECTED) ? "connection" : "disconnection", (unsigned long long)ci->id, ci->addr, ci->port);
 }
 
-void flushdbCallback(RedisModuleCtx *ctx, RedisModuleEvent e, uint64_t sub, void *data)
-{
+void flushdbCallback(RedisModuleCtx *ctx, RedisModuleEvent e, uint64_t sub, void *data) {
     REDISMODULE_NOT_USED(ctx);
     REDISMODULE_NOT_USED(e);
 
@@ -58,18 +53,20 @@ void flushdbCallback(RedisModuleCtx *ctx, RedisModuleEvent e, uint64_t sub, void
     if (sub == REDISMODULE_SUBEVENT_FLUSHDB_START) {
         if (fi->dbnum != -1) {
             RedisModuleCallReply *reply;
-            reply = RedisModule_Call(ctx,"DBSIZE","");
+            reply = RedisModule_Call(ctx, "DBSIZE", "");
             long long numkeys = RedisModule_CallReplyInteger(reply);
-            printf("FLUSHDB event of database %d started (%lld keys in DB)\n",
-                fi->dbnum, numkeys);
+            printf("FLUSHDB event of database %d started (%lld keys in DB)\n", fi->dbnum, numkeys);
             RedisModule_FreeCallReply(reply);
-        } else {
+        }
+        else {
             printf("FLUSHALL event started\n");
         }
-    } else {
+    }
+    else {
         if (fi->dbnum != -1) {
-            printf("FLUSHDB event of database %d ended\n",fi->dbnum);
-        } else {
+            printf("FLUSHDB event of database %d ended\n", fi->dbnum);
+        }
+        else {
             printf("FLUSHALL event ended\n");
         }
     }
@@ -81,12 +78,10 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    if (RedisModule_Init(ctx,"hellohook",1,REDISMODULE_APIVER_1)
-        == REDISMODULE_ERR) return REDISMODULE_ERR;
+    if (RedisModule_Init(ctx, "hellohook", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR)
+        return REDISMODULE_ERR;
 
-    RedisModule_SubscribeToServerEvent(ctx,
-        RedisModuleEvent_ClientChange, clientChangeCallback);
-    RedisModule_SubscribeToServerEvent(ctx,
-        RedisModuleEvent_FlushDB, flushdbCallback);
+    RedisModule_SubscribeToServerEvent(ctx, RedisModuleEvent_ClientChange, clientChangeCallback);
+    RedisModule_SubscribeToServerEvent(ctx, RedisModuleEvent_FlushDB, flushdbCallback);
     return REDISMODULE_OK;
 }

@@ -12,24 +12,21 @@
  */
 
 typedef struct {
-	int32_t tick;
-	int32_t nticks;
+    int32_t tick;
+    int32_t nticks;
 } ticker_t;
 
-static inline void
-ticker_init(ticker_t *ticker, int32_t nticks) {
-	ticker->tick = nticks;
-	ticker->nticks = nticks;
+static inline void ticker_init(ticker_t *ticker, int32_t nticks) {
+    ticker->tick = nticks;
+    ticker->nticks = nticks;
 }
 
-static inline void
-ticker_copy(ticker_t *ticker, const ticker_t *other) {
-	*ticker = *other;
+static inline void ticker_copy(ticker_t *ticker, const ticker_t *other) {
+    *ticker = *other;
 }
 
-static inline int32_t
-ticker_read(const ticker_t *ticker) {
-	return ticker->tick;
+static inline int32_t ticker_read(const ticker_t *ticker) {
+    return ticker->tick;
 }
 
 /*
@@ -51,41 +48,37 @@ ticker_read(const ticker_t *ticker) {
  * worth the hassle, but this is on the fast path of both malloc and free (via
  * tcache_event).
  */
-#if defined(__GNUC__) && !defined(__clang__)				\
-    && (defined(__x86_64__) || defined(__i386__))
+#if defined(__GNUC__) && !defined(__clang__) && (defined(__x86_64__) || defined(__i386__))
 JEMALLOC_NOINLINE
 #endif
-static bool
-ticker_fixup(ticker_t *ticker) {
-	ticker->tick = ticker->nticks;
-	return true;
+
+static bool ticker_fixup(ticker_t *ticker) {
+    ticker->tick = ticker->nticks;
+    return true;
 }
 
-static inline bool
-ticker_ticks(ticker_t *ticker, int32_t nticks) {
-	ticker->tick -= nticks;
-	if (unlikely(ticker->tick < 0)) {
-		return ticker_fixup(ticker);
-	}
-	return false;
+static inline bool ticker_ticks(ticker_t *ticker, int32_t nticks) {
+    ticker->tick -= nticks;
+    if (unlikely(ticker->tick < 0)) {
+        return ticker_fixup(ticker);
+    }
+    return false;
 }
 
-static inline bool
-ticker_tick(ticker_t *ticker) {
-	return ticker_ticks(ticker, 1);
+static inline bool ticker_tick(ticker_t *ticker) {
+    return ticker_ticks(ticker, 1);
 }
 
-/* 
+/*
  * Try to tick.  If ticker would fire, return true, but rely on
  * slowpath to reset ticker.
  */
-static inline bool
-ticker_trytick(ticker_t *ticker) {
-	--ticker->tick;
-	if (unlikely(ticker->tick < 0)) {
-		return true;
-	}
-	return false;
+static inline bool ticker_trytick(ticker_t *ticker) {
+    --ticker->tick;
+    if (unlikely(ticker->tick < 0)) {
+        return true;
+    }
+    return false;
 }
 
 #endif /* JEMALLOC_INTERNAL_TICKER_H */

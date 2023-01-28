@@ -21,7 +21,7 @@
  * with other types of time.*/
 typedef uint64_t monotime;
 
-/* Retrieve counter of micro-seconds relative to an arbitrary point in time.  */
+// 获取任意时间的微妙数
 extern monotime (*getMonotonicUs)(void);
 
 typedef enum monotonic_clock_type {

@@ -18,14 +18,14 @@ int stream_add(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
         return REDISMODULE_OK;
     }
 
-    RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_WRITE);
+    RedisModuleKey     *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_WRITE);
     RedisModuleStreamID id;
-    if (RedisModule_StreamAdd(key, REDISMODULE_STREAM_ADD_AUTOID, &id,
-                              &argv[2], (argc-2)/2) == REDISMODULE_OK) {
+    if (RedisModule_StreamAdd(key, REDISMODULE_STREAM_ADD_AUTOID, &id, &argv[2], (argc - 2) / 2) == REDISMODULE_OK) {
         RedisModuleString *id_str = RedisModule_CreateStringFromStreamID(ctx, &id);
         RedisModule_ReplyWithString(ctx, id_str);
         RedisModule_FreeString(ctx, id_str);
-    } else {
+    }
+    else {
         RedisModule_ReplyWithError(ctx, "ERR StreamAdd failed");
     }
     RedisModule_CloseKey(key);
@@ -52,8 +52,7 @@ int stream_addn(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
 
     RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_WRITE);
     for (i = 0; i < n; i++) {
-        if (RedisModule_StreamAdd(key, REDISMODULE_STREAM_ADD_AUTOID, NULL,
-                                  &argv[3], (argc-3)/2) == REDISMODULE_ERR)
+        if (RedisModule_StreamAdd(key, REDISMODULE_STREAM_ADD_AUTOID, NULL, &argv[3], (argc - 3) / 2) == REDISMODULE_ERR)
             break;
     }
     RedisModule_ReplyWithLongLong(ctx, i);
@@ -63,7 +62,8 @@ int stream_addn(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
 
 /* STREAM.DELETE key stream-id */
 int stream_delete(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
-    if (argc != 3) return RedisModule_WrongArity(ctx);
+    if (argc != 3)
+        return RedisModule_WrongArity(ctx);
     RedisModuleStreamID id;
     if (RedisModule_StringToStreamID(argv[2], &id) != REDISMODULE_OK) {
         return RedisModule_ReplyWithError(ctx, "Invalid stream ID");
@@ -71,7 +71,8 @@ int stream_delete(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_WRITE);
     if (RedisModule_StreamDelete(key, &id) == REDISMODULE_OK) {
         RedisModule_ReplyWithSimpleString(ctx, "OK");
-    } else {
+    }
+    else {
         RedisModule_ReplyWithError(ctx, "ERR StreamDelete failed");
     }
     RedisModule_CloseKey(key);
@@ -94,16 +95,14 @@ int stream_range(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     }
 
     RedisModuleStreamID startid, endid;
-    if (RedisModule_StringToStreamID(argv[2], &startid) != REDISMODULE_OK ||
-        RedisModule_StringToStreamID(argv[3], &endid) != REDISMODULE_OK) {
+    if (RedisModule_StringToStreamID(argv[2], &startid) != REDISMODULE_OK || RedisModule_StringToStreamID(argv[3], &endid) != REDISMODULE_OK) {
         RedisModule_ReplyWithError(ctx, "Invalid stream ID");
         return REDISMODULE_OK;
     }
 
     /* If startid > endid, we swap and set the reverse flag. */
     int flags = 0;
-    if (startid.ms > endid.ms ||
-        (startid.ms == endid.ms && startid.seq > endid.seq)) {
+    if (startid.ms > endid.ms || (startid.ms == endid.ms && startid.seq > endid.seq)) {
         RedisModuleStreamID tmp = startid;
         startid = endid;
         endid = tmp;
@@ -111,10 +110,9 @@ int stream_range(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     }
 
     /* Open key and start iterator. */
-    int openflags = REDISMODULE_READ | REDISMODULE_WRITE;
+    int             openflags = REDISMODULE_READ | REDISMODULE_WRITE;
     RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], openflags);
-    if (RedisModule_StreamIteratorStart(key, flags,
-                                        &startid, &endid) != REDISMODULE_OK) {
+    if (RedisModule_StreamIteratorStart(key, flags, &startid, &endid) != REDISMODULE_OK) {
         /* Key is not a stream, etc. */
         RedisModule_ReplyWithError(ctx, "ERR StreamIteratorStart failed");
         RedisModule_CloseKey(key);
@@ -122,23 +120,20 @@ int stream_range(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     }
 
     /* Check error handling: Delete current entry when no current entry. */
-    assert(RedisModule_StreamIteratorDelete(key) ==
-           REDISMODULE_ERR);
+    assert(RedisModule_StreamIteratorDelete(key) == REDISMODULE_ERR);
     assert(errno == ENOENT);
 
     /* Check error handling: Fetch fields when no current entry. */
-    assert(RedisModule_StreamIteratorNextField(key, NULL, NULL) ==
-           REDISMODULE_ERR);
+    assert(RedisModule_StreamIteratorNextField(key, NULL, NULL) == REDISMODULE_ERR);
     assert(errno == ENOENT);
 
     /* Return array. */
     RedisModule_ReplyWithArray(ctx, REDISMODULE_POSTPONED_LEN);
     RedisModule_AutoMemory(ctx);
     RedisModuleStreamID id;
-    long numfields;
-    long len = 0;
-    while (RedisModule_StreamIteratorNextID(key, &id,
-                                            &numfields) == REDISMODULE_OK) {
+    long                numfields;
+    long                len = 0;
+    while (RedisModule_StreamIteratorNextID(key, &id, &numfields) == REDISMODULE_OK) {
         RedisModule_ReplyWithArray(ctx, 2);
         RedisModuleString *id_str = RedisModule_CreateStringFromStreamID(ctx, &id);
         RedisModule_ReplyWithString(ctx, id_str);
@@ -146,21 +141,20 @@ int stream_range(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
         int delete = 0;
         RedisModuleString *field, *value;
         for (long i = 0; i < numfields; i++) {
-            assert(RedisModule_StreamIteratorNextField(key, &field, &value) ==
-                   REDISMODULE_OK);
+            assert(RedisModule_StreamIteratorNextField(key, &field, &value) == REDISMODULE_OK);
             RedisModule_ReplyWithString(ctx, field);
             RedisModule_ReplyWithString(ctx, value);
             /* check if this is a "selfdestruct" field */
-            size_t field_len;
+            size_t      field_len;
             const char *field_str = RedisModule_StringPtrLen(field, &field_len);
-            if (!strncmp(field_str, "selfdestruct", field_len)) delete = 1;
+            if (!strncmp(field_str, "selfdestruct", field_len))
+                delete = 1;
         }
         if (delete) {
             assert(RedisModule_StreamIteratorDelete(key) == REDISMODULE_OK);
         }
         /* check error handling: no more fields to fetch */
-        assert(RedisModule_StreamIteratorNextField(key, &field, &value) ==
-               REDISMODULE_ERR);
+        assert(RedisModule_StreamIteratorNextField(key, &field, &value) == REDISMODULE_ERR);
         assert(errno == ENOENT);
         len++;
     }
@@ -180,23 +174,25 @@ int stream_trim(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     }
 
     /* Parse args */
-    int trim_by_id = 0; /* 0 = maxlen, 1 = minid */
-    long long maxlen;
+    int                 trim_by_id = 0; /* 0 = maxlen, 1 = minid */
+    long long           maxlen;
     RedisModuleStreamID minid;
-    size_t arg_len;
-    const char *arg = RedisModule_StringPtrLen(argv[2], &arg_len);
+    size_t              arg_len;
+    const char         *arg = RedisModule_StringPtrLen(argv[2], &arg_len);
     if (!strcasecmp(arg, "minid")) {
         trim_by_id = 1;
         if (RedisModule_StringToStreamID(argv[4], &minid) != REDISMODULE_OK) {
             RedisModule_ReplyWithError(ctx, "ERR Invalid stream ID");
             return REDISMODULE_OK;
         }
-    } else if (!strcasecmp(arg, "maxlen")) {
+    }
+    else if (!strcasecmp(arg, "maxlen")) {
         if (RedisModule_StringToLongLong(argv[4], &maxlen) == REDISMODULE_ERR) {
             RedisModule_ReplyWithError(ctx, "ERR Maxlen must be a number");
             return REDISMODULE_OK;
         }
-    } else {
+    }
+    else {
         RedisModule_ReplyWithError(ctx, "ERR Invalid arguments");
         return REDISMODULE_OK;
     }
@@ -206,26 +202,30 @@ int stream_trim(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     arg = RedisModule_StringPtrLen(argv[3], &arg_len);
     if (arg_len == 1 && arg[0] == '~') {
         flags = REDISMODULE_STREAM_TRIM_APPROX;
-    } else if (arg_len == 1 && arg[0] == '=') {
+    }
+    else if (arg_len == 1 && arg[0] == '=') {
         flags = 0;
-    } else {
+    }
+    else {
         RedisModule_ReplyWithError(ctx, "ERR Invalid approx-or-exact mark");
         return REDISMODULE_OK;
     }
 
     /* Trim */
     RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_WRITE);
-    long long trimmed;
+    long long       trimmed;
     if (trim_by_id) {
         trimmed = RedisModule_StreamTrimByID(key, flags, &minid);
-    } else {
+    }
+    else {
         trimmed = RedisModule_StreamTrimByLength(key, flags, maxlen);
     }
 
     /* Return result */
     if (trimmed < 0) {
         RedisModule_ReplyWithError(ctx, "ERR Trimming failed");
-    } else {
+    }
+    else {
         RedisModule_ReplyWithLongLong(ctx, trimmed);
     }
     RedisModule_CloseKey(key);
@@ -238,20 +238,15 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
     if (RedisModule_Init(ctx, "stream", 1, REDISMODULE_APIVER_1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
-    if (RedisModule_CreateCommand(ctx, "stream.add", stream_add, "write",
-                                  1, 1, 1) == REDISMODULE_ERR)
+    if (RedisModule_CreateCommand(ctx, "stream.add", stream_add, "write", 1, 1, 1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
-    if (RedisModule_CreateCommand(ctx, "stream.addn", stream_addn, "write",
-                                  1, 1, 1) == REDISMODULE_ERR)
+    if (RedisModule_CreateCommand(ctx, "stream.addn", stream_addn, "write", 1, 1, 1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
-    if (RedisModule_CreateCommand(ctx, "stream.delete", stream_delete, "write",
-                                  1, 1, 1) == REDISMODULE_ERR)
+    if (RedisModule_CreateCommand(ctx, "stream.delete", stream_delete, "write", 1, 1, 1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
-    if (RedisModule_CreateCommand(ctx, "stream.range", stream_range, "write",
-                                  1, 1, 1) == REDISMODULE_ERR)
+    if (RedisModule_CreateCommand(ctx, "stream.range", stream_range, "write", 1, 1, 1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
-    if (RedisModule_CreateCommand(ctx, "stream.trim", stream_trim, "write",
-                                  1, 1, 1) == REDISMODULE_ERR)
+    if (RedisModule_CreateCommand(ctx, "stream.trim", stream_trim, "write", 1, 1, 1) == REDISMODULE_ERR)
         return REDISMODULE_ERR;
 
     return REDISMODULE_OK;

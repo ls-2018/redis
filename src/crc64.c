@@ -28,6 +28,7 @@
 
 #include "crc64.h"
 #include "crcspeed.h"
+
 static uint64_t crc64_table[8][256] = {{0}};
 
 #define POLY UINT64_C(0xad93d23594c935a9)
@@ -78,7 +79,7 @@ static inline uint_fast64_t crc_reflect(uint_fast64_t data, size_t data_len) {
 }
 
 /**
- *  Update the crc value with new data.
+ *  使用新的数据 更新crc值
  *
  * \param crc      The current crc value.
  * \param data     Pointer to a buffer of \a data_len bytes.
@@ -86,7 +87,7 @@ static inline uint_fast64_t crc_reflect(uint_fast64_t data, size_t data_len) {
  * \return         The updated crc value.
  ******************************************************************************/
 uint64_t _crc64(uint_fast64_t crc, const void *in_data, const uint64_t len) {
-    const uint8_t *data = in_data;
+    const uint8_t     *data = in_data;
     unsigned long long bit;
 
     for (uint64_t offset = 0; offset < len; offset++) {
@@ -112,14 +113,14 @@ uint64_t _crc64(uint_fast64_t crc, const void *in_data, const uint64_t len) {
 
 /******************** END GENERATED PYCRC FUNCTIONS ********************/
 
-/* Initializes the 16KB lookup tables. */
-void crc64_init(void) {
+// 初始化16KB的查找表
+void crc64_init(void) { // 初始化16KB的查找表
     crcspeed64native_init(_crc64, crc64_table);
 }
 
 /* Compute crc64 */
 uint64_t crc64(uint64_t crc, const unsigned char *s, uint64_t l) {
-    return crcspeed64native(crc64_table, crc, (void *) s, l);
+    return crcspeed64native(crc64_table, crc, (void *)s, l);
 }
 
 /* Test main */
@@ -131,23 +132,20 @@ int crc64Test(int argc, char *argv[], int flags) {
     UNUSED(argc);
     UNUSED(argv);
     UNUSED(flags);
-    crc64_init();
-    printf("[calcula]: e9c6d914c4b8d9ca == %016" PRIx64 "\n",
-           (uint64_t)_crc64(0, "123456789", 9));
-    printf("[64speed]: e9c6d914c4b8d9ca == %016" PRIx64 "\n",
-           (uint64_t)crc64(0, (unsigned char*)"123456789", 9));
-    char li[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed "
-                "do eiusmod tempor incididunt ut labore et dolore magna "
-                "aliqua. Ut enim ad minim veniam, quis nostrud exercitation "
-                "ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis "
-                "aute irure dolor in reprehenderit in voluptate velit esse "
-                "cillum dolore eu fugiat nulla pariatur. Excepteur sint "
-                "occaecat cupidatat non proident, sunt in culpa qui officia "
-                "deserunt mollit anim id est laborum.";
-    printf("[calcula]: c7794709e69683b3 == %016" PRIx64 "\n",
-           (uint64_t)_crc64(0, li, sizeof(li)));
-    printf("[64speed]: c7794709e69683b3 == %016" PRIx64 "\n",
-           (uint64_t)crc64(0, (unsigned char*)li, sizeof(li)));
+    crc64_init(); // 初始化16KB的查找表
+    printf("[calcula]: e9c6d914c4b8d9ca == %016" PRIx64 "\n", (uint64_t)_crc64(0, "123456789", 9));
+    printf("[64speed]: e9c6d914c4b8d9ca == %016" PRIx64 "\n", (uint64_t)crc64(0, (unsigned char *)"123456789", 9));
+    char li[] =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed "
+        "do eiusmod tempor incididunt ut labore et dolore magna "
+        "aliqua. Ut enim ad minim veniam, quis nostrud exercitation "
+        "ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis "
+        "aute irure dolor in reprehenderit in voluptate velit esse "
+        "cillum dolore eu fugiat nulla pariatur. Excepteur sint "
+        "occaecat cupidatat non proident, sunt in culpa qui officia "
+        "deserunt mollit anim id est laborum.";
+    printf("[calcula]: c7794709e69683b3 == %016" PRIx64 "\n", (uint64_t)_crc64(0, li, sizeof(li)));
+    printf("[64speed]: c7794709e69683b3 == %016" PRIx64 "\n", (uint64_t)crc64(0, (unsigned char *)li, sizeof(li)));
     return 0;
 }
 

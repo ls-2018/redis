@@ -10,8 +10,9 @@
 
 void getCallback(redisAsyncContext *c, void *r, void *privdata) {
     redisReply *reply = r;
-    if (reply == NULL) return;
-    printf("argv[%s]: %s\n", (char*)privdata, reply->str);
+    if (reply == NULL)
+        return;
+    printf("argv[%s]: %s\n", (char *)privdata, reply->str);
 
     /* Disconnect after receiving the reply to GET */
     redisAsyncDisconnect(c);
@@ -33,35 +34,33 @@ void disconnectCallback(const redisAsyncContext *c, int status) {
     printf("Disconnected...\n");
 }
 
-int main (int argc, char **argv) {
+int main(int argc, char **argv) {
 #ifndef _WIN32
     signal(SIGPIPE, SIG_IGN);
 #endif
 
     struct event_base *base = event_base_new();
     if (argc < 5) {
-        fprintf(stderr,
-                "Usage: %s <key> <host> <port> <cert> <certKey> [ca]\n", argv[0]);
+        fprintf(stderr, "Usage: %s <key> <host> <port> <cert> <certKey> [ca]\n", argv[0]);
         exit(1);
     }
 
     const char *value = argv[1];
-    size_t nvalue = strlen(value);
+    size_t      nvalue = strlen(value);
 
     const char *hostname = argv[2];
-    int port = atoi(argv[3]);
+    int         port = atoi(argv[3]);
 
     const char *cert = argv[4];
     const char *certKey = argv[5];
     const char *caCert = argc > 5 ? argv[6] : NULL;
 
-    redisSSLContext *ssl;
+    redisSSLContext     *ssl;
     redisSSLContextError ssl_error;
 
     redisInitOpenSSL();
 
-    ssl = redisCreateSSLContext(caCert, NULL,
-            cert, certKey, NULL, &ssl_error);
+    ssl = redisCreateSSLContext(caCert, NULL, cert, certKey, NULL, &ssl_error);
     if (!ssl) {
         printf("Error: %s\n", redisSSLContextGetError(ssl_error));
         return 1;
@@ -78,11 +77,11 @@ int main (int argc, char **argv) {
         exit(1);
     }
 
-    redisLibeventAttach(c,base);
-    redisAsyncSetConnectCallback(c,connectCallback);
-    redisAsyncSetDisconnectCallback(c,disconnectCallback);
+    redisLibeventAttach(c, base);
+    redisAsyncSetConnectCallback(c, connectCallback);
+    redisAsyncSetDisconnectCallback(c, disconnectCallback);
     redisAsyncCommand(c, NULL, NULL, "SET key %b", value, nvalue);
-    redisAsyncCommand(c, getCallback, (char*)"end-1", "GET key");
+    redisAsyncCommand(c, getCallback, (char *)"end-1", "GET key");
     event_base_dispatch(base);
 
     redisFreeSSLContext(ssl);

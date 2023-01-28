@@ -31,7 +31,7 @@
 
 /* ================================ MULTI/EXEC ============================== */
 
-/* Client state initialization for MULTI/EXEC */
+// MULTI/EXEC 初始化客户端事务相关的属性
 void initClientMultiState(client *c) {
     c->mstate.commands = NULL;
     c->mstate.count = 0;
@@ -45,11 +45,10 @@ void freeClientMultiState(client *c) {
     int j;
 
     for (j = 0; j < c->mstate.count; j++) {
-        int i;
-        multiCmd *mc = c->mstate.commands+j;
+        int       i;
+        multiCmd *mc = c->mstate.commands + j;
 
-        for (i = 0; i < mc->argc; i++)
-            decrRefCount(mc->argv[i]);
+        for (i = 0; i < mc->argc; i++) decrRefCount(mc->argv[i]);
         zfree(mc->argv);
     }
     zfree(c->mstate.commands);
@@ -63,12 +62,11 @@ void queueMultiCommand(client *c) {
      * this is useful in case client sends these in a pipeline, or doesn't
      * bother to read previous responses and didn't notice the multi was already
      * aborted. */
-    if (c->flags & (CLIENT_DIRTY_CAS|CLIENT_DIRTY_EXEC))
+    if (c->flags & (CLIENT_DIRTY_CAS | CLIENT_DIRTY_EXEC))
         return;
 
-    c->mstate.commands = zrealloc(c->mstate.commands,
-            sizeof(multiCmd)*(c->mstate.count+1));
-    mc = c->mstate.commands+c->mstate.count;
+    c->mstate.commands = zrealloc(c->mstate.commands, sizeof(multiCmd) * (c->mstate.count + 1));
+    mc = c->mstate.commands + c->mstate.count;
     mc->cmd = c->cmd;
     mc->argc = c->argc;
     mc->argv = c->argv;
@@ -77,7 +75,7 @@ void queueMultiCommand(client *c) {
     c->mstate.count++;
     c->mstate.cmd_flags |= c->cmd->flags;
     c->mstate.cmd_inv_flags |= ~c->cmd->flags;
-    c->mstate.argv_len_sums += c->argv_len_sum + sizeof(robj*)*c->argc;
+    c->mstate.argv_len_sums += c->argv_len_sum + sizeof(robj *) * c->argc;
 
     /* Reset the client's args since we copied them into the mstate and shouldn't
      * reference them from c anymore. */
@@ -86,38 +84,40 @@ void queueMultiCommand(client *c) {
     c->argv_len_sum = 0;
     c->argv_len = 0;
 }
-
+// 查询的 key 不在当前实例时,如果 client 执行的是 EXEC 命令,discardTransaction 函数就会被调用
 void discardTransaction(client *c) {
+    //    会放弃事务的执行,清空当前 client 之前缓存的命令,并对事务中的 key 执行 unWatch 操作,最后重置 client 的事务标记.
     freeClientMultiState(c);
     initClientMultiState(c);
-    c->flags &= ~(CLIENT_MULTI|CLIENT_DIRTY_CAS|CLIENT_DIRTY_EXEC);
+    c->flags &= ~(CLIENT_MULTI | CLIENT_DIRTY_CAS | CLIENT_DIRTY_EXEC);
     unwatchAllKeys(c);
 }
 
-/* Flag the transaction as DIRTY_EXEC so that EXEC will fail.
- * Should be called every time there is an error while queueing a command. */
+// 执行事务时, 将事务状态设为 DIRTY_EXEC ,让之后的 EXEC 命令失败.
+// * 每次在入队命令出错时调用
 void flagTransaction(client *c) {
-    if (c->flags & CLIENT_MULTI)
+    if (c->flags & CLIENT_MULTI) {
         c->flags |= CLIENT_DIRTY_EXEC;
+    }
 }
 
 void multiCommand(client *c) {
     if (c->flags & CLIENT_MULTI) {
-        addReplyError(c,"MULTI calls can not be nested");
+        addReplyError(c, "MULTI calls can not be nested");
         return;
     }
     c->flags |= CLIENT_MULTI;
 
-    addReply(c,shared.ok);
+    addReply(c, shared.ok);
 }
 
 void discardCommand(client *c) {
     if (!(c->flags & CLIENT_MULTI)) {
-        addReplyError(c,"DISCARD without MULTI");
+        addReplyError(c, "DISCARD without MULTI");
         return;
     }
     discardTransaction(c);
-    addReply(c,shared.ok);
+    addReply(c, shared.ok);
 }
 
 /* Aborts a transaction, with a specific error message.
@@ -128,23 +128,24 @@ void discardCommand(client *c) {
 void execCommandAbort(client *c, sds error) {
     discardTransaction(c);
 
-    if (error[0] == '-') error++;
+    if (error[0] == '-')
+        error++;
     addReplyErrorFormat(c, "-EXECABORT Transaction discarded because of: %s", error);
 
     /* Send EXEC to clients waiting data from MONITOR. We did send a MULTI
      * already, and didn't send any of the queued commands, now we'll just send
      * EXEC so it is clear that the transaction is over. */
-    replicationFeedMonitors(c,server.monitors,c->db->id,c->argv,c->argc);
+    replicationFeedMonitors(c, server.monitors, c->db->id, c->argv, c->argc);
 }
 
 void execCommand(client *c) {
-    int j;
-    robj **orig_argv;
-    int orig_argc, orig_argv_len;
+    int                  j;
+    robj               **orig_argv;
+    int                  orig_argc, orig_argv_len;
     struct redisCommand *orig_cmd;
 
     if (!(c->flags & CLIENT_MULTI)) {
-        addReplyError(c,"EXEC without MULTI");
+        addReplyError(c, "EXEC without MULTI");
         return;
     }
 
@@ -162,7 +163,8 @@ void execCommand(client *c) {
     if (c->flags & (CLIENT_DIRTY_CAS | CLIENT_DIRTY_EXEC)) {
         if (c->flags & CLIENT_DIRTY_EXEC) {
             addReplyErrorObject(c, shared.execaborterr);
-        } else {
+        }
+        else {
             addReply(c, shared.nullarray[c->resp]);
         }
 
@@ -184,7 +186,7 @@ void execCommand(client *c) {
     orig_argv_len = c->argv_len;
     orig_argc = c->argc;
     orig_cmd = c->cmd;
-    addReplyArrayLen(c,c->mstate.count);
+    addReplyArrayLen(c, c->mstate.count);
     for (j = 0; j < c->mstate.count; j++) {
         c->argc = c->mstate.commands[j].argc;
         c->argv = c->mstate.commands[j].argv;
@@ -194,35 +196,39 @@ void execCommand(client *c) {
         /* ACL permissions are also checked at the time of execution in case
          * they were changed after the commands were queued. */
         int acl_errpos;
-        int acl_retval = ACLCheckAllPerm(c,&acl_errpos);
+        int acl_retval = ACLCheckAllPerm(c, &acl_errpos);
         if (acl_retval != ACL_OK) {
             char *reason;
             switch (acl_retval) {
-            case ACL_DENIED_CMD:
-                reason = "no permission to execute the command or subcommand";
-                break;
-            case ACL_DENIED_KEY:
-                reason = "no permission to touch the specified keys";
-                break;
-            case ACL_DENIED_CHANNEL:
-                reason = "no permission to access one of the channels used "
-                         "as arguments";
-                break;
-            default:
-                reason = "no permission";
-                break;
+                case ACL_DENIED_CMD:
+                    reason = "no permission to execute the command or subcommand";
+                    break;
+                case ACL_DENIED_KEY:
+                    reason = "no permission to touch the specified keys";
+                    break;
+                case ACL_DENIED_CHANNEL:
+                    reason =
+                        "no permission to access one of the channels used "
+                        "as arguments";
+                    break;
+                default:
+                    reason = "no permission";
+                    break;
             }
-            addACLLogEntry(c,acl_retval,ACL_LOG_CTX_MULTI,acl_errpos,NULL,NULL);
-            addReplyErrorFormat(c,
+            addACLLogEntry(c, acl_retval, ACL_LOG_CTX_MULTI, acl_errpos, NULL, NULL);
+            addReplyErrorFormat(
+                c,
                 "-NOPERM ACLs rules changed between the moment the "
                 "transaction was accumulated and the EXEC call. "
                 "This command is no longer allowed for the "
-                "following reason: %s", reason);
-        } else {
+                "following reason: %s",
+                reason);
+        }
+        else {
             if (c->id == CLIENT_ID_AOF)
-                call(c,CMD_CALL_NONE);
+                call(c, CMD_CALL_NONE);
             else
-                call(c,CMD_CALL_FULL);
+                call(c, CMD_CALL_FULL);
 
             serverAssert((c->flags & CLIENT_BLOCKED) == 0);
         }
@@ -260,31 +266,31 @@ void execCommand(client *c) {
  * DB. This struct is also referenced from db->watched_keys dict, where the
  * values are lists of watchedKey pointers. */
 typedef struct watchedKey {
-    robj *key;
+    robj    *key;
     redisDb *db;
-    client *client;
-    unsigned expired:1; /* Flag that we're watching an already expired key. */
+    client  *client;
+    unsigned expired : 1; /* Flag that we're watching an already expired key. */
 } watchedKey;
 
 /* Watch for the specified key */
 void watchForKey(client *c, robj *key) {
-    list *clients = NULL;
-    listIter li;
-    listNode *ln;
+    list       *clients = NULL;
+    listIter    li;
+    listNode   *ln;
     watchedKey *wk;
 
     /* Check if we are already watching for this key */
-    listRewind(c->watched_keys,&li);
-    while((ln = listNext(&li))) {
+    listRewind(c->watched_keys, &li);
+    while ((ln = listNext(&li))) {
         wk = listNodeValue(ln);
-        if (wk->db == c->db && equalStringObjects(key,wk->key))
+        if (wk->db == c->db && equalStringObjects(key, wk->key))
             return; /* Key already watched */
     }
     /* This key is not already watched in this DB. Let's add it */
-    clients = dictFetchValue(c->db->watched_keys,key);
+    clients = dictFetchValue(c->db->watched_keys, key);
     if (!clients) {
         clients = listCreate();
-        dictAdd(c->db->watched_keys,key,clients);
+        dictAdd(c->db->watched_keys, key, clients);
         incrRefCount(key);
     }
     /* Add the new key to the list of keys watched by this client */
@@ -294,33 +300,34 @@ void watchForKey(client *c, robj *key) {
     wk->db = c->db;
     wk->expired = keyIsExpired(c->db, key);
     incrRefCount(key);
-    listAddNodeTail(c->watched_keys,wk);
-    listAddNodeTail(clients,wk);
+    listAddNodeTail(c->watched_keys, wk);
+    listAddNodeTail(clients, wk);
 }
 
 /* Unwatch all the keys watched by this client. To clean the EXEC dirty
  * flag is up to the caller. */
 void unwatchAllKeys(client *c) {
-    listIter li;
+    listIter  li;
     listNode *ln;
 
-    if (listLength(c->watched_keys) == 0) return;
-    listRewind(c->watched_keys,&li);
-    while((ln = listNext(&li))) {
-        list *clients;
+    if (listLength(c->watched_keys) == 0)
+        return;
+    listRewind(c->watched_keys, &li);
+    while ((ln = listNext(&li))) {
+        list       *clients;
         watchedKey *wk;
 
         /* Lookup the watched key -> clients list and remove the client's wk
          * from the list */
         wk = listNodeValue(ln);
         clients = dictFetchValue(wk->db->watched_keys, wk->key);
-        serverAssertWithInfo(c,NULL,clients != NULL);
-        listDelNode(clients,listSearchKey(clients,wk));
+        serverAssertWithInfo(c, NULL, clients != NULL);
+        listDelNode(clients, listSearchKey(clients, wk));
         /* Kill the entry at all if this was the only client */
         if (listLength(clients) == 0)
             dictDelete(wk->db->watched_keys, wk->key);
         /* Remove this watched key from the client->watched list */
-        listDelNode(c->watched_keys,ln);
+        listDelNode(c->watched_keys, ln);
         decrRefCount(wk->key);
         zfree(wk);
     }
@@ -329,15 +336,18 @@ void unwatchAllKeys(client *c) {
 /* Iterates over the watched_keys list and looks for an expired key. Keys which
  * were expired already when WATCH was called are ignored. */
 int isWatchedKeyExpired(client *c) {
-    listIter li;
-    listNode *ln;
+    listIter    li;
+    listNode   *ln;
     watchedKey *wk;
-    if (listLength(c->watched_keys) == 0) return 0;
-    listRewind(c->watched_keys,&li);
+    if (listLength(c->watched_keys) == 0)
+        return 0;
+    listRewind(c->watched_keys, &li);
     while ((ln = listNext(&li))) {
         wk = listNodeValue(ln);
-        if (wk->expired) continue; /* was expired when WATCH was called */
-        if (keyIsExpired(wk->db, wk->key)) return 1;
+        if (wk->expired)
+            continue; /* was expired when WATCH was called */
+        if (keyIsExpired(wk->db, wk->key))
+            return 1;
     }
 
     return 0;
@@ -346,27 +356,26 @@ int isWatchedKeyExpired(client *c) {
 /* "Touch" a key, so that if this key is being WATCHed by some client the
  * next EXEC will fail. */
 void touchWatchedKey(redisDb *db, robj *key) {
-    list *clients;
-    listIter li;
+    list     *clients;
+    listIter  li;
     listNode *ln;
 
-    if (dictSize(db->watched_keys) == 0) return;
+    if (dictSize(db->watched_keys) == 0)
+        return;
     clients = dictFetchValue(db->watched_keys, key);
-    if (!clients) return;
+    if (!clients)
+        return;
 
     /* Mark all the clients watching this key as CLIENT_DIRTY_CAS */
     /* Check if we are already watching for this key */
-    listRewind(clients,&li);
-    while((ln = listNext(&li))) {
+    listRewind(clients, &li);
+    while ((ln = listNext(&li))) {
         watchedKey *wk = listNodeValue(ln);
-        client *c = wk->client;
+        client     *c = wk->client;
 
         if (wk->expired) {
             /* The key was already expired when WATCH was called. */
-            if (db == wk->db &&
-                equalStringObjects(key, wk->key) &&
-                dictFind(db->dict, key->ptr) == NULL)
-            {
+            if (db == wk->db && equalStringObjects(key, wk->key) && dictFind(db->dict, key->ptr) == NULL) {
                 /* Already expired key is deleted, so logically no change. Clear
                  * the flag. Deleted keys are not flagged as expired. */
                 wk->expired = 0;
@@ -394,23 +403,23 @@ void touchWatchedKey(redisDb *db, robj *key) {
  * the key exists in either of them, and skipped only if it
  * doesn't exist in both. */
 void touchAllWatchedKeysInDb(redisDb *emptied, redisDb *replaced_with) {
-    listIter li;
-    listNode *ln;
+    listIter   li;
+    listNode  *ln;
     dictEntry *de;
 
-    if (dictSize(emptied->watched_keys) == 0) return;
+    if (dictSize(emptied->watched_keys) == 0)
+        return;
 
     dictIterator *di = dictGetSafeIterator(emptied->watched_keys);
-    while((de = dictNext(di)) != NULL) {
+    while ((de = dictNext(di)) != NULL) {
         robj *key = dictGetKey(de);
-        int exists_in_emptied = dictFind(emptied->dict, key->ptr) != NULL;
-        if (exists_in_emptied ||
-            (replaced_with && dictFind(replaced_with->dict, key->ptr)))
-        {
+        int   exists_in_emptied = dictFind(emptied->dict, key->ptr) != NULL;
+        if (exists_in_emptied || (replaced_with && dictFind(replaced_with->dict, key->ptr))) {
             list *clients = dictGetVal(de);
-            if (!clients) continue;
-            listRewind(clients,&li);
-            while((ln = listNext(&li))) {
+            if (!clients)
+                continue;
+            listRewind(clients, &li);
+            while ((ln = listNext(&li))) {
                 watchedKey *wk = listNodeValue(ln);
                 if (wk->expired) {
                     if (!replaced_with || !dictFind(replaced_with->dict, key->ptr)) {
@@ -418,11 +427,13 @@ void touchAllWatchedKeysInDb(redisDb *emptied, redisDb *replaced_with) {
                          * flag. Deleted keys are not flagged as expired. */
                         wk->expired = 0;
                         continue;
-                    } else if (keyIsExpired(replaced_with, key)) {
+                    }
+                    else if (keyIsExpired(replaced_with, key)) {
                         /* Expired key remains expired. */
                         continue;
                     }
-                } else if (!exists_in_emptied && keyIsExpired(replaced_with, key)) {
+                }
+                else if (!exists_in_emptied && keyIsExpired(replaced_with, key)) {
                     /* Non-existing key is replaced with an expired key. */
                     wk->expired = 1;
                     continue;
@@ -442,23 +453,22 @@ void watchCommand(client *c) {
     int j;
 
     if (c->flags & CLIENT_MULTI) {
-        addReplyError(c,"WATCH inside MULTI is not allowed");
+        addReplyError(c, "WATCH inside MULTI is not allowed");
         return;
     }
     /* No point in watching if the client is already dirty. */
     if (c->flags & CLIENT_DIRTY_CAS) {
-        addReply(c,shared.ok);
+        addReply(c, shared.ok);
         return;
     }
-    for (j = 1; j < c->argc; j++)
-        watchForKey(c,c->argv[j]);
-    addReply(c,shared.ok);
+    for (j = 1; j < c->argc; j++) watchForKey(c, c->argv[j]);
+    addReply(c, shared.ok);
 }
 
 void unwatchCommand(client *c) {
     unwatchAllKeys(c);
     c->flags &= (~CLIENT_DIRTY_CAS);
-    addReply(c,shared.ok);
+    addReply(c, shared.ok);
 }
 
 size_t multiStateMemOverhead(client *c) {

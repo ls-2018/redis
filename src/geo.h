@@ -10,13 +10,13 @@ typedef struct geoPoint {
     double latitude;
     double dist;
     double score;
-    char *member;
+    char  *member;
 } geoPoint;
 
 typedef struct geoArray {
     struct geoPoint *array;
-    size_t buckets;
-    size_t used;
+    size_t           buckets;
+    size_t           used;
 } geoArray;
 
 #endif

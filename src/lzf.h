@@ -73,9 +73,7 @@
  * and lzf_c.c.
  *
  */
-size_t
-lzf_compress (const void *const in_data,  size_t in_len,
-              void             *out_data, size_t out_len);
+size_t lzf_compress(const void *const in_data, size_t in_len, void *out_data, size_t out_len);
 
 /*
  * Decompress data compressed with some version of the lzf_compress
@@ -92,9 +90,6 @@ lzf_compress (const void *const in_data,  size_t in_len,
  *
  * This function is very fast, about as fast as a copying loop.
  */
-size_t
-lzf_decompress (const void *const in_data,  size_t in_len,
-                void             *out_data, size_t out_len);
+size_t lzf_decompress(const void *const in_data, size_t in_len, void *out_data, size_t out_len);
 
 #endif
-
