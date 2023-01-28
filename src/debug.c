@@ -38,9 +38,15 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <dlfcn.h>
-#include <fcntl.h>
+#ifdef __CYGWIN__
+#    include "win_dlfcn.h"
+#else
+#    include <dlfcn.h>
+#endif
+
 #include <sys/mman.h>
 #include <unistd.h>
+#include <sys/fcntl.h>
 
 #ifdef HAVE_BACKTRACE
 #    include <execinfo.h>
