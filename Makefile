@@ -3,6 +3,7 @@
 default: all
 
 .DEFAULT:
+	cd src && sh './mkreleasehdr.sh' && cd ..
 	rm ./dump.rdb || rm ./src/dump.rdb || rm ./src/release.h || echo start
 	cd src && $(MAKE) $@
 
