@@ -42,11 +42,11 @@
 #define ANET_IP_ONLY (1 << 0)
 
 #if defined(__sun) || defined(_AIX)
-#define AF_LOCAL AF_UNIX
+#    define AF_LOCAL AF_UNIX
 #endif
 
 #ifdef _AIX
-#undef ip_len
+#    undef ip_len
 #endif
 
 /* FD to address string conversion types */

@@ -123,7 +123,7 @@ void decodeTimeoutKey(unsigned char *buf, uint64_t *toptr, client **cptr) {
 void addClientToTimeoutTable(client *c) {
     if (c->bpop.timeout == 0)
         return;
-    uint64_t      timeout = c->bpop.timeout;
+    uint64_t timeout = c->bpop.timeout;
     unsigned char buf[CLIENT_ST_KEYLEN];
     encodeTimeoutKey(buf, timeout, c);
     if (raxTryInsert(server.clients_timeout_table, buf, sizeof(buf), NULL, NULL))
@@ -136,7 +136,7 @@ void removeClientFromTimeoutTable(client *c) {
     if (!(c->flags & CLIENT_IN_TO_TABLE))
         return;
     c->flags &= ~CLIENT_IN_TO_TABLE;
-    uint64_t      timeout = c->bpop.timeout;
+    uint64_t timeout = c->bpop.timeout;
     unsigned char buf[CLIENT_ST_KEYLEN];
     encodeTimeoutKey(buf, timeout, c);
     raxRemove(server.clients_timeout_table, buf, sizeof(buf), NULL);
@@ -147,14 +147,14 @@ void handleBlockedClientsTimeout(void) {
     if (raxSize(server.clients_timeout_table) == 0) { // 返回基数树中元素的数量.
         return;
     }
-    uint64_t    now = mstime(); // 毫秒数
+    uint64_t now = mstime(); // 毫秒数
     raxIterator ri;
     raxStart(&ri, server.clients_timeout_table);
     raxSeek(&ri, "^", NULL, 0);
 
     while (raxNext(&ri)) {
         uint64_t timeout;
-        client  *c;
+        client *c;
         decodeTimeoutKey(ri.key, &timeout, &c);
         if (timeout >= now) {
             break; /* 所有的暂停都在未来.*/
@@ -176,7 +176,7 @@ void handleBlockedClientsTimeout(void) {
  * commands API this means no timeout) the value stored into 'timeout'
  * is zero. */
 int getTimeoutFromObjectOrReply(client *c, robj *object, mstime_t *timeout, int unit) {
-    long long   tval;
+    long long tval;
     long double ftval;
 
     if (unit == UNIT_SECONDS) {

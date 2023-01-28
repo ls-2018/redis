@@ -197,9 +197,9 @@ sds getTempAofManifestFileName() {
 sds getAofManifestAsString(aofManifest *am) {
     serverAssert(am != NULL);
 
-    sds       buf = sdsempty();
+    sds buf = sdsempty();
     listNode *ln;
-    listIter  li;
+    listIter li;
 
     /* 1. Add BASE File information, it is always at the beginning
      * of the manifest file. */
@@ -262,18 +262,18 @@ void aofLoadManifestFromDisk(void) {
 
 aofManifest *aofLoadManifestFromFile(sds am_filepath) {
     const char *err = NULL;
-    long long   maxseq = 0;
+    long long maxseq = 0;
 
     aofManifest *am = aofManifestCreate();
-    FILE        *fp = fopen(am_filepath, "r");
+    FILE *fp = fopen(am_filepath, "r");
     if (fp == NULL) {
         serverLog(LL_WARNING, "Fatal error: 不能打开aof日志文件%s: %s", am_filepath, strerror(errno));
         exit(1);
     }
 
-    char     buf[MANIFEST_MAX_LINE + 1];
-    sds     *argv = NULL;
-    int      argc;
+    char buf[MANIFEST_MAX_LINE + 1];
+    sds *argv = NULL;
+    int argc;
     aofInfo *ai = NULL;
 
     sds line = NULL;
@@ -494,7 +494,7 @@ sds getLastIncrAofName(aofManifest *am) {
 
     /* Or return the last one. */
     listNode *lastnode = listIndex(am->incr_aof_list, -1);
-    aofInfo  *ai = listNodeValue(lastnode);
+    aofInfo *ai = listNodeValue(lastnode);
     return ai->file_name;
 }
 
@@ -510,7 +510,7 @@ void markRewrittenIncrAofAsHistory(aofManifest *am) {
     }
 
     listNode *ln;
-    listIter  li;
+    listIter li;
 
     listRewindTail(am->incr_aof_list, &li);
 
@@ -537,9 +537,9 @@ void markRewrittenIncrAofAsHistory(aofManifest *am) {
 
 /* Write the formatted manifest string to disk. */
 int writeAofManifestFile(sds buf) {
-    int     ret = C_OK;
+    int ret = C_OK;
     ssize_t nwritten;
-    int     len;
+    int len;
 
     sds am_name = getAofManifestFileName();
     sds am_filepath = makePath(server.aof_dirname, am_name);
@@ -668,7 +668,7 @@ int aofDelHistoryFiles(void) {
     }
 
     listNode *ln;
-    listIter  li;
+    listIter li;
 
     listRewind(server.aof_manifest->history_aof_list, &li);
     while ((ln = listNext(&li)) != NULL) {
@@ -771,9 +771,9 @@ int aofFileExist(char *filename) {
  * */
 int openNewIncrAofForAppend(void) {
     serverAssert(server.aof_manifest != NULL);
-    int          newfd = -1;
+    int newfd = -1;
     aofManifest *temp_am = NULL;
-    sds          new_aof_name = NULL;
+    sds new_aof_name = NULL;
 
     /* Only open new INCR AOF when AOF enabled. */
     if (server.aof_state == AOF_OFF)
@@ -854,7 +854,7 @@ cleanup:
 #define AOF_REWRITE_LIMITE_MAX_MINUTES 60 /* 1 hour */
 
 int aofRewriteLimited(void) {
-    static int    next_delay_minutes = 0;
+    static int next_delay_minutes = 0;
     static time_t next_rewrite_time = 0;
 
     if (server.stat_aofrw_consecutive_failures < AOF_REWRITE_LIMITE_THRESHOLD) {
@@ -1053,8 +1053,8 @@ ssize_t aofWrite(int fd, const char *buf, size_t len) {
 #define AOF_WRITE_LOG_ERROR_RATE 30 /* Seconds between errors logging. */
 
 void flushAppendOnlyFile(int force) {
-    ssize_t  nwritten;
-    int      sync_in_progress = 0;
+    ssize_t nwritten;
+    int sync_in_progress = 0;
     mstime_t latency;
     // 缓冲区中没有任何内容,直接返回
     if (sdslen(server.aof_buf) == 0) {
@@ -1161,7 +1161,7 @@ void flushAppendOnlyFile(int force) {
 
     if (nwritten != (ssize_t)sdslen(server.aof_buf)) {
         static time_t last_write_error_log = 0;
-        int           can_log = 0;
+        int can_log = 0;
 
         /* Limit logging rate to 1 line per AOF_WRITE_LOG_ERROR_RATE seconds. */
         // 将日志的记录频率限制在每行 AOF_WRITE_LOG_ERROR_RATE 秒
@@ -1299,8 +1299,8 @@ try_fsync:
 }
 // * 根据传入的命令和命令参数,将它们还原成协议格式.
 sds catAppendOnlyGenericCommand(sds dst, int argc, robj **argv) {
-    char  buf[32];
-    int   len, j;
+    char buf[32];
+    int len, j;
     robj *o;
     // 重建命令的个数,格式为 *<count>\r\n
     // 例如 *3\r\n
@@ -1438,16 +1438,16 @@ struct client *createAOFClient(void) {
  * AOF_EMPTY: The AOF file is empty (nothing to load).
  * AOF_FAILED: Failed to load the AOF file. */
 int loadSingleAppendOnlyFile(char *filename) {
-    struct client    *fakeClient;
+    struct client *fakeClient;
     struct redis_stat sb;
-    int               old_aof_state = server.aof_state;
-    long              loops = 0;
-    off_t             valid_up_to = 0;        /* Offset of latest well-formed command loaded. */
-    off_t             valid_before_multi = 0; /* Offset before MULTI command loaded. */
-    off_t             last_progress_report_size = 0;
-    int               ret = C_OK;
+    int old_aof_state = server.aof_state;
+    long loops = 0;
+    off_t valid_up_to = 0;        /* Offset of latest well-formed command loaded. */
+    off_t valid_before_multi = 0; /* Offset before MULTI command loaded. */
+    off_t last_progress_report_size = 0;
+    int ret = C_OK;
 
-    sds   aof_filepath = makePath(server.aof_dirname, filename);
+    sds aof_filepath = makePath(server.aof_dirname, filename);
     FILE *fp = fopen(aof_filepath, "r");
     if (fp == NULL) {
         int en = errno;
@@ -1514,11 +1514,11 @@ int loadSingleAppendOnlyFile(char *filename) {
 
     /* Read the actual AOF file, in REPL format, command by command. */
     while (1) {
-        int                  argc, j;
-        unsigned long        len;
-        robj               **argv;
-        char                 buf[AOF_ANNOTATION_LINE_MAX_LEN];
-        sds                  argsds;
+        int argc, j;
+        unsigned long len;
+        robj **argv;
+        char buf[AOF_ANNOTATION_LINE_MAX_LEN];
+        sds argsds;
         struct redisCommand *cmd;
 
         // 间隔性地处理客户端发送来的请求
@@ -1712,11 +1712,11 @@ cleanup:
 // * 执行 AOF 文件中的命令.
 int loadAppendOnlyFiles(aofManifest *am) {
     serverAssert(am != NULL);
-    int       status, ret = C_OK;
+    int status, ret = C_OK;
     long long start;
-    off_t     total_size = 0, base_size = 0;
-    sds       aof_name;
-    int       total_num, aof_num = 0, last_file;
+    off_t total_size = 0, base_size = 0;
+    sds aof_name;
+    int total_num, aof_num = 0, last_file;
 
     /* If the 'server.aof_filename' file exists in dir, we may be starting
      * from an old redis version. We will use enter upgrade mode in three situations.
@@ -1782,7 +1782,7 @@ int loadAppendOnlyFiles(aofManifest *am) {
     /* Load INCR AOFs if needed. */
     if (listLength(am->incr_aof_list)) {
         listNode *ln;
-        listIter  li;
+        listIter li;
 
         listRewind(am->incr_aof_list, &li);
         while ((ln = listNext(&li)) != NULL) {
@@ -1862,7 +1862,7 @@ int rewriteListObject(rio *r, robj *key, robj *o) {
     long long count = 0, items = listTypeLength(o);
 
     if (o->encoding == OBJ_ENCODING_QUICKLIST) {
-        quicklist     *list = o->ptr;
+        quicklist *list = o->ptr;
         quicklistIter *li = quicklistGetIterator(list, AL_START_HEAD);
         quicklistEntry entry;
         // 先构建一个 RPUSH key
@@ -1914,7 +1914,7 @@ int rewriteSetObject(rio *r, robj *key, robj *o) {
     long long count = 0, items = setTypeSize(o);
 
     if (o->encoding == OBJ_ENCODING_INTSET) {
-        int     ii = 0;
+        int ii = 0;
         int64_t llval;
 
         while (intsetGet(o->ptr, ii++, &llval)) {
@@ -1934,7 +1934,7 @@ int rewriteSetObject(rio *r, robj *key, robj *o) {
     }
     else if (o->encoding == OBJ_ENCODING_HT) {
         dictIterator *di = dictGetIterator(o->ptr);
-        dictEntry    *de;
+        dictEntry *de;
 
         while ((de = dictNext(di)) != NULL) {
             sds ele = dictGetKey(de);
@@ -1976,9 +1976,9 @@ int rewriteSortedSetObject(rio *r, robj *key, robj *o) {
         unsigned char *zl = o->ptr;
         unsigned char *eptr, *sptr;
         unsigned char *vstr;
-        unsigned int   vlen;
-        long long      vll;
-        double         score;
+        unsigned int vlen;
+        long long vll;
+        double score;
 
         eptr = lpSeek(zl, 0);
         serverAssert(eptr != NULL);
@@ -2013,12 +2013,12 @@ int rewriteSortedSetObject(rio *r, robj *key, robj *o) {
         }
     }
     else if (o->encoding == OBJ_ENCODING_SKIPLIST) {
-        zset         *zs = o->ptr;
+        zset *zs = o->ptr;
         dictIterator *di = dictGetIterator(zs->dict);
-        dictEntry    *de;
+        dictEntry *de;
 
         while ((de = dictNext(di)) != NULL) {
-            sds     ele = dictGetKey(de);
+            sds ele = dictGetKey(de);
             double *score = dictGetVal(de);
 
             if (count == 0) {
@@ -2064,8 +2064,8 @@ int rewriteSortedSetObject(rio *r, robj *key, robj *o) {
 static int rioWriteHashIteratorCursor(rio *r, hashTypeIterator *hi, int what) {
     if (hi->encoding == OBJ_ENCODING_LISTPACK) {
         unsigned char *vstr = NULL;
-        unsigned int   vlen = UINT_MAX;
-        long long      vll = LLONG_MAX;
+        unsigned int vlen = UINT_MAX;
+        long long vll = LLONG_MAX;
 
         hashTypeCurrentFromListpack(hi, what, &vstr, &vlen, &vll);
         if (vstr)
@@ -2093,7 +2093,7 @@ static int rioWriteHashIteratorCursor(rio *r, hashTypeIterator *hi, int what) {
  */
 int rewriteHashObject(rio *r, robj *key, robj *o) {
     hashTypeIterator *hi;
-    long long         count = 0, items = hashTypeLength(o);
+    long long count = 0, items = hashTypeLength(o);
 
     hi = hashTypeInitIterator(o);
     while (hashTypeNext(hi) != C_ERR) {
@@ -2192,11 +2192,11 @@ int rioWriteStreamEmptyConsumer(rio *r, robj *key, const char *groupname, size_t
 /* Emit the commands needed to rebuild a stream object.
  * The function returns 0 on error, 1 on success. */
 int rewriteStreamObject(rio *r, robj *key, robj *o) {
-    stream        *s = o->ptr;
+    stream *s = o->ptr;
     streamIterator si;
     streamIteratorStart(&si, s, NULL, NULL, 0);
     streamID id;
-    int64_t  numfields;
+    int64_t numfields;
 
     if (s->length) {
         /* Reconstruct the stream data using XADD commands. */
@@ -2211,7 +2211,7 @@ int rewriteStreamObject(rio *r, robj *key, robj *o) {
             }
             while (numfields--) {
                 unsigned char *field, *value;
-                int64_t        field_len, value_len;
+                int64_t field_len, value_len;
                 streamIteratorGetField(&si, &field, &value, &field_len, &value_len);
                 if (!rioWriteBulkString(r, (char *)field, field_len) || !rioWriteBulkString(r, (char *)value, value_len)) {
                     streamIteratorStop(&si);
@@ -2302,8 +2302,8 @@ int rewriteStreamObject(rio *r, robj *key, robj *o) {
  * The function returns 0 on error, 1 on success. */
 int rewriteModuleObject(rio *r, robj *key, robj *o, int dbid) {
     RedisModuleIO io;
-    moduleValue  *mv = o->ptr;
-    moduleType   *mt = mv->type;
+    moduleValue *mv = o->ptr;
+    moduleType *mt = mv->type;
     moduleInitIOContext(io, mt, r, key, dbid);
     mt->aof_rewrite(&io, key, mv->value);
     if (io.ctx) {
@@ -2314,9 +2314,9 @@ int rewriteModuleObject(rio *r, robj *key, robj *o, int dbid) {
 }
 
 static int rewriteFunctions(rio *aof) {
-    dict         *functions = functionsLibGet();
+    dict *functions = functionsLibGet();
     dictIterator *iter = dictGetIterator(functions);
-    dictEntry    *entry = NULL;
+    dictEntry *entry = NULL;
     while ((entry = dictNext(iter))) {
         functionLibInfo *li = dictGetVal(entry);
         if (rioWrite(aof, "*3\r\n", 4) == 0)
@@ -2337,10 +2337,10 @@ werr:
 
 int rewriteAppendOnlyFileRio(rio *aof) {
     dictIterator *di = NULL;
-    dictEntry    *de;
-    int           j;
-    long          key_count = 0;
-    long long     updated_time = 0;
+    dictEntry *de;
+    int j;
+    long key_count = 0;
+    long long updated_time = 0;
 
     /* Record timestamp at the beginning of rewriting AOF. */
     if (server.aof_timestamp_enabled) {
@@ -2356,9 +2356,9 @@ int rewriteAppendOnlyFileRio(rio *aof) {
         goto werr;
     // 遍历所有数据库
     for (j = 0; j < server.dbnum; j++) {
-        char     selectcmd[] = "*2\r\n$6\r\nSELECT\r\n";
+        char selectcmd[] = "*2\r\n$6\r\nSELECT\r\n";
         redisDb *db = server.db + j;
-        dict    *d = db->dict; // 指向键空间
+        dict *d = db->dict; // 指向键空间
         if (dictSize(d) == 0)
             continue;
         di = dictGetSafeIterator(d); // 创建键空间迭代器
@@ -2373,10 +2373,10 @@ int rewriteAppendOnlyFileRio(rio *aof) {
         /* Iterate this DB writing every entry */
         /// * 遍历数据库所有键,并通过命令将它们的当前状态（值）记录到新 AOF 文件中
         while ((de = dictNext(di)) != NULL) {
-            sds       keystr;
-            robj      key, *o;
+            sds keystr;
+            robj key, *o;
             long long expiretime;
-            size_t    aof_bytes_before_key = aof->processed_bytes;
+            size_t aof_bytes_before_key = aof->processed_bytes;
 
             keystr = dictGetKey(de); // 取出键
             o = dictGetVal(de);      // 取出值
@@ -2492,9 +2492,9 @@ werr:
  * 不过单个命令每次处理的元素数量不能超过 REDIS_AOF_REWRITE_ITEMS_PER_CMD .
  */
 int rewriteAppendOnlyFile(char *filename) {
-    rio   aof;
+    rio aof;
     FILE *fp = NULL;
-    char  tmpfile[256];
+    char tmpfile[256];
     /* Note that we have to use a different temp name here compared to the
      * one used by rewriteAppendOnlyFileBackground() function.
      * 创建临时文件
@@ -2588,7 +2588,7 @@ int rewriteAppendOnlyFileBackground(void) {
         return C_ERR;
     server.stat_aof_rewrites++;
     childpid = redisFork(CHILD_TYPE_AOF);
-    if (childpid == 0) { //创建子进程
+    if (childpid == 0) { // 创建子进程
 
         char tmpfile[256];
 
@@ -2598,7 +2598,7 @@ int rewriteAppendOnlyFileBackground(void) {
         redisSetCpuAffinity(server.aof_rewrite_cpulist);
         // 创建临时文件,并进行 AOF 重写
         snprintf(tmpfile, 256, "temp-rewriteaof-bg-%d.aof", (int)getpid());
-        //子进程调用rewriteAppendOnlyFile进行AOF重写
+        // 子进程调用rewriteAppendOnlyFile进行AOF重写
 
         if (rewriteAppendOnlyFile(tmpfile) == C_OK) { // 主要逻辑
             sendChildCowInfo(CHILD_INFO_TYPE_AOF_COW_SIZE, "AOF rewrite");
@@ -2630,14 +2630,14 @@ void bgrewriteaofCommand(client *c) {
         addReplyError(c, "已经有一个AOF重写进程在工作");
     }
     else if (hasActiveChildProcess() || server.in_exec) {
-        //有RDB子进程,将AOF重写设置为待调度运行
+        // 有RDB子进程,将AOF重写设置为待调度运行
         server.aof_rewrite_scheduled = 1;
         /* When manually triggering AOFRW we reset the count
          * so that it can be executed immediately. */
         server.stat_aofrw_consecutive_failures = 0;
         addReplyStatus(c, "Background append only file rewriting scheduled");
     }
-    else if (rewriteAppendOnlyFileBackground() == C_OK) { //实际执行AOF重写
+    else if (rewriteAppendOnlyFileBackground() == C_OK) { // 实际执行AOF重写
         addReplyStatus(c, "后台AOF重写已开启");
     }
     else {
@@ -2661,8 +2661,8 @@ void aofRemoveTempFile(pid_t childpid) {
  * one of the AOF_ status values. */
 off_t getAppendOnlyFileSize(sds filename, int *status) {
     struct redis_stat sb;
-    off_t             size;
-    mstime_t          latency;
+    off_t size;
+    mstime_t latency;
 
     sds aof_filepath = makePath(server.aof_dirname, filename);
     latencyStartMonitor(latency);
@@ -2687,9 +2687,9 @@ off_t getAppendOnlyFileSize(sds filename, int *status) {
  * The status argument is an output argument to be filled with
  * one of the AOF_ status values. */
 off_t getBaseAndIncrAppendOnlyFilesSize(aofManifest *am, int *status) {
-    off_t     size = 0;
+    off_t size = 0;
     listNode *ln;
-    listIter  li;
+    listIter li;
 
     if (am->base_aof_info) {
         serverAssert(am->base_aof_info->file_type == AOF_FILE_TYPE_BASE);
@@ -2727,12 +2727,12 @@ int getBaseAndIncrAppendOnlyFilesNum(aofManifest *am) {
  */
 void backgroundRewriteDoneHandler(int exitcode, int bysignal) {
     if (!bysignal && exitcode == 0) {
-        char         tmpfile[256];
-        long long    now = ustime();
-        sds          new_base_filepath = NULL;
-        sds          new_incr_filepath = NULL;
+        char tmpfile[256];
+        long long now = ustime();
+        sds new_base_filepath = NULL;
+        sds new_incr_filepath = NULL;
         aofManifest *temp_am;
-        mstime_t     latency;
+        mstime_t latency;
 
         serverLog(LL_NOTICE, "Background AOF rewrite terminated with success");
         // 创建临时文件,并进行 AOF 重写

@@ -221,7 +221,7 @@ int anetRecvTimeout(char *err, int fd, long long ms) {
 // 解释 host 的地址,并保存到 ipbuf 中
 int anetResolve(char *err, char *host, char *ipbuf, size_t ipbuf_len, int flags) {
     struct addrinfo hints, *info;
-    int             rv;
+    int rv;
 
     memset(&hints, 0, sizeof(hints));
     if (flags & ANET_IP_ONLY)
@@ -279,8 +279,8 @@ static int anetCreateSocket(char *err, int domain) {
 
 //* 创建阻塞 TCP 连接
 static int anetTcpGenericConnect(char *err, const char *addr, int port, const char *source_addr, int flags) {
-    int             s = ANET_ERR, rv;
-    char            portstr[6]; /* strlen("65535") + 1; */
+    int s = ANET_ERR, rv;
+    char portstr[6]; /* strlen("65535") + 1; */
     struct addrinfo hints, *servinfo, *bservinfo, *p, *b;
 
     snprintf(portstr, sizeof(portstr), "%d", port);
@@ -367,7 +367,7 @@ int anetTcpNonBlockBestEffortBindConnect(char *err, const char *addr, int port, 
 }
 // * 创建阻塞、非阻塞  本地连接
 int anetUnixGenericConnect(char *err, const char *path, int flags) {
-    int                s;
+    int s;
     struct sockaddr_un sa;
 
     if ((s = anetCreateSocket(err, AF_LOCAL)) == ANET_ERR)
@@ -419,8 +419,8 @@ static int anetV6Only(char *err, int s) {
 
 // 创建TCP套接字
 static int _anetTcpServer(char *err, int port, char *bindaddr, int af, int backlog) {
-    int             s = -1, rv;
-    char            _port[6]; /* strlen("65535") */
+    int s = -1, rv;
+    char _port[6]; /* strlen("65535") */
     struct addrinfo hints, *servinfo, *p;
 
     snprintf(_port, 6, "%d", port);
@@ -488,7 +488,7 @@ int anetTcp6Server(char *err, int port, char *bindaddr, int backlog) {
 
 // * 创建一个本地连接用的服务器监听套接字
 int anetUnixServer(char *err, char *path, mode_t perm, int backlog) {
-    int                s;
+    int s;
     struct sockaddr_un sa;
 
     if (strlen(path) > sizeof(sa.sun_path) - 1) {
@@ -548,9 +548,9 @@ int anetTcpAccept(char *err, int serversock, char *ip, size_t ip_len, int *port)
     //    ntohs  作用是将一个16位数由网络字节顺序转换为主机字节顺序.
     //    inet_ntop 从数值格式(addrptr)转换到表达式(strptr)
 
-    int                     fd;
+    int fd;
     struct sockaddr_storage sa;
-    socklen_t               salen = sizeof(sa);
+    socklen_t salen = sizeof(sa);
     // 从6379端口,接收新的链接
     if ((fd = anetGenericAccept(err, serversock, (struct sockaddr *)&sa, &salen)) == ANET_ERR) {
         return ANET_ERR;
@@ -579,9 +579,9 @@ int anetTcpAccept(char *err, int serversock, char *ip, size_t ip_len, int *port)
 
 // * 本地连接 accept 函数
 int anetUnixAccept(char *err, int s) {
-    int                fd;
+    int fd;
     struct sockaddr_un sa;
-    socklen_t          salen = sizeof(sa);
+    socklen_t salen = sizeof(sa);
     if ((fd = anetGenericAccept(err, s, (struct sockaddr *)&sa, &salen)) == ANET_ERR)
         return ANET_ERR;
 
@@ -591,7 +591,7 @@ int anetUnixAccept(char *err, int s) {
 // * 获取连接客户端的 IP 和端口号
 int anetFdToString(int fd, char *ip, size_t ip_len, int *port, int fd_to_str_type) {
     struct sockaddr_storage sa;
-    socklen_t               salen = sizeof(sa);
+    socklen_t salen = sizeof(sa);
 
     if (fd_to_str_type == FD_TO_PEER_NAME) {
         if (getpeername(fd, (struct sockaddr *)&sa, &salen) == -1)
@@ -659,7 +659,7 @@ int anetFormatAddr(char *buf, size_t buf_len, char *ip, int port) {
 /* Like anetFormatAddr() but extract ip and port from the socket's peer/sockname. */
 int anetFormatFdAddr(int fd, char *buf, size_t buf_len, int fd_to_str_type) {
     char ip[INET6_ADDRSTRLEN];
-    int  port;
+    int port;
 
     anetFdToString(fd, ip, sizeof(ip), &port, fd_to_str_type);
     return anetFormatAddr(buf, buf_len, ip, port);

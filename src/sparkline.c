@@ -38,8 +38,8 @@
  * to increase the resolution. */
 static char charset[] = "_-`";
 static char charset_fill[] = "_o#";
-static int  charset_len = sizeof(charset) - 1;
-static int  label_margin_top = 1;
+static int charset_len = sizeof(charset) - 1;
+static int label_margin_top = 1;
 
 /* ----------------------------------------------------------------------------
  * Sequences are arrays of samples we use to represent data to turn
@@ -98,14 +98,14 @@ void freeSparklineSequence(struct sequence *seq) {
  * with different parts in order to create the full output without overflowing
  * the current terminal columns. */
 sds sparklineRenderRange(sds output, struct sequence *seq, int rows, int offset, int len, int flags) {
-    int    j;
+    int j;
     double relmax = seq->max - seq->min;
-    int    steps = charset_len * rows;
-    int    row = 0;
-    char  *chars = zmalloc(len);
-    int    loop = 1;
-    int    opt_fill = flags & SPARKLINE_FILL;
-    int    opt_log = flags & SPARKLINE_LOG_SCALE;
+    int steps = charset_len * rows;
+    int row = 0;
+    char *chars = zmalloc(len);
+    int loop = 1;
+    int opt_fill = flags & SPARKLINE_FILL;
+    int opt_log = flags & SPARKLINE_LOG_SCALE;
 
     if (opt_log) {
         relmax = log(relmax + 1);
@@ -119,8 +119,8 @@ sds sparklineRenderRange(sds output, struct sequence *seq, int rows, int offset,
         memset(chars, ' ', len);
         for (j = 0; j < len; j++) {
             struct sample *s = &seq->samples[j + offset];
-            double         relval = s->value - seq->min;
-            int            step;
+            double relval = s->value - seq->min;
+            int step;
 
             if (opt_log)
                 relval = log(relval + 1);

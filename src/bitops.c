@@ -8,9 +8,9 @@
 // 计算长度为 count 的二进制数组指针 s 被设置为 1 的位数量
 // 这个函数只能在最大为 512 MB 的字符串上使用或更多(server.proto_max_bulk_len)
 long long redisPopcount(void *s, long count) {
-    long long      bits = 0;
+    long long bits = 0;
     unsigned char *p = s;
-    uint32_t      *p4;
+    uint32_t *p4;
     // 通过查表来计算,对于 1 字节所能表示的值来说
     // 这些值的二进制表示所带有的 1 的数量
     // 比如整数 3 的二进制表示 0011 ,带有两个 1
@@ -74,10 +74,10 @@ long long redisPopcount(void *s, long count) {
 long long redisBitpos(void *s, unsigned long count, int bit) {
     unsigned long *l;
     unsigned char *c;
-    unsigned long  skipval, word = 0, one;
-    long long      pos = 0; /* Position of bit, to return to the caller. */
-    unsigned long  j;
-    int            found;
+    unsigned long skipval, word = 0, one;
+    long long pos = 0; /* Position of bit, to return to the caller. */
+    unsigned long j;
+    int found;
 
     /* Process whole words first, seeking for first word that is not
      * all ones or all zeros respectively if we are looking for zeros
@@ -221,7 +221,7 @@ int64_t getSignedBitfield(unsigned char *p, uint64_t offset, uint64_t bits) {
     union
     {
         uint64_t u;
-        int64_t  i;
+        int64_t i;
     } conv;
 
     /* Converting from unsigned to signed is undefined when the value does
@@ -267,8 +267,8 @@ int64_t getSignedBitfield(unsigned char *p, uint64_t offset, uint64_t bits) {
 
 int checkUnsignedBitfieldOverflow(uint64_t value, int64_t incr, uint64_t bits, int owtype, uint64_t *limit) {
     uint64_t max = (bits == 64) ? UINT64_MAX : (((uint64_t)1 << bits) - 1);
-    int64_t  maxincr = max - value;
-    int64_t  minincr = -value;
+    int64_t maxincr = max - value;
+    int64_t minincr = -value;
 
     if (value > max || (incr > 0 && incr > maxincr)) {
         if (limit) {
@@ -395,10 +395,10 @@ void printBits(unsigned char *p, unsigned long count) {
  * is multiplied by 'bits'. This is useful for the BITFIELD command. */
 int getBitOffsetFromArgument(client *c, robj *o, uint64_t *offset, int hash, int bits) {
     long long loffset;
-    char     *err = "bit offset is not an integer or out of range";
-    char     *p = o->ptr;
-    size_t    plen = sdslen(p);
-    int       usehash = 0;
+    char *err = "bit offset is not an integer or out of range";
+    char *p = o->ptr;
+    size_t plen = sdslen(p);
+    int usehash = 0;
 
     /* Handle #<offset> form. */
     if (p[0] == '#' && hash && bits > 0)
@@ -431,8 +431,8 @@ int getBitOffsetFromArgument(client *c, robj *o, uint64_t *offset, int hash, int
  *
  * On error C_ERR is returned and an error is sent to the client. */
 int getBitfieldTypeFromArgument(client *c, robj *o, int *sign, int *bits) {
-    char     *p = o->ptr;
-    char     *err = "Invalid bitfield type. Use something like i16 u8. Note that u64 is not supported but i64 is.";
+    char *p = o->ptr;
+    char *err = "Invalid bitfield type. Use something like i16 u8. Note that u64 is not supported but i64 is.";
     long long llbits;
 
     if (p[0] == 'i') {
@@ -528,12 +528,12 @@ unsigned char *getObjectReadOnlyString(robj *o, long *len, char *llbuf) {
 
 /* SETBIT key offset bitvalue */
 void setbitCommand(client *c) {
-    robj    *o;
-    char    *err = "bit is not an integer or out of range";
+    robj *o;
+    char *err = "bit is not an integer or out of range";
     uint64_t bitoffset;
-    ssize_t  byte, bit;
-    int      byteval, bitval;
-    long     on;
+    ssize_t byte, bit;
+    int byteval, bitval;
+    long on;
 
     if (getBitOffsetFromArgument(c, c->argv[2], &bitoffset, 0, 0) != C_OK)
         return;
@@ -586,11 +586,11 @@ void setbitCommand(client *c) {
 
 /* GETBIT key offset */
 void getbitCommand(client *c) {
-    robj    *o;
-    char     llbuf[32];
+    robj *o;
+    char llbuf[32];
     uint64_t bitoffset;
-    size_t   byte, bit;
-    size_t   bitval = 0;
+    size_t byte, bit;
+    size_t bitval = 0;
     // 获取 offset 参数
     if (getBitOffsetFromArgument(c, c->argv[2], &bitoffset, 0, 0) != C_OK)
         return;
@@ -620,15 +620,15 @@ void getbitCommand(client *c) {
 REDIS_NO_SANITIZE("alignment")
 
 void bitopCommand(client *c) {
-    char           *opname = c->argv[1]->ptr;
-    robj           *o, *targetkey = c->argv[2];
-    unsigned long   op, j, numkeys;
-    robj          **objects;         /* Array of source objects. */
-    unsigned char **src;             /* Array of source strings pointers. */
-    unsigned long  *len, maxlen = 0; /* Array of length of src strings,
-                                        and max len. */
-    unsigned long  minlen = 0;       /* Min len among the input keys. */
-    unsigned char *res = NULL;       /* Resulting string. */
+    char *opname = c->argv[1]->ptr;
+    robj *o, *targetkey = c->argv[2];
+    unsigned long op, j, numkeys;
+    robj **objects;                 /* Array of source objects. */
+    unsigned char **src;            /* Array of source strings pointers. */
+    unsigned long *len, maxlen = 0; /* Array of length of src strings,
+                                       and max len. */
+    unsigned long minlen = 0;       /* Min len among the input keys. */
+    unsigned char *res = NULL;      /* Resulting string. */
 
     // 读入 op 参数,确定要执行的操作
     if ((opname[0] == 'a' || opname[0] == 'A') && !strcasecmp(opname, "and"))
@@ -848,13 +848,13 @@ void bitopCommand(client *c) {
 
 /* BITCOUNT key [start end [BIT|BYTE]] */
 void bitcountCommand(client *c) {
-    robj          *o;
-    long long      start, end;
-    long           strlen;
+    robj *o;
+    long long start, end;
+    long strlen;
     unsigned char *p;
-    char           llbuf[LONG_STR_SIZE];
-    int            isbit = 0;
-    unsigned char  first_byte_neg_mask = 0, last_byte_neg_mask = 0;
+    char llbuf[LONG_STR_SIZE];
+    int isbit = 0;
+    unsigned char first_byte_neg_mask = 0, last_byte_neg_mask = 0;
 
     /* Lookup, check for type, and return 0 for non existing keys. */
     // 查找 key
@@ -927,7 +927,7 @@ void bitcountCommand(client *c) {
         addReply(c, shared.czero);
     }
     else {
-        long      bytes = (long)(end - start + 1);
+        long bytes = (long)(end - start + 1);
         long long count = redisPopcount(p + start, bytes);
         if (first_byte_neg_mask != 0 || last_byte_neg_mask != 0) {
             unsigned char firstlast[2] = {0, 0};
@@ -947,13 +947,13 @@ void bitcountCommand(client *c) {
 
 /* BITPOS key bit [start [end [BIT|BYTE]]] */
 void bitposCommand(client *c) {
-    robj          *o;
-    long long      start, end;
-    long           bit, strlen;
+    robj *o;
+    long long start, end;
+    long bit, strlen;
     unsigned char *p;
-    char           llbuf[LONG_STR_SIZE];
-    int            isbit = 0, end_given = 0;
-    unsigned char  first_byte_neg_mask = 0, last_byte_neg_mask = 0;
+    char llbuf[LONG_STR_SIZE];
+    int isbit = 0, end_given = 0;
+    unsigned char first_byte_neg_mask = 0, last_byte_neg_mask = 0;
 
     /* Parse the bit argument to understand what we are looking for, set
      * or clear bits. */
@@ -1042,8 +1042,8 @@ void bitposCommand(client *c) {
         addReplyLongLong(c, -1);
     }
     else {
-        long          bytes = end - start + 1;
-        long long     pos;
+        long bytes = end - start + 1;
+        long long pos;
         unsigned char tmpchar;
         if (first_byte_neg_mask) {
             if (bit)
@@ -1113,32 +1113,32 @@ void bitposCommand(client *c) {
 
 struct bitfieldOp {
     uint64_t offset; /* Bitfield offset. */
-    int64_t  i64;    /* Increment amount (INCRBY) or SET value */
-    int      opcode; /* Operation id. */
-    int      owtype; /* Overflow type to use. */
-    int      bits;   /* Integer bitfield bits width. */
-    int      sign;   /* True if signed, otherwise unsigned op. */
+    int64_t i64;     /* Increment amount (INCRBY) or SET value */
+    int opcode;      /* Operation id. */
+    int owtype;      /* Overflow type to use. */
+    int bits;        /* Integer bitfield bits width. */
+    int sign;        /* True if signed, otherwise unsigned op. */
 };
 
 /* This implements both the BITFIELD command and the BITFIELD_RO command
  * when flags is set to BITFIELD_FLAG_READONLY: in this case only the
  * GET subcommand is allowed, other subcommands will return an error. */
 void bitfieldGeneric(client *c, int flags) {
-    robj              *o;
-    uint64_t           bitoffset;
-    int                j, numops = 0, changes = 0, dirty = 0;
-    struct bitfieldOp *ops = NULL;               /* Array of ops to execute at end. */
-    int                owtype = BFOVERFLOW_WRAP; /* Overflow type. */
-    int                readonly = 1;
-    uint64_t           highest_write_offset = 0;
+    robj *o;
+    uint64_t bitoffset;
+    int j, numops = 0, changes = 0, dirty = 0;
+    struct bitfieldOp *ops = NULL; /* Array of ops to execute at end. */
+    int owtype = BFOVERFLOW_WRAP;  /* Overflow type. */
+    int readonly = 1;
+    uint64_t highest_write_offset = 0;
 
     for (j = 2; j < c->argc; j++) {
-        int       remargs = c->argc - j - 1; /* Remaining args other than current. */
-        char     *subcmd = c->argv[j]->ptr;  /* Current command name. */
-        int       opcode;                    /* Current operation code. */
-        long long i64 = 0;                   /* Signed SET value. */
-        int       sign = 0;                  /* Signed or unsigned type? */
-        int       bits = 0;                  /* Bitfield width in bits. */
+        int remargs = c->argc - j - 1;  /* Remaining args other than current. */
+        char *subcmd = c->argv[j]->ptr; /* Current command name. */
+        int opcode;                     /* Current operation code. */
+        long long i64 = 0;              /* Signed SET value. */
+        int sign = 0;                   /* Signed or unsigned type? */
+        int bits = 0;                   /* Bitfield width in bits. */
 
         if (!strcasecmp(subcmd, "get") && remargs >= 2)
             opcode = BITFIELDOP_GET;
@@ -1244,7 +1244,7 @@ void bitfieldGeneric(client *c, int flags) {
              * the integers and the used variables types are different. */
             if (thisop->sign) {
                 int64_t oldval, newval, wrapped, retval;
-                int     overflow;
+                int overflow;
 
                 oldval = getSignedBitfield(o->ptr, thisop->offset, thisop->bits);
 
@@ -1276,7 +1276,7 @@ void bitfieldGeneric(client *c, int flags) {
             }
             else {
                 uint64_t oldval, newval, wrapped, retval;
-                int      overflow;
+                int overflow;
 
                 oldval = getUnsignedBitfield(o->ptr, thisop->offset, thisop->bits);
 
@@ -1310,10 +1310,10 @@ void bitfieldGeneric(client *c, int flags) {
         }
         else {
             /* GET */
-            unsigned char  buf[9];
-            long           strlen = 0;
+            unsigned char buf[9];
+            long strlen = 0;
             unsigned char *src = NULL;
-            char           llbuf[LONG_STR_SIZE];
+            char llbuf[LONG_STR_SIZE];
 
             if (o != NULL)
                 src = getObjectReadOnlyString(o, &strlen, llbuf);
@@ -1323,7 +1323,7 @@ void bitfieldGeneric(client *c, int flags) {
              * execute up to 64 bit operations that are at actual string
              * object boundaries. */
             memset(buf, 0, 9);
-            int      i;
+            int i;
             uint64_t byte = thisop->offset >> 3;
             for (i = 0; i < 9; i++) {
                 if (src == NULL || i + byte >= (uint64_t)strlen)

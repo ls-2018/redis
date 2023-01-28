@@ -145,10 +145,10 @@ int lpSafeToAdd(unsigned char *lp, size_t add) {
  * The function is released under the BSD 3-clause license.
  */
 int lpStringToInt64(const char *s, unsigned long slen, int64_t *value) {
-    const char   *p = s;
+    const char *p = s;
     unsigned long plen = 0;
-    int           negative = 0;
-    uint64_t      v;
+    int negative = 0;
+    uint64_t v;
 
     /* Abort if length indicates this cannot possibly be an int */
     if (slen == 0 || slen >= LONG_STR_SIZE)
@@ -569,7 +569,7 @@ unsigned long lpLength(unsigned char *lp) {
 
     /* Too many elements inside the listpack. We need to scan in order
      * to get the total number. */
-    uint32_t       count = 0;
+    uint32_t count = 0;
     unsigned char *p = lpFirst(lp);
     while (p) {
         count++;
@@ -622,7 +622,7 @@ unsigned long lpLength(unsigned char *lp) {
  * in order to check the integrity of the listpack at load time is provided,
  * check lpIsValid(). */
 static inline unsigned char *lpGetWithSize(unsigned char *p, int64_t *count, unsigned char *intbuf, uint64_t *entry_size) {
-    int64_t  val;
+    int64_t val;
     uint64_t uval, negstart, negmax;
 
     assert(p); /* assertion for valgrind (avoid NPD) */
@@ -729,7 +729,7 @@ unsigned char *lpGet(unsigned char *p, int64_t *count, unsigned char *intbuf) {
  * string. */
 unsigned char *lpGetValue(unsigned char *p, unsigned int *slen, long long *lval) {
     unsigned char *vstr;
-    int64_t        ele_len;
+    int64_t ele_len;
 
     vstr = lpGet(p, &ele_len, NULL);
     if (vstr) {
@@ -744,12 +744,12 @@ unsigned char *lpGetValue(unsigned char *p, unsigned int *slen, long long *lval)
 /* Find pointer to the entry equal to the specified entry. Skip 'skip' entries
  * between every comparison. Returns NULL when the field could not be found. */
 unsigned char *lpFind(unsigned char *lp, unsigned char *p, unsigned char *s, uint32_t slen, unsigned int skip) {
-    int            skipcnt = 0;
-    unsigned char  vencoding = 0;
+    int skipcnt = 0;
+    unsigned char vencoding = 0;
     unsigned char *value;
-    int64_t        ll, vll;
-    uint64_t       entry_size = 123456789; /* initialized to avoid warning. */
-    uint32_t       lp_bytes = lpBytes(lp);
+    int64_t ll, vll;
+    uint64_t entry_size = 123456789; /* initialized to avoid warning. */
+    uint32_t lp_bytes = lpBytes(lp);
 
     assert(p);
     while (p) {
@@ -894,8 +894,8 @@ unsigned char *lpInsert(unsigned char *lp, unsigned char *elestr, unsigned char 
      * and append it to the end: this allows to traverse the listpack from
      * the end to the start. */
     unsigned long backlen_size = (!delete) ? lpEncodeBacklen(backlen, enclen) : 0;
-    uint64_t      old_listpack_bytes = lpGetTotalBytes(lp);
-    uint32_t      replaced_len = 0;
+    uint64_t old_listpack_bytes = lpGetTotalBytes(lp);
+    uint32_t replaced_len = 0;
     if (where == LP_REPLACE) {
         replaced_len = lpCurrentEncodedSizeUnsafe(p);
         replaced_len += lpEncodeBacklen(NULL, replaced_len);
@@ -1000,7 +1000,7 @@ unsigned char *lpInsertString(unsigned char *lp, unsigned char *s, uint32_t slen
 /* This is just a wrapper for lpInsert() to directly use a 64 bit integer
  * instead of a string. */
 unsigned char *lpInsertInteger(unsigned char *lp, long long lval, unsigned char *p, int where, unsigned char **newp) {
-    uint64_t      enclen; /* The length of the encoded element. */
+    uint64_t enclen; /* The length of the encoded element. */
     unsigned char intenc[LP_MAX_INT_ENCODING_LEN];
 
     lpEncodeIntegerGetType(lval, intenc, &enclen);
@@ -1027,14 +1027,14 @@ unsigned char *lpPrependInteger(unsigned char *lp, long long lval) {
  * listpack. It is implemented in terms of lpInsert(), so the return value is
  * the same as lpInsert(). */
 unsigned char *lpAppend(unsigned char *lp, unsigned char *ele, uint32_t size) {
-    uint64_t       listpack_bytes = lpGetTotalBytes(lp);
+    uint64_t listpack_bytes = lpGetTotalBytes(lp);
     unsigned char *eofptr = lp + listpack_bytes - 1;
     return lpInsert(lp, ele, NULL, size, eofptr, LP_BEFORE, NULL);
 }
 
 /* Append the specified integer element 'lval' at the end of the listpack. */
 unsigned char *lpAppendInteger(unsigned char *lp, long long lval) {
-    uint64_t       listpack_bytes = lpGetTotalBytes(lp);
+    uint64_t listpack_bytes = lpGetTotalBytes(lp);
     unsigned char *eofptr = lp + listpack_bytes - 1;
     return lpInsertInteger(lp, lval, eofptr, LP_BEFORE, NULL);
 }
@@ -1064,8 +1064,8 @@ unsigned char *lpDelete(unsigned char *lp, unsigned char *p, unsigned char **new
 
 /* Delete a range of entries from the listpack start with the element pointed by 'p'. */
 unsigned char *lpDeleteRangeWithEntry(unsigned char *lp, unsigned char **p, unsigned long num) {
-    size_t         bytes = lpBytes(lp);
-    unsigned long  deleted = 0;
+    size_t bytes = lpBytes(lp);
+    unsigned long deleted = 0;
     unsigned char *eofptr = lp + bytes - 1;
     unsigned char *first, *tail;
     first = tail = *p;
@@ -1107,7 +1107,7 @@ unsigned char *lpDeleteRangeWithEntry(unsigned char *lp, unsigned char **p, unsi
 /* Delete a range of entries from the listpack. */
 unsigned char *lpDeleteRange(unsigned char *lp, long index, unsigned long num) {
     unsigned char *p;
-    uint32_t       numele = lpGetNumElements(lp);
+    uint32_t numele = lpGetNumElements(lp);
 
     if (num == 0)
         return lp; /* Nothing to delete, return ASAP. */
@@ -1160,15 +1160,15 @@ unsigned char *lpMerge(unsigned char **first, unsigned char **second) {
     if (*first == *second)
         return NULL;
 
-    size_t        first_bytes = lpBytes(*first);
+    size_t first_bytes = lpBytes(*first);
     unsigned long first_len = lpLength(*first);
 
-    size_t        second_bytes = lpBytes(*second);
+    size_t second_bytes = lpBytes(*second);
     unsigned long second_len = lpLength(*second);
 
-    int            append;
+    int append;
     unsigned char *source, *target;
-    size_t         target_bytes, source_bytes;
+    size_t target_bytes, source_bytes;
     /* Pick the largest listpack so we can resize easily in-place.
      * We must also track if we are now appending or prepending to
      * the target listpack. */
@@ -1375,8 +1375,8 @@ int lpValidateIntegrity(unsigned char *lp, size_t size, int deep, listpackValida
         return 1;
 
     /* Validate the individual entries. */
-    uint32_t       count = 0;
-    uint32_t       numele = lpGetNumElements(lp);
+    uint32_t count = 0;
+    uint32_t numele = lpGetNumElements(lp);
     unsigned char *p = lp + LP_HDR_SIZE;
     while (p && p[0] != LP_EOF) {
         unsigned char *prev = p;
@@ -1408,7 +1408,7 @@ int lpValidateIntegrity(unsigned char *lp, size_t size, int deep, listpackValida
  * Return 1 if equal. */
 unsigned int lpCompare(unsigned char *p, unsigned char *s, uint32_t slen) {
     unsigned char *value;
-    int64_t        sz;
+    int64_t sz;
     if (p[0] == LP_EOF)
         return 0;
 
@@ -1467,15 +1467,15 @@ void lpRandomPair(unsigned char *lp, unsigned long total_count, listpackEntry *k
  * The 'vals' arg can be NULL in which case we skip these. */
 void lpRandomPairs(unsigned char *lp, unsigned int count, listpackEntry *keys, listpackEntry *vals) {
     unsigned char *p, *key, *value;
-    unsigned int   klen = 0, vlen = 0;
-    long long      klval = 0, vlval = 0;
+    unsigned int klen = 0, vlen = 0;
+    long long klval = 0, vlval = 0;
 
     /* Notice: the index member must be first due to the use in uintCompare */
     typedef struct {
         unsigned int index;
         unsigned int order;
     } rand_pick;
-    rand_pick   *picks = zmalloc(sizeof(rand_pick) * count);
+    rand_pick *picks = zmalloc(sizeof(rand_pick) * count);
     unsigned int total_size = lpLength(lp) / 2;
 
     /* Avoid div by zero on corrupt listpack */
@@ -1520,10 +1520,10 @@ void lpRandomPairs(unsigned char *lp, unsigned int count, listpackEntry *keys, l
  * requested count if the listpack doesn't hold enough pairs. */
 unsigned int lpRandomPairsUnique(unsigned char *lp, unsigned int count, listpackEntry *keys, listpackEntry *vals) {
     unsigned char *p, *key;
-    unsigned int   klen = 0;
-    long long      klval = 0;
-    unsigned int   total_size = lpLength(lp) / 2;
-    unsigned int   index = 0;
+    unsigned int klen = 0;
+    long long klval = 0;
+    unsigned int total_size = lpLength(lp) / 2;
+    unsigned int index = 0;
     if (count > total_size)
         count = total_size;
 
@@ -1559,16 +1559,16 @@ unsigned int lpRandomPairsUnique(unsigned char *lp, unsigned int count, listpack
 /* Print info of listpack which is used in debugCommand */
 void lpRepr(unsigned char *lp) {
     unsigned char *p, *vstr;
-    int64_t        vlen;
-    unsigned char  intbuf[LP_INTBUF_SIZE];
-    int            index = 0;
+    int64_t vlen;
+    unsigned char intbuf[LP_INTBUF_SIZE];
+    int index = 0;
 
     printf("{total bytes %zu} {num entries %lu}\n", lpBytes(lp), lpLength(lp));
 
     p = lpFirst(lp);
     while (p) {
-        uint32_t      encoded_size_bytes = lpCurrentEncodedSizeBytes(p);
-        uint32_t      encoded_size = lpCurrentEncodedSizeUnsafe(p);
+        uint32_t encoded_size_bytes = lpCurrentEncodedSizeBytes(p);
+        uint32_t encoded_size = lpCurrentEncodedSizeUnsafe(p);
         unsigned long back_len = lpEncodeBacklen(NULL, encoded_size);
         printf(
             "{\n"
@@ -1606,13 +1606,13 @@ void lpRepr(unsigned char *lp) {
 
 #ifdef REDIS_TEST
 
-#include <sys/time.h>
-#include "adlist.h"
-#include "sds.h"
-#include "testhelp.h"
+#    include <sys/time.h>
+#    include "adlist.h"
+#    include "sds.h"
+#    include "testhelp.h"
 
-#define UNUSED(x) (void)(x)
-#define TEST(name) printf("test — %s\n", name);
+#    define UNUSED(x) (void)(x)
+#    define TEST(name) printf("test — %s\n", name);
 
 char *mixlist[] = {"hello", "foo", "quux", "1024"};
 char *intlist[] = {"4294967296", "-100", "100", "128000", "non integer", "much much longer non integer"};
@@ -1644,10 +1644,10 @@ static long long usec(void) {
 }
 
 static void stress(int pos, int num, int maxsize, int dnum) {
-    int            i, j, k;
+    int i, j, k;
     unsigned char *lp;
-    char           posstr[2][5] = {"HEAD", "TAIL"};
-    long long      start;
+    char posstr[2][5] = {"HEAD", "TAIL"};
+    long long start;
     for (i = 0; i < maxsize; i += dnum) {
         lp = lpNew(0);
         for (j = 0; j < i; j++) {
@@ -1672,7 +1672,7 @@ static void stress(int pos, int num, int maxsize, int dnum) {
 
 static unsigned char *pop(unsigned char *lp, int where) {
     unsigned char *p, *vstr;
-    int64_t        vlen;
+    int64_t vlen;
 
     p = lpSeek(lp, where == 0 ? 0 : -1);
     vstr = lpGet(p, &vlen, NULL);
@@ -1726,7 +1726,7 @@ static int lpValidation(unsigned char *p, unsigned int head_count, void *userdat
     UNUSED(p);
     UNUSED(head_count);
 
-    int   ret;
+    int ret;
     long *count = userdata;
     ret = lpCompare(p, (unsigned char *)mixlist[*count], strlen(mixlist[*count]));
     (*count)++;
@@ -1737,11 +1737,11 @@ int listpackTest(int argc, char *argv[], int flags) {
     UNUSED(argc);
     UNUSED(argv);
 
-    int            i;
+    int i;
     unsigned char *lp, *p, *vstr;
-    int64_t        vlen;
-    unsigned char  intbuf[LP_INTBUF_SIZE];
-    int            accurate = (flags & REDIS_TEST_ACCURATE);
+    int64_t vlen;
+    unsigned char intbuf[LP_INTBUF_SIZE];
+    int accurate = (flags & REDIS_TEST_ACCURATE);
 
     TEST("Create int list") {
         lp = createIntList();
@@ -2050,7 +2050,7 @@ int listpackTest(int argc, char *argv[], int flags) {
     TEST("Create long list and check indices") {
         lp = lpNew(0);
         char buf[32];
-        int  i, len;
+        int i, len;
         for (i = 0; i < 1000; i++) {
             len = sprintf(buf, "%d", i);
             lp = lpAppend(lp, (unsigned char *)buf, len);
@@ -2093,8 +2093,8 @@ int listpackTest(int argc, char *argv[], int flags) {
         unsigned char *lp1 = createIntList();
         unsigned char *lp2 = createList();
 
-        size_t        lp1_bytes = lpBytes(lp1);
-        size_t        lp2_bytes = lpBytes(lp2);
+        size_t lp1_bytes = lpBytes(lp1);
+        size_t lp2_bytes = lpBytes(lp2);
         unsigned long lp1_len = lpLength(lp1);
         unsigned long lp2_len = lpLength(lp2);
 
@@ -2114,8 +2114,8 @@ int listpackTest(int argc, char *argv[], int flags) {
         unsigned char *lp1 = createList();
         unsigned char *lp2 = createIntList();
 
-        size_t        lp1_bytes = lpBytes(lp1);
-        size_t        lp2_bytes = lpBytes(lp2);
+        size_t lp1_bytes = lpBytes(lp1);
+        size_t lp2_bytes = lpBytes(lp2);
         unsigned long lp1_len = lpLength(lp1);
         unsigned long lp2_len = lpLength(lp2);
 
@@ -2132,7 +2132,7 @@ int listpackTest(int argc, char *argv[], int flags) {
     }
 
     TEST("Random pair with one element") {
-        listpackEntry  key, val;
+        listpackEntry key, val;
         unsigned char *lp = lpNew(0);
         lp = lpAppend(lp, (unsigned char *)"abc", 3);
         lp = lpAppend(lp, (unsigned char *)"123", 3);
@@ -2143,7 +2143,7 @@ int listpackTest(int argc, char *argv[], int flags) {
     }
 
     TEST("Random pair with many elements") {
-        listpackEntry  key, val;
+        listpackEntry key, val;
         unsigned char *lp = lpNew(0);
         lp = lpAppend(lp, (unsigned char *)"abc", 3);
         lp = lpAppend(lp, (unsigned char *)"123", 3);
@@ -2163,7 +2163,7 @@ int listpackTest(int argc, char *argv[], int flags) {
     }
 
     TEST("Random pairs with one element") {
-        int            count = 5;
+        int count = 5;
         unsigned char *lp = lpNew(0);
         listpackEntry *keys = zmalloc(sizeof(listpackEntry) * count);
         listpackEntry *vals = zmalloc(sizeof(listpackEntry) * count);
@@ -2207,7 +2207,7 @@ int listpackTest(int argc, char *argv[], int flags) {
 
     TEST("Random pairs unique with one element") {
         unsigned picked;
-        int      count = 5;
+        int count = 5;
         lp = lpNew(0);
         listpackEntry *keys = zmalloc(sizeof(listpackEntry) * count);
         listpackEntry *vals = zmalloc(sizeof(listpackEntry) * count);
@@ -2225,7 +2225,7 @@ int listpackTest(int argc, char *argv[], int flags) {
 
     TEST("Random pairs unique with many elements") {
         unsigned picked;
-        int      count = 5;
+        int count = 5;
         lp = lpNew(0);
         listpackEntry *keys = zmalloc(sizeof(listpackEntry) * count);
         listpackEntry *vals = zmalloc(sizeof(listpackEntry) * count);
@@ -2333,12 +2333,12 @@ int listpackTest(int argc, char *argv[], int flags) {
 
     TEST("Stress with random payloads of different encoding") {
         unsigned long long start = usec();
-        int                i, j, len, where;
-        unsigned char     *p;
-        char               buf[1024];
-        int                buflen;
-        list              *ref;
-        listNode          *refnode;
+        int i, j, len, where;
+        unsigned char *p;
+        char buf[1024];
+        int buflen;
+        list *ref;
+        listNode *refnode;
 
         int iteration = accurate ? 20000 : 20;
         for (i = 0; i < iteration; i++) {
@@ -2407,7 +2407,7 @@ int listpackTest(int argc, char *argv[], int flags) {
 
     TEST("Stress with variable listpack size") {
         unsigned long long start = usec();
-        int                maxsize = accurate ? 16384 : 16;
+        int maxsize = accurate ? 16384 : 16;
         stress(0, 100000, maxsize, 256);
         stress(1, 100000, maxsize, 256);
         printf("Done. usec=%lld\n\n", usec() - start);

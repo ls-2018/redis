@@ -1,28 +1,28 @@
 #include "lzfP.h"
 
 #if AVOID_ERRNO
-#define SET_ERRNO(n)
+#    define SET_ERRNO(n)
 #else
-# include <errno.h>
-# define SET_ERRNO(n) errno = (n)
+#    include <errno.h>
+#    define SET_ERRNO(n) errno = (n)
 #endif
 
 #if USE_REP_MOVSB /* small win on amd, big loss on intel */
-#if (__i386 || __amd64) && __GNUC__ >= 3
-#define lzf_movsb(dst, src, len) asm("rep movsb" : "=D"(dst), "=S"(src), "=c"(len) : "0"(dst), "1"(src), "2"(len));
-#endif
+#    if (__i386 || __amd64) && __GNUC__ >= 3
+#        define lzf_movsb(dst, src, len) asm("rep movsb" : "=D"(dst), "=S"(src), "=c"(len) : "0"(dst), "1"(src), "2"(len));
+#    endif
 #endif
 
 #if defined(__GNUC__) && __GNUC__ >= 7
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 #endif
 
 size_t lzf_decompress(const void *const in_data, size_t in_len, void *out_data, size_t out_len) {
-    u8 const       *ip = (const u8 *)in_data;
-    u8             *op = (u8 *)out_data;
+    u8 const *ip = (const u8 *)in_data;
+    u8 *op = (u8 *)out_data;
     u8 const *const in_end = ip + in_len;
-    u8 *const       out_end = op + out_len;
+    u8 *const out_end = op + out_len;
 
     while (ip < in_end) {
         unsigned int ctrl;
@@ -200,5 +200,5 @@ size_t lzf_decompress(const void *const in_data, size_t in_len, void *out_data, 
 }
 
 #if defined(__GNUC__) && __GNUC__ >= 5
-#pragma GCC diagnostic pop
+#    pragma GCC diagnostic pop
 #endif

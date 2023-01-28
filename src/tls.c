@@ -4,27 +4,27 @@
 
 #ifdef USE_OPENSSL // 编译时指定
 
-#include <openssl/conf.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/pem.h>
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
-#include <openssl/decoder.h>
-#endif
-#include <sys/uio.h>
+#    include <openssl/conf.h>
+#    include <openssl/ssl.h>
+#    include <openssl/err.h>
+#    include <openssl/rand.h>
+#    include <openssl/pem.h>
+#    if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#        include <openssl/decoder.h>
+#    endif
+#    include <sys/uio.h>
 
-#define REDIS_TLS_PROTO_TLSv1 (1 << 0)
-#define REDIS_TLS_PROTO_TLSv1_1 (1 << 1)
-#define REDIS_TLS_PROTO_TLSv1_2 (1 << 2)
-#define REDIS_TLS_PROTO_TLSv1_3 (1 << 3)
+#    define REDIS_TLS_PROTO_TLSv1 (1 << 0)
+#    define REDIS_TLS_PROTO_TLSv1_1 (1 << 1)
+#    define REDIS_TLS_PROTO_TLSv1_2 (1 << 2)
+#    define REDIS_TLS_PROTO_TLSv1_3 (1 << 3)
 
 /* Use safe defaults */
-#ifdef TLS1_3_VERSION
-#define REDIS_TLS_PROTO_DEFAULT (REDIS_TLS_PROTO_TLSv1_2 | REDIS_TLS_PROTO_TLSv1_3)
-#else
-#define REDIS_TLS_PROTO_DEFAULT (REDIS_TLS_PROTO_TLSv1_2)
-#endif
+#    ifdef TLS1_3_VERSION
+#        define REDIS_TLS_PROTO_DEFAULT (REDIS_TLS_PROTO_TLSv1_2 | REDIS_TLS_PROTO_TLSv1_3)
+#    else
+#        define REDIS_TLS_PROTO_DEFAULT (REDIS_TLS_PROTO_TLSv1_2)
+#    endif
 
 extern ConnectionType CT_Socket;
 
@@ -51,13 +51,13 @@ static int parseProtocolsConfig(const char *str) {
         else if (!strcasecmp(tokens[i], "tlsv1.2"))
             protocols |= REDIS_TLS_PROTO_TLSv1_2;
         else if (!strcasecmp(tokens[i], "tlsv1.3")) {
-#ifdef TLS1_3_VERSION
+#    ifdef TLS1_3_VERSION
             protocols |= REDIS_TLS_PROTO_TLSv1_3;
-#else
+#    else
             serverLog(LL_WARNING, "TLSv1.3 is specified in tls-protocols but not supported by OpenSSL.");
             protocols = -1;
             break;
-#endif
+#    endif
         }
         else {
             serverLog(
@@ -82,11 +82,11 @@ static list *pending_list = NULL;
  * Note that this is only required for OpenSSL < 1.1.0.
  */
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define USE_CRYPTO_LOCKS
-#endif
+#    if OPENSSL_VERSION_NUMBER < 0x10100000L
+#        define USE_CRYPTO_LOCKS
+#    endif
 
-#ifdef USE_CRYPTO_LOCKS
+#    ifdef USE_CRYPTO_LOCKS
 
 static pthread_mutex_t *openssl_locks;
 
@@ -117,7 +117,7 @@ static void initCryptoLocks(void) {
     }
     CRYPTO_set_locking_callback(sslLockingCallback);
 }
-#endif /* USE_CRYPTO_LOCKS */
+#    endif /* USE_CRYPTO_LOCKS */
 
 void tlsInit(void) {
     /* Enable configuring OpenSSL using the standard openssl.cnf
@@ -126,19 +126,19 @@ void tlsInit(void) {
      *  - OPENSSL_config() should be used for OpenSSL versions < 1.1.0
      *  - OPENSSL_init_crypto() should be used for OpenSSL versions >= 1.1.0
      */
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#    if OPENSSL_VERSION_NUMBER < 0x10100000L
     OPENSSL_config(NULL);
     SSL_load_error_strings();
     SSL_library_init();
-#elif OPENSSL_VERSION_NUMBER < 0x10101000L
+#    elif OPENSSL_VERSION_NUMBER < 0x10101000L
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
-#else
+#    else
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG | OPENSSL_INIT_ATFORK, NULL);
-#endif
+#    endif
 
-#ifdef USE_CRYPTO_LOCKS
+#    ifdef USE_CRYPTO_LOCKS
     initCryptoLocks();
-#endif
+#    endif
 
     if (!RAND_poll()) {
         serverLog(LL_WARNING, "OpenSSL: Failed to seed random number generator.");
@@ -157,10 +157,10 @@ void tlsCleanup(void) {
         redis_tls_client_ctx = NULL;
     }
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+#    if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
     // unavailable on LibreSSL
     OPENSSL_cleanup();
-#endif
+#    endif
 }
 
 /* Callback for passing a keyfile password stored as an sds to OpenSSL */
@@ -168,7 +168,7 @@ static int tlsPasswordCallback(char *buf, int size, int rwflag, void *u) {
     UNUSED(rwflag);
 
     const char *pass = u;
-    size_t      pass_len;
+    size_t pass_len;
 
     if (!pass)
         return -1;
@@ -187,33 +187,33 @@ static SSL_CTX *createSSLContext(redisTLSContextConfig *ctx_config, int protocol
     const char *cert_file = client ? ctx_config->client_cert_file : ctx_config->cert_file;
     const char *key_file = client ? ctx_config->client_key_file : ctx_config->key_file;
     const char *key_file_pass = client ? ctx_config->client_key_file_pass : ctx_config->key_file_pass;
-    char        errbuf[256];
-    SSL_CTX    *ctx = NULL;
+    char errbuf[256];
+    SSL_CTX *ctx = NULL;
 
     ctx = SSL_CTX_new(SSLv23_method());
 
     SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
-#ifdef SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+#    ifdef SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
     SSL_CTX_set_options(ctx, SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS);
-#endif
+#    endif
 
     if (!(protocols & REDIS_TLS_PROTO_TLSv1))
         SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
     if (!(protocols & REDIS_TLS_PROTO_TLSv1_1))
         SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
-#ifdef SSL_OP_NO_TLSv1_2
+#    ifdef SSL_OP_NO_TLSv1_2
     if (!(protocols & REDIS_TLS_PROTO_TLSv1_2))
         SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
-#endif
-#ifdef SSL_OP_NO_TLSv1_3
+#    endif
+#    ifdef SSL_OP_NO_TLSv1_3
     if (!(protocols & REDIS_TLS_PROTO_TLSv1_3))
         SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
-#endif
+#    endif
 
-#ifdef SSL_OP_NO_COMPRESSION
+#    ifdef SSL_OP_NO_COMPRESSION
     SSL_CTX_set_options(ctx, SSL_OP_NO_COMPRESSION);
-#endif
+#    endif
 
     SSL_CTX_set_mode(ctx, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
@@ -244,12 +244,12 @@ static SSL_CTX *createSSLContext(redisTLSContextConfig *ctx_config, int protocol
         goto error;
     }
 
-#ifdef TLS1_3_VERSION
+#    ifdef TLS1_3_VERSION
     if (ctx_config->ciphersuites && !SSL_CTX_set_ciphersuites(ctx, ctx_config->ciphersuites)) {
         serverLog(LL_WARNING, "Failed to configure ciphersuites: %s", ctx_config->ciphersuites);
         goto error;
     }
-#endif
+#    endif
 
     return ctx;
 
@@ -263,7 +263,7 @@ error:
  * leave the SSL_CTX unchanged if fails.
  */
 int tlsConfigure(redisTLSContextConfig *ctx_config) {
-    char     errbuf[256];
+    char errbuf[256];
     SSL_CTX *ctx = NULL;
     SSL_CTX *client_ctx = NULL;
 
@@ -301,16 +301,16 @@ int tlsConfigure(redisTLSContextConfig *ctx_config) {
         SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
     }
 
-#ifdef SSL_OP_NO_CLIENT_RENEGOTIATION
+#    ifdef SSL_OP_NO_CLIENT_RENEGOTIATION
     SSL_CTX_set_options(ctx, SSL_OP_NO_CLIENT_RENEGOTIATION);
-#endif
+#    endif
 
     if (ctx_config->prefer_server_ciphers)
         SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 
-#if ((OPENSSL_VERSION_NUMBER < 0x30000000L) && defined(SSL_CTX_set_ecdh_auto))
+#    if ((OPENSSL_VERSION_NUMBER < 0x30000000L) && defined(SSL_CTX_set_ecdh_auto))
     SSL_CTX_set_ecdh_auto(ctx, 1);
-#endif
+#    endif
     SSL_CTX_set_options(ctx, SSL_OP_SINGLE_DH_USE);
 
     if (ctx_config->dh_params_file) {
@@ -320,8 +320,8 @@ int tlsConfigure(redisTLSContextConfig *ctx_config) {
             goto error;
         }
 
-#if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
-        EVP_PKEY         *pkey = NULL;
+#    if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
+        EVP_PKEY *pkey = NULL;
         OSSL_DECODER_CTX *dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "PEM", NULL, "DH", OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS, NULL, NULL);
         if (!dctx) {
             serverLog(LL_WARNING, "No decoder for DH params.");
@@ -345,7 +345,7 @@ int tlsConfigure(redisTLSContextConfig *ctx_config) {
             goto error;
         }
         /* Not freeing pkey, it is owned by OpenSSL now */
-#else
+#    else
         DH *dh = PEM_read_DHparams(dhfile, NULL, NULL, NULL);
         fclose(dhfile);
         if (!dh) {
@@ -361,12 +361,12 @@ int tlsConfigure(redisTLSContextConfig *ctx_config) {
         }
 
         DH_free(dh);
-#endif
+#    endif
     }
     else {
-#if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
+#    if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
         SSL_CTX_set_dh_auto(ctx, 1);
-#endif
+#    endif
     }
 
     /* If a client-side certificate is configured, create an explicit client context */
@@ -397,11 +397,11 @@ int isTlsConfigured(void) {
     return redis_tls_ctx != NULL;
 }
 
-#ifdef TLS_DEBUGGING
-#define TLSCONN_DEBUG(fmt, ...) serverLog(LL_DEBUG, "TLSCONN: " fmt, __VA_ARGS__)
-#else
-#define TLSCONN_DEBUG(fmt, ...)
-#endif
+#    ifdef TLS_DEBUGGING
+#        define TLSCONN_DEBUG(fmt, ...) serverLog(LL_DEBUG, "TLSCONN: " fmt, __VA_ARGS__)
+#    else
+#        define TLSCONN_DEBUG(fmt, ...)
+#    endif
 
 ConnectionType CT_TLS;
 
@@ -422,16 +422,16 @@ ConnectionType CT_TLS;
 
 typedef enum { WANT_READ = 1, WANT_WRITE } WantIOType;
 
-#define TLS_CONN_FLAG_READ_WANT_WRITE (1 << 0)
-#define TLS_CONN_FLAG_WRITE_WANT_READ (1 << 1)
-#define TLS_CONN_FLAG_FD_SET (1 << 2)
+#    define TLS_CONN_FLAG_READ_WANT_WRITE (1 << 0)
+#    define TLS_CONN_FLAG_WRITE_WANT_READ (1 << 1)
+#    define TLS_CONN_FLAG_FD_SET (1 << 2)
 
 typedef struct tls_connection {
     connection c;
-    int        flags;
-    SSL       *ssl;
-    char      *ssl_error;
-    listNode  *pending_list_node;
+    int flags;
+    SSL *ssl;
+    char *ssl_error;
+    listNode *pending_list_node;
 } tls_connection;
 
 static connection *createTLSConnection(int client_side) {
@@ -730,7 +730,7 @@ static void connTLSClose(connection *conn_) {
 
 static int connTLSAccept(connection *_conn, ConnectionCallbackFunc accept_handler) {
     tls_connection *conn = (tls_connection *)_conn;
-    int             ret;
+    int ret;
 
     if (conn->c.state != CONN_STATE_ACCEPTING)
         return C_ERR;
@@ -779,7 +779,7 @@ static int connTLSConnect(connection *conn_, const char *addr, int port, const c
 
 static int connTLSWrite(connection *conn_, const void *data, size_t data_len) {
     tls_connection *conn = (tls_connection *)conn_;
-    int             ret, ssl_err;
+    int ret, ssl_err;
 
     if (conn->c.state != CONN_STATE_CONNECTED)
         return -1;
@@ -849,7 +849,7 @@ static int connTLSWritev(connection *conn_, const struct iovec *iov, int iovcnt)
      * which is worth doing more memory copies in exchange for fewer system calls,
      * so concatenate these scattered buffers into a contiguous piece of memory
      * and send it away by one call to connTLSWrite(). */
-    char   buf[iov_bytes_len];
+    char buf[iov_bytes_len];
     size_t offset = 0;
     for (int i = 0; i < iovcnt; i++) {
         memcpy(buf + offset, iov[i].iov_base, iov[i].iov_len);
@@ -860,8 +860,8 @@ static int connTLSWritev(connection *conn_, const struct iovec *iov, int iovcnt)
 
 static int connTLSRead(connection *conn_, void *buf, size_t buf_len) {
     tls_connection *conn = (tls_connection *)conn_;
-    int             ret;
-    int             ssl_err;
+    int ret;
+    int ssl_err;
 
     if (conn->c.state != CONN_STATE_CONNECTED)
         return -1;
@@ -938,7 +938,7 @@ static void unsetBlockingTimeout(tls_connection *conn) {
 
 static int connTLSBlockingConnect(connection *conn_, const char *addr, int port, long long timeout) {
     tls_connection *conn = (tls_connection *)conn_;
-    int             ret;
+    int ret;
 
     if (conn->c.state != CONN_STATE_NONE)
         return C_ERR;
@@ -986,7 +986,7 @@ static ssize_t connTLSSyncRead(connection *conn_, char *ptr, ssize_t size, long 
 
 static ssize_t connTLSSyncReadLine(connection *conn_, char *ptr, ssize_t size, long long timeout) {
     tls_connection *conn = (tls_connection *)conn_;
-    ssize_t         nread = 0;
+    ssize_t nread = 0;
 
     setBlockingTimeout(conn, timeout);
 
@@ -1046,7 +1046,7 @@ int tlsHasPendingData() {
 }
 
 int tlsProcessPendingData() {
-    listIter  li;
+    listIter li;
     listNode *ln;
 
     int processed = listLength(pending_list);
@@ -1078,8 +1078,8 @@ sds connTLSGetPeerCert(connection *conn_) {
     }
 
     const char *bio_ptr;
-    long long   bio_len = BIO_get_mem_data(bio, &bio_ptr);
-    sds         cert_pem = sdsnewlen(bio_ptr, bio_len);
+    long long bio_len = BIO_get_mem_data(bio, &bio_ptr);
+    sds cert_pem = sdsnewlen(bio_ptr, bio_len);
     BIO_free(bio);
 
     return cert_pem;

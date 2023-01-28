@@ -25,11 +25,11 @@
 
 #include "server.h"
 #include "bio.h"
-//保存线程描述符的数组
+// 保存线程描述符的数组
 static pthread_t bio_threads[BIO_NUM_OPS];
-//保存互斥锁的数组
+// 保存互斥锁的数组
 static pthread_mutex_t bio_mutex[BIO_NUM_OPS];
-//保存条件变量的两个数组
+// 保存条件变量的两个数组
 static pthread_cond_t bio_newjob_cond[BIO_NUM_OPS];
 static pthread_cond_t bio_step_cond[BIO_NUM_OPS];
 // 存放每种类型工作的队列
@@ -39,9 +39,9 @@ static unsigned long long bio_pending[BIO_NUM_OPS];
 
 // 表示后台任务的数据结构
 struct bio_job {
-    int           fd;          /* Fd for file based background jobs */
-    lazy_free_fn *free_fn;     // 每种后台线程对应的处理函数
-    void         *free_args[]; // 任务的参数
+    int fd;                /* Fd for file based background jobs */
+    lazy_free_fn *free_fn; // 每种后台线程对应的处理函数
+    void *free_args[];     // 任务的参数
 };
 
 void *bioProcessBackgroundJobs(void *arg);
@@ -53,10 +53,10 @@ void *bioProcessBackgroundJobs(void *arg);
 
 // 初始化后台任务系统,生成线程
 void bioInit(void) {
-    pthread_t      thread;
-    int            j;
-    size_t         stacksize = 0; //堆栈大小变量
-    pthread_attr_t attr;          //线程属性结构体变量
+    pthread_t thread;
+    int j;
+    size_t stacksize = 0; // 堆栈大小变量
+    pthread_attr_t attr;  // 线程属性结构体变量
     // 初始化互斥锁数组和条件变量数组
     for (j = 0; j < BIO_NUM_OPS; j++) {
         pthread_mutex_init(&bio_mutex[j], NULL);
@@ -68,7 +68,7 @@ void bioInit(void) {
 
     pthread_attr_init(&attr);                     // 线程设置属性,包括堆栈地址和大小、优先级等
     pthread_attr_getstacksize(&attr, &stacksize); // 获取当前的线程栈大小, 512k
-    //打印堆栈值
+    // 打印堆栈值
     serverLog(LL_NOTICE, "\nstack_size = %zuB, %luk\n", stacksize, stacksize / 1024);
     if (!stacksize) {
         stacksize = 1; // 针对Solaris系统做处理
@@ -140,8 +140,8 @@ void bioCreateFsyncJob(int fd) {
 // 处理后台任务
 void *bioProcessBackgroundJobs(void *arg) {
     struct bio_job *job;
-    unsigned long   type = (unsigned long)arg;
-    sigset_t        sigset;
+    unsigned long type = (unsigned long)arg;
+    sigset_t sigset;
 
     // 类型检查
     if (type >= BIO_NUM_OPS) {
@@ -197,7 +197,7 @@ void *bioProcessBackgroundJobs(void *arg) {
             /* The fd may be closed by main thread and reused for another
              * socket, pipe, or file. We just ignore these errno because
              * aof fsync did not really fail. */
-            //如果是AOF同步写任务,那就调用redis_fsync函数
+            // 如果是AOF同步写任务,那就调用redis_fsync函数
             if (redis_fsync(job->fd) == -1 && errno != EBADF && errno != EINVAL) {
                 int last_status;
                 atomicGet(server.aof_bio_fsync_status, last_status);
@@ -215,7 +215,7 @@ void *bioProcessBackgroundJobs(void *arg) {
             // lazyfreeFreeObjectFromBioThread
             // lazyfreeFreeDatabaseFromBioThread
             // lazyfreeFreeSlotsMapFromBioThread
-            //如果是惰性删除任务,调用不同的惰性删除函数执行
+            // 如果是惰性删除任务,调用不同的惰性删除函数执行
             job->free_fn(job->free_args);
         }
         else {
@@ -226,9 +226,9 @@ void *bioProcessBackgroundJobs(void *arg) {
         /* Lock again before reiterating the loop, if there are no longer
          * jobs to process we'll block again in pthread_cond_wait(). */
         pthread_mutex_lock(&bio_mutex[type]);
-        //任务执行完成后,调用listDelNode在任务队列中删除该任务
+        // 任务执行完成后,调用listDelNode在任务队列中删除该任务
         listDelNode(bio_jobs[type], ln);
-        //将对应的等待任务个数减一.
+        // 将对应的等待任务个数减一.
         bio_pending[type]--;
 
         /* Unblock threads blocked on bioWaitStepOfType() if any. */

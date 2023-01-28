@@ -314,16 +314,16 @@ typedef enum {
 #define REDISMODULE_CMD_CHANNEL_UNSUBSCRIBE (1ULL << 3)
 
 typedef struct RedisModuleCommandArg {
-    const char               *name;
+    const char *name;
     RedisModuleCommandArgType type;
-    int                       key_spec_index; /* If type is KEY, this is a zero-based index of
-                                               * the key_spec in the command. For other types,
-                                               * you may specify -1. */
-    const char                   *token;      /* If type is PURE_TOKEN, this is the token. */
-    const char                   *summary;
-    const char                   *since;
-    int                           flags; /* The REDISMODULE_CMD_ARG_* macros. */
-    const char                   *deprecated_since;
+    int key_spec_index; /* If type is KEY, this is a zero-based index of
+                         * the key_spec in the command. For other types,
+                         * you may specify -1. */
+    const char *token;  /* If type is PURE_TOKEN, this is the token. */
+    const char *summary;
+    const char *since;
+    int flags; /* The REDISMODULE_CMD_ARG_* macros. */
+    const char *deprecated_since;
     struct RedisModuleCommandArg *subargs;
 } RedisModuleCommandArg;
 
@@ -333,8 +333,8 @@ typedef struct {
 } RedisModuleCommandHistoryEntry;
 
 typedef struct {
-    const char                       *notes;
-    uint64_t                          flags; /* REDISMODULE_CMD_KEY_* macros. */
+    const char *notes;
+    uint64_t flags; /* REDISMODULE_CMD_KEY_* macros. */
     RedisModuleKeySpecBeginSearchType begin_search_type;
     union
     {
@@ -384,7 +384,7 @@ typedef struct {
 } RedisModuleCommandKeySpec;
 
 typedef struct {
-    int    version;
+    int version;
     size_t sizeof_historyentry;
     size_t sizeof_keyspec;
     size_t sizeof_arg;
@@ -398,17 +398,17 @@ typedef struct {
     /* Always set version to REDISMODULE_COMMAND_INFO_VERSION */
     const RedisModuleCommandInfoVersion *version;
     /* Version 1 fields (added in Redis 7.0.0) */
-    const char                     *summary;    /* Summary of the command */
-    const char                     *complexity; /* Complexity description */
-    const char                     *since;      /* Debut module version of the command */
-    RedisModuleCommandHistoryEntry *history;    /* History */
+    const char *summary;                     /* Summary of the command */
+    const char *complexity;                  /* Complexity description */
+    const char *since;                       /* Debut module version of the command */
+    RedisModuleCommandHistoryEntry *history; /* History */
     /* A string of space-separated tips meant for clients/proxies regarding this
      * command */
     const char *tips;
     /* Number of arguments, it is possible to use -N to say >= N */
-    int                        arity;
+    int arity;
     RedisModuleCommandKeySpec *key_specs;
-    RedisModuleCommandArg     *args;
+    RedisModuleCommandArg *args;
 } RedisModuleCommandInfo;
 
 /* Eventloop definitions. */
@@ -577,12 +577,12 @@ static const RedisModuleEvent RedisModuleEvent_ReplicationRoleChanged = {REDISMO
 
 #define REDISMODULE_CLIENTINFO_VERSION 1
 typedef struct RedisModuleClientInfo {
-    uint64_t version;  /* Version of this structure for ABI compat. */
-    uint64_t flags;    /* REDISMODULE_CLIENTINFO_FLAG_* */
-    uint64_t id;       /* Client ID. */
-    char     addr[46]; /* IPv4 or IPv6 address. */
-    uint16_t port;     /* TCP port. */
-    uint16_t db;       /* Selected DB. */
+    uint64_t version; /* Version of this structure for ABI compat. */
+    uint64_t flags;   /* REDISMODULE_CLIENTINFO_FLAG_* */
+    uint64_t id;      /* Client ID. */
+    char addr[46];    /* IPv4 or IPv6 address. */
+    uint16_t port;    /* TCP port. */
+    uint16_t db;      /* Selected DB. */
 } RedisModuleClientInfoV1;
 
 #define RedisModuleClientInfo RedisModuleClientInfoV1
@@ -592,11 +592,11 @@ typedef struct RedisModuleReplicationInfo {
     uint64_t version;      /* Not used since this structure is never passed
                               from the module to the core right now. Here
                               for future compatibility. */
-    int      master;       /* true if master, false if replica */
-    char    *masterhost;   /* master instance hostname for NOW_REPLICA */
-    int      masterport;   /* master instance port for NOW_REPLICA */
-    char    *replid1;      /* Main replication ID */
-    char    *replid2;      /* Secondary replication ID */
+    int master;            /* true if master, false if replica */
+    char *masterhost;      /* master instance hostname for NOW_REPLICA */
+    int masterport;        /* master instance port for NOW_REPLICA */
+    char *replid1;         /* Main replication ID */
+    char *replid2;         /* Secondary replication ID */
     uint64_t repl1_offset; /* Main replication offset */
     uint64_t repl2_offset; /* Offset of replid2 validity */
 } RedisModuleReplicationInfoV1;
@@ -616,11 +616,11 @@ typedef struct RedisModuleFlushInfo {
 
 #define REDISMODULE_MODULE_CHANGE_VERSION 1
 typedef struct RedisModuleModuleChange {
-    uint64_t version;           /* Not used since this structure is never passed
-                                   from the module to the core right now. Here
-                                   for future compatibility. */
-    const char *module_name;    /* Name of module loaded or unloaded. */
-    int32_t     module_version; /* Module version. */
+    uint64_t version;        /* Not used since this structure is never passed
+                                from the module to the core right now. Here
+                                for future compatibility. */
+    const char *module_name; /* Name of module loaded or unloaded. */
+    int32_t module_version;  /* Module version. */
 } RedisModuleModuleChangeV1;
 
 #define RedisModuleModuleChange RedisModuleModuleChangeV1
@@ -630,7 +630,7 @@ typedef struct RedisModuleConfigChange {
     uint64_t version;          /* Not used since this structure is never passed
                                   from the module to the core right now. Here
                                   for future compatibility. */
-    uint32_t     num_changes;  /* how many redis config options were changed */
+    uint32_t num_changes;      /* how many redis config options were changed */
     const char **config_names; /* the config names that were changed */
 } RedisModuleConfigChangeV1;
 
@@ -683,51 +683,51 @@ typedef enum {
 typedef long long mstime_t;
 
 /* Macro definitions specific to individual compilers */
-#ifndef REDISMODULE_ATTR_UNUSED
-#ifdef __GNUC__
-#define REDISMODULE_ATTR_UNUSED __attribute__((unused))
-#else
-#define REDISMODULE_ATTR_UNUSED
-#endif
-#endif
+#    ifndef REDISMODULE_ATTR_UNUSED
+#        ifdef __GNUC__
+#            define REDISMODULE_ATTR_UNUSED __attribute__((unused))
+#        else
+#            define REDISMODULE_ATTR_UNUSED
+#        endif
+#    endif
 
-#ifndef REDISMODULE_ATTR_PRINTF
-#ifdef __GNUC__
-#define REDISMODULE_ATTR_PRINTF(idx, cnt) __attribute__((format(printf, idx, cnt)))
-#else
-#define REDISMODULE_ATTR_PRINTF(idx, cnt)
-#endif
-#endif
+#    ifndef REDISMODULE_ATTR_PRINTF
+#        ifdef __GNUC__
+#            define REDISMODULE_ATTR_PRINTF(idx, cnt) __attribute__((format(printf, idx, cnt)))
+#        else
+#            define REDISMODULE_ATTR_PRINTF(idx, cnt)
+#        endif
+#    endif
 
-#ifndef REDISMODULE_ATTR_COMMON
-#if defined(__GNUC__) && !(defined(__clang__) && defined(__cplusplus))
-#define REDISMODULE_ATTR_COMMON __attribute__((__common__))
-#else
-#define REDISMODULE_ATTR_COMMON
-#endif
-#endif
+#    ifndef REDISMODULE_ATTR_COMMON
+#        if defined(__GNUC__) && !(defined(__clang__) && defined(__cplusplus))
+#            define REDISMODULE_ATTR_COMMON __attribute__((__common__))
+#        else
+#            define REDISMODULE_ATTR_COMMON
+#        endif
+#    endif
 
 /* Incomplete structures for compiler checks but opaque access. */
-typedef struct RedisModuleCtx              RedisModuleCtx;
-typedef struct RedisModuleCommand          RedisModuleCommand;
-typedef struct RedisModuleKey              RedisModuleKey;
-typedef struct RedisModuleString           RedisModuleString;
-typedef struct RedisModuleCallReply        RedisModuleCallReply;
-typedef struct RedisModuleIO               RedisModuleIO;
-typedef struct RedisModuleType             RedisModuleType;
-typedef struct RedisModuleDigest           RedisModuleDigest;
-typedef struct RedisModuleBlockedClient    RedisModuleBlockedClient;
-typedef struct RedisModuleClusterInfo      RedisModuleClusterInfo;
-typedef struct RedisModuleDict             RedisModuleDict;
-typedef struct RedisModuleDictIter         RedisModuleDictIter;
+typedef struct RedisModuleCtx RedisModuleCtx;
+typedef struct RedisModuleCommand RedisModuleCommand;
+typedef struct RedisModuleKey RedisModuleKey;
+typedef struct RedisModuleString RedisModuleString;
+typedef struct RedisModuleCallReply RedisModuleCallReply;
+typedef struct RedisModuleIO RedisModuleIO;
+typedef struct RedisModuleType RedisModuleType;
+typedef struct RedisModuleDigest RedisModuleDigest;
+typedef struct RedisModuleBlockedClient RedisModuleBlockedClient;
+typedef struct RedisModuleClusterInfo RedisModuleClusterInfo;
+typedef struct RedisModuleDict RedisModuleDict;
+typedef struct RedisModuleDictIter RedisModuleDictIter;
 typedef struct RedisModuleCommandFilterCtx RedisModuleCommandFilterCtx;
-typedef struct RedisModuleCommandFilter    RedisModuleCommandFilter;
-typedef struct RedisModuleInfoCtx          RedisModuleInfoCtx;
-typedef struct RedisModuleServerInfoData   RedisModuleServerInfoData;
-typedef struct RedisModuleScanCursor       RedisModuleScanCursor;
-typedef struct RedisModuleDefragCtx        RedisModuleDefragCtx;
-typedef struct RedisModuleUser             RedisModuleUser;
-typedef struct RedisModuleKeyOptCtx        RedisModuleKeyOptCtx;
+typedef struct RedisModuleCommandFilter RedisModuleCommandFilter;
+typedef struct RedisModuleInfoCtx RedisModuleInfoCtx;
+typedef struct RedisModuleServerInfoData RedisModuleServerInfoData;
+typedef struct RedisModuleScanCursor RedisModuleScanCursor;
+typedef struct RedisModuleDefragCtx RedisModuleDefragCtx;
+typedef struct RedisModuleUser RedisModuleUser;
+typedef struct RedisModuleKeyOptCtx RedisModuleKeyOptCtx;
 
 typedef int (*RedisModuleCmdFunc)(RedisModuleCtx *ctx, RedisModuleString **argv, int argc);
 typedef void (*RedisModuleDisconnectFunc)(RedisModuleCtx *ctx, RedisModuleBlockedClient *bc);
@@ -768,37 +768,37 @@ typedef int (*RedisModuleConfigSetEnumFunc)(const char *name, int val, void *pri
 typedef int (*RedisModuleConfigApplyFunc)(RedisModuleCtx *ctx, void *privdata, RedisModuleString **err);
 
 typedef struct RedisModuleTypeMethods {
-    uint64_t                       version;
-    RedisModuleTypeLoadFunc        rdb_load;
-    RedisModuleTypeSaveFunc        rdb_save;
-    RedisModuleTypeRewriteFunc     aof_rewrite;
-    RedisModuleTypeMemUsageFunc    mem_usage;
-    RedisModuleTypeDigestFunc      digest;
-    RedisModuleTypeFreeFunc        free;
-    RedisModuleTypeAuxLoadFunc     aux_load;
-    RedisModuleTypeAuxSaveFunc     aux_save;
-    int                            aux_save_triggers;
-    RedisModuleTypeFreeEffortFunc  free_effort;
-    RedisModuleTypeUnlinkFunc      unlink;
-    RedisModuleTypeCopyFunc        copy;
-    RedisModuleTypeDefragFunc      defrag;
-    RedisModuleTypeMemUsageFunc2   mem_usage2;
+    uint64_t version;
+    RedisModuleTypeLoadFunc rdb_load;
+    RedisModuleTypeSaveFunc rdb_save;
+    RedisModuleTypeRewriteFunc aof_rewrite;
+    RedisModuleTypeMemUsageFunc mem_usage;
+    RedisModuleTypeDigestFunc digest;
+    RedisModuleTypeFreeFunc free;
+    RedisModuleTypeAuxLoadFunc aux_load;
+    RedisModuleTypeAuxSaveFunc aux_save;
+    int aux_save_triggers;
+    RedisModuleTypeFreeEffortFunc free_effort;
+    RedisModuleTypeUnlinkFunc unlink;
+    RedisModuleTypeCopyFunc copy;
+    RedisModuleTypeDefragFunc defrag;
+    RedisModuleTypeMemUsageFunc2 mem_usage2;
     RedisModuleTypeFreeEffortFunc2 free_effort2;
-    RedisModuleTypeUnlinkFunc2     unlink2;
-    RedisModuleTypeCopyFunc2       copy2;
+    RedisModuleTypeUnlinkFunc2 unlink2;
+    RedisModuleTypeCopyFunc2 copy2;
 } RedisModuleTypeMethods;
 
-#define REDISMODULE_GET_API(name) RedisModule_GetApi("RedisModule_" #name, ((void **)&RedisModule_##name))
+#    define REDISMODULE_GET_API(name) RedisModule_GetApi("RedisModule_" #name, ((void **)&RedisModule_##name))
 
 /* Default API declaration prefix (not 'extern' for backwards compatibility) */
-#ifndef REDISMODULE_API
-#define REDISMODULE_API
-#endif
+#    ifndef REDISMODULE_API
+#        define REDISMODULE_API
+#    endif
 
 /* Default API declaration suffix (compiler attributes) */
-#ifndef REDISMODULE_ATTR
-#define REDISMODULE_ATTR REDISMODULE_ATTR_COMMON
-#endif
+#    ifndef REDISMODULE_ATTR
+#        define REDISMODULE_ATTR REDISMODULE_ATTR_COMMON
+#    endif
 
 REDISMODULE_API void *(*RedisModule_Alloc)(size_t bytes)REDISMODULE_ATTR;
 REDISMODULE_API void *(*RedisModule_TryAlloc)(size_t bytes)REDISMODULE_ATTR;
@@ -1127,7 +1127,7 @@ REDISMODULE_API int (*RedisModule_RegisterStringConfig)(RedisModuleCtx *ctx, con
 REDISMODULE_API int (*RedisModule_RegisterEnumConfig)(RedisModuleCtx *ctx, const char *name, int default_val, unsigned int flags, const char **enum_values, const int *int_values, int num_enum_vals, RedisModuleConfigGetEnumFunc getfn, RedisModuleConfigSetEnumFunc setfn, RedisModuleConfigApplyFunc applyfn, void *privdata) REDISMODULE_ATTR;
 REDISMODULE_API int (*RedisModule_LoadConfigs)(RedisModuleCtx *ctx) REDISMODULE_ATTR;
 
-#define RedisModule_IsAOFClient(id) ((id) == UINT64_MAX)
+#    define RedisModule_IsAOFClient(id) ((id) == UINT64_MAX)
 
 /* This is included inline inside each Redis module. */
 static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int apiver) REDISMODULE_ATTR_UNUSED;
@@ -1466,15 +1466,15 @@ static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int 
     return REDISMODULE_OK;
 }
 
-#define RedisModule_Assert(_e) ((_e) ? (void)0 : (RedisModule__Assert(#_e, __FILE__, __LINE__), exit(1)))
+#    define RedisModule_Assert(_e) ((_e) ? (void)0 : (RedisModule__Assert(#_e, __FILE__, __LINE__), exit(1)))
 
-#define RMAPI_FUNC_SUPPORTED(func) (func != NULL)
+#    define RMAPI_FUNC_SUPPORTED(func) (func != NULL)
 
 #else
 
 /* Things only defined for the modules core, not exported to modules
  * including this file. */
-#define RedisModuleString robj
+#    define RedisModuleString robj
 
 #endif /* REDISMODULE_CORE */
 #endif /* REDISMODULE_H */

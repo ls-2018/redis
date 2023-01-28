@@ -24,7 +24,7 @@ list *listCreate(void) {
 // 从列表中删除所有元素,但不破坏列表本身.
 void listEmpty(list *list) {
     unsigned long len;
-    listNode     *current, *next;
+    listNode *current, *next;
 
     current = list->head;
     len = list->len;
@@ -191,8 +191,8 @@ listNode *listNext(listIter *iter) {
 
 // 复制一个给定链表的副本
 list *listDup(list *orig) {
-    list     *copy;
-    listIter  iter;
+    list *copy;
+    listIter iter;
     listNode *node;
 
     if ((copy = listCreate()) == NULL)
@@ -229,7 +229,7 @@ list *listDup(list *orig) {
 
 // 从链表中查找并返回指定值的节点
 listNode *listSearchKey(list *list, void *key) {
-    listIter  iter;
+    listIter iter;
     listNode *node;
 
     listRewind(list, &iter);

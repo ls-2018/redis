@@ -117,7 +117,7 @@ static intset *intsetResize(intset *is, uint32_t len) {
  * the value is not present in the intset and sets "pos" to the position
  * where "value" can be inserted. */
 static uint8_t intsetSearch(intset *is, int64_t value, uint32_t *pos) {
-    int     min = 0, max = intrev32ifbe(is->length) - 1, mid = -1;
+    int min = 0, max = intrev32ifbe(is->length) - 1, mid = -1;
     int64_t cur = -1;
 
     /* The value can never be found when the set is empty */
@@ -171,8 +171,8 @@ static uint8_t intsetSearch(intset *is, int64_t value, uint32_t *pos) {
 static intset *intsetUpgradeAndAdd(intset *is, int64_t value) {
     uint8_t curenc = intrev32ifbe(is->encoding);
     uint8_t newenc = _intsetValueEncoding(value);
-    int     length = intrev32ifbe(is->length);
-    int     prepend = value < 0 ? 1 : 0;
+    int length = intrev32ifbe(is->length);
+    int prepend = value < 0 ? 1 : 0;
 
     /* First set new encoding and resize */
     is->encoding = intrev32ifbe(newenc);
@@ -193,7 +193,7 @@ static intset *intsetUpgradeAndAdd(intset *is, int64_t value) {
 }
 
 static void intsetMoveTail(intset *is, uint32_t from, uint32_t to) {
-    void    *src, *dst;
+    void *src, *dst;
     uint32_t bytes = intrev32ifbe(is->length) - from;
     uint32_t encoding = intrev32ifbe(is->encoding);
 
@@ -217,7 +217,7 @@ static void intsetMoveTail(intset *is, uint32_t from, uint32_t to) {
 
 /* Insert an integer in the intset */
 intset *intsetAdd(intset *is, int64_t value, uint8_t *success) {
-    uint8_t  valenc = _intsetValueEncoding(value);
+    uint8_t valenc = _intsetValueEncoding(value);
     uint32_t pos;
     if (success)
         *success = 1;
@@ -251,7 +251,7 @@ intset *intsetAdd(intset *is, int64_t value, uint8_t *success) {
 
 /* Delete integer from intset */
 intset *intsetRemove(intset *is, int64_t value, int *success) {
-    uint8_t  valenc = _intsetValueEncoding(value);
+    uint8_t valenc = _intsetValueEncoding(value);
     uint32_t pos;
     if (success)
         *success = 0;
@@ -355,10 +355,10 @@ int intsetValidateIntegrity(const unsigned char *p, size_t size, int deep) {
 }
 
 #ifdef REDIS_TEST
-#include <sys/time.h>
-#include <time.h>
+#    include <sys/time.h>
+#    include <time.h>
 
-#if 0
+#    if 0
 static void intsetRepr(intset *is) {
     for (uint32_t i = 0; i < intrev32ifbe(is->length); i++) {
         printf("%lld\n", (uint64_t)_intsetGet(is,i));
@@ -370,7 +370,7 @@ static void error(char *err) {
     printf("%s\n", err);
     exit(1);
 }
-#endif
+#    endif
 
 static void ok(void) {
     printf("OK\n");
@@ -385,7 +385,7 @@ static long long usec(void) {
 static intset *createSet(int bits, int size) {
     uint64_t mask = (1 << bits) - 1;
     uint64_t value;
-    intset  *is = intsetNew();
+    intset *is = intsetNew();
 
     for (int i = 0; i < size; i++) {
         if (bits > 32) {
@@ -418,10 +418,10 @@ static void checkConsistency(intset *is) {
     }
 }
 
-#define UNUSED(x) (void)(x)
+#    define UNUSED(x) (void)(x)
 int intsetTest(int argc, char **argv, int flags) {
     uint8_t success;
-    int     i;
+    int i;
     intset *is;
     srand(time(NULL));
 
@@ -548,8 +548,8 @@ int intsetTest(int argc, char **argv, int flags) {
 
     printf("Stress lookups: ");
     {
-        long      num = 100000, size = 10000;
-        int       i, bits = 20;
+        long num = 100000, size = 10000;
+        int i, bits = 20;
         long long start;
         is = createSet(bits, size);
         checkConsistency(is);

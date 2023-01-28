@@ -69,12 +69,12 @@ typedef struct scriptRunCtx scriptRunCtx;
 
 struct scriptRunCtx {
     const char *funcname;
-    client     *c;
-    client     *original_client;
-    int         flags;
-    int         repl_flags;
-    monotime    start_time;
-    mstime_t    snapshot_time;
+    client *c;
+    client *original_client;
+    int flags;
+    int repl_flags;
+    monotime start_time;
+    mstime_t snapshot_time;
 };
 
 /* Scripts flags */
@@ -87,7 +87,7 @@ struct scriptRunCtx {
 
 /* Defines a script flags */
 typedef struct scriptFlag {
-    uint64_t    flag;
+    uint64_t flag;
     const char *str;
 } scriptFlag;
 

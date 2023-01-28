@@ -45,7 +45,7 @@ void freeClientMultiState(client *c) {
     int j;
 
     for (j = 0; j < c->mstate.count; j++) {
-        int       i;
+        int i;
         multiCmd *mc = c->mstate.commands + j;
 
         for (i = 0; i < mc->argc; i++) decrRefCount(mc->argv[i]);
@@ -139,9 +139,9 @@ void execCommandAbort(client *c, sds error) {
 }
 
 void execCommand(client *c) {
-    int                  j;
-    robj               **orig_argv;
-    int                  orig_argc, orig_argv_len;
+    int j;
+    robj **orig_argv;
+    int orig_argc, orig_argv_len;
     struct redisCommand *orig_cmd;
 
     if (!(c->flags & CLIENT_MULTI)) {
@@ -266,17 +266,17 @@ void execCommand(client *c) {
  * DB. This struct is also referenced from db->watched_keys dict, where the
  * values are lists of watchedKey pointers. */
 typedef struct watchedKey {
-    robj    *key;
+    robj *key;
     redisDb *db;
-    client  *client;
+    client *client;
     unsigned expired : 1; /* Flag that we're watching an already expired key. */
 } watchedKey;
 
 /* Watch for the specified key */
 void watchForKey(client *c, robj *key) {
-    list       *clients = NULL;
-    listIter    li;
-    listNode   *ln;
+    list *clients = NULL;
+    listIter li;
+    listNode *ln;
     watchedKey *wk;
 
     /* Check if we are already watching for this key */
@@ -307,14 +307,14 @@ void watchForKey(client *c, robj *key) {
 /* Unwatch all the keys watched by this client. To clean the EXEC dirty
  * flag is up to the caller. */
 void unwatchAllKeys(client *c) {
-    listIter  li;
+    listIter li;
     listNode *ln;
 
     if (listLength(c->watched_keys) == 0)
         return;
     listRewind(c->watched_keys, &li);
     while ((ln = listNext(&li))) {
-        list       *clients;
+        list *clients;
         watchedKey *wk;
 
         /* Lookup the watched key -> clients list and remove the client's wk
@@ -336,8 +336,8 @@ void unwatchAllKeys(client *c) {
 /* Iterates over the watched_keys list and looks for an expired key. Keys which
  * were expired already when WATCH was called are ignored. */
 int isWatchedKeyExpired(client *c) {
-    listIter    li;
-    listNode   *ln;
+    listIter li;
+    listNode *ln;
     watchedKey *wk;
     if (listLength(c->watched_keys) == 0)
         return 0;
@@ -356,8 +356,8 @@ int isWatchedKeyExpired(client *c) {
 /* "Touch" a key, so that if this key is being WATCHed by some client the
  * next EXEC will fail. */
 void touchWatchedKey(redisDb *db, robj *key) {
-    list     *clients;
-    listIter  li;
+    list *clients;
+    listIter li;
     listNode *ln;
 
     if (dictSize(db->watched_keys) == 0)
@@ -371,7 +371,7 @@ void touchWatchedKey(redisDb *db, robj *key) {
     listRewind(clients, &li);
     while ((ln = listNext(&li))) {
         watchedKey *wk = listNodeValue(ln);
-        client     *c = wk->client;
+        client *c = wk->client;
 
         if (wk->expired) {
             /* The key was already expired when WATCH was called. */
@@ -403,8 +403,8 @@ void touchWatchedKey(redisDb *db, robj *key) {
  * the key exists in either of them, and skipped only if it
  * doesn't exist in both. */
 void touchAllWatchedKeysInDb(redisDb *emptied, redisDb *replaced_with) {
-    listIter   li;
-    listNode  *ln;
+    listIter li;
+    listNode *ln;
     dictEntry *de;
 
     if (dictSize(emptied->watched_keys) == 0)
@@ -413,7 +413,7 @@ void touchAllWatchedKeysInDb(redisDb *emptied, redisDb *replaced_with) {
     dictIterator *di = dictGetSafeIterator(emptied->watched_keys);
     while ((de = dictNext(di)) != NULL) {
         robj *key = dictGetKey(de);
-        int   exists_in_emptied = dictFind(emptied->dict, key->ptr) != NULL;
+        int exists_in_emptied = dictFind(emptied->dict, key->ptr) != NULL;
         if (exists_in_emptied || (replaced_with && dictFind(replaced_with->dict, key->ptr))) {
             list *clients = dictGetVal(de);
             if (!clients)

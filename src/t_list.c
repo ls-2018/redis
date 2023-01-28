@@ -61,7 +61,7 @@ void *listPopSaver(unsigned char *data, size_t sz) {
 
 robj *listTypePop(robj *subject, int where) {
     long long vlong;
-    robj     *value = NULL;
+    robj *value = NULL;
 
     int ql_where = where == LIST_HEAD ? QUICKLIST_HEAD : QUICKLIST_TAIL;
     if (subject->encoding == OBJ_ENCODING_QUICKLIST) {
@@ -154,7 +154,7 @@ robj *listTypeGet(listTypeEntry *entry) {
 void listTypeInsert(listTypeEntry *entry, robj *value, int where) {
     if (entry->li->encoding == OBJ_ENCODING_QUICKLIST) {
         value = getDecodedObject(value);
-        sds    str = value->ptr;
+        sds str = value->ptr;
         size_t len = sdslen(str);
         if (where == LIST_TAIL) {
             quicklistInsertAfter(entry->li->iter, &entry->entry, str, len);
@@ -173,7 +173,7 @@ void listTypeInsert(listTypeEntry *entry, robj *value, int where) {
 void listTypeReplace(listTypeEntry *entry, robj *value) {
     if (entry->li->encoding == OBJ_ENCODING_QUICKLIST) {
         value = getDecodedObject(value);
-        sds    str = value->ptr;
+        sds str = value->ptr;
         size_t len = sdslen(str);
         quicklistReplaceEntry(entry->li->iter, &entry->entry, str, len);
         decrRefCount(value);
@@ -293,11 +293,11 @@ void rpushxCommand(client *c) {
 
 /* LINSERT <key> (BEFORE|AFTER) <pivot> <element> */
 void linsertCommand(client *c) {
-    int               where;
-    robj             *subject;
+    int where;
+    robj *subject;
     listTypeIterator *iter;
-    listTypeEntry     entry;
-    int               inserted = 0;
+    listTypeEntry entry;
+    int inserted = 0;
 
     if (strcasecmp(c->argv[2]->ptr, "after") == 0) {
         where = LIST_TAIL;
@@ -382,7 +382,7 @@ void lsetCommand(client *c) {
     robj *o = lookupKeyWriteOrReply(c, c->argv[1], shared.nokeyerr);
     if (o == NULL || checkType(c, o, OBJ_LIST))
         return;
-    long  index;
+    long index;
     robj *value = c->argv[3];
 
     if ((getLongFromObjectOrReply(c, c->argv[2], &index, NULL) != C_OK))
@@ -390,7 +390,7 @@ void lsetCommand(client *c) {
 
     if (o->encoding == OBJ_ENCODING_QUICKLIST) {
         quicklist *ql = o->ptr;
-        int        replaced = quicklistReplaceAtIndex(ql, index, value->ptr, sdslen(value->ptr));
+        int replaced = quicklistReplaceAtIndex(ql, index, value->ptr, sdslen(value->ptr));
         if (!replaced) {
             addReplyErrorObject(c, shared.outofrangeerr);
         }
@@ -422,7 +422,7 @@ void listPopRangeAndReplyWithKey(client *c, robj *o, robj *key, int where, long 
     long rangelen = (count > llen) ? llen : count;
     long rangestart = (where == LIST_HEAD) ? 0 : -rangelen;
     long rangeend = (where == LIST_HEAD) ? rangelen - 1 : -1;
-    int  reverse = (where == LIST_HEAD) ? 0 : 1;
+    int reverse = (where == LIST_HEAD) ? 0 : 1;
 
     /* We return key-name just once, and an array of elements */
     addReplyArrayLen(c, 2);
@@ -464,8 +464,8 @@ void addListRangeReply(client *c, robj *o, long start, long end, int reverse) {
     /* Return the result in form of a multi-bulk reply */
     addReplyArrayLen(c, rangelen);
     if (o->encoding == OBJ_ENCODING_QUICKLIST) {
-        int               from = reverse ? end : start;
-        int               direction = reverse ? LIST_HEAD : LIST_TAIL;
+        int from = reverse ? end : start;
+        int direction = reverse ? LIST_HEAD : LIST_TAIL;
         listTypeIterator *iter = listTypeInitIterator(o, from, direction);
 
         while (rangelen--) {
@@ -514,8 +514,8 @@ void listElementsRemoved(client *c, robj *key, int where, robj *o, long count, i
  * optional count may be provided as the third argument of the client's
  * command. */
 void popGenericCommand(client *c, int where) {
-    int   hascount = (c->argc == 3);
-    long  count = 0;
+    int hascount = (c->argc == 3);
+    long count = 0;
     robj *value;
 
     if (c->argc > 3) {
@@ -554,7 +554,7 @@ void popGenericCommand(client *c, int where) {
         long rangelen = (count > llen) ? llen : count;
         long rangestart = (where == LIST_HEAD) ? 0 : -rangelen;
         long rangeend = (where == LIST_HEAD) ? rangelen - 1 : -1;
-        int  reverse = (where == LIST_HEAD) ? 0 : 1;
+        int reverse = (where == LIST_HEAD) ? 0 : 1;
 
         addListRangeReply(c, o, rangestart, rangeend, reverse);
         listTypeDelRange(o, rangestart, rangelen);
@@ -570,7 +570,7 @@ void popGenericCommand(client *c, int where) {
  *
  * Always reply with array. */
 void mpopGenericCommand(client *c, robj **keys, int numkeys, int where, long count) {
-    int   j;
+    int j;
     robj *o;
     robj *key;
 
@@ -617,7 +617,7 @@ void rpopCommand(client *c) {
 /* LRANGE <key> <start> <stop> */
 void lrangeCommand(client *c) {
     robj *o;
-    long  start, end;
+    long start, end;
 
     if ((getLongFromObjectOrReply(c, c->argv[2], &start, NULL) != C_OK) || (getLongFromObjectOrReply(c, c->argv[3], &end, NULL) != C_OK))
         return;
@@ -631,7 +631,7 @@ void lrangeCommand(client *c) {
 /* LTRIM <key> <start> <stop> */
 void ltrimCommand(client *c) {
     robj *o;
-    long  start, end, llen, ltrim, rtrim;
+    long start, end, llen, ltrim, rtrim;
 
     if ((getLongFromObjectOrReply(c, c->argv[2], &start, NULL) != C_OK) || (getLongFromObjectOrReply(c, c->argv[3], &end, NULL) != C_OK))
         return;
@@ -701,13 +701,13 @@ void ltrimCommand(client *c) {
 void lposCommand(client *c) {
     robj *o, *ele;
     ele = c->argv[2];
-    int  direction = LIST_TAIL;
+    int direction = LIST_TAIL;
     long rank = 1, count = -1, maxlen = 0; /* Count -1: option not given. */
 
     /* Parse the optional arguments. */
     for (int j = 3; j < c->argc; j++) {
         char *opt = c->argv[j]->ptr;
-        int   moreargs = (c->argc - 1) - j;
+        int moreargs = (c->argc - 1) - j;
 
         if (!strcasecmp(opt, "RANK") && moreargs) {
             j++;
@@ -764,8 +764,8 @@ void lposCommand(client *c) {
     listTypeIterator *li;
     li = listTypeInitIterator(o, direction == LIST_HEAD ? -1 : 0, direction);
     listTypeEntry entry;
-    long          llen = listTypeLength(o);
-    long          index = 0, matches = 0, matchindex = -1, arraylen = 0;
+    long llen = listTypeLength(o);
+    long index = 0, matches = 0, matchindex = -1, arraylen = 0;
     while (listTypeNext(li, &entry) && (maxlen == 0 || index < maxlen)) {
         if (listTypeEqual(&entry, ele)) {
             matches++;
@@ -1068,10 +1068,10 @@ void serveClientBlockedOnList(client *receiver, robj *o, robj *key, robj *dstkey
  * When count is -1, a reply of a single bulk-string will be used.
  * When count > 0, an array reply will be used. */
 void blockingPopGenericCommand(client *c, robj **keys, int numkeys, int where, int timeout_idx, long count) {
-    robj    *o;
-    robj    *key;
+    robj *o;
+    robj *key;
     mstime_t timeout;
-    int      j;
+    int j;
 
     if (getTimeoutFromObjectOrReply(c, c->argv[timeout_idx], &timeout, UNIT_SECONDS) != C_OK)
         return;
@@ -1170,7 +1170,7 @@ void blmoveGenericCommand(client *c, int wherefrom, int whereto, mstime_t timeou
 /* BLMOVE <source> <destination> (LEFT|RIGHT) (LEFT|RIGHT) <timeout> */
 void blmoveCommand(client *c) {
     mstime_t timeout;
-    int      wherefrom, whereto;
+    int wherefrom, whereto;
     if (getListPositionFromObjectOrReply(c, c->argv[3], &wherefrom) != C_OK)
         return;
     if (getListPositionFromObjectOrReply(c, c->argv[4], &whereto) != C_OK)
@@ -1195,7 +1195,7 @@ void brpoplpushCommand(client *c) {
 void lmpopGenericCommand(client *c, int numkeys_idx, int is_block) {
     long j;
     long numkeys = 0; /* Number of keys. */
-    int  where = 0;   /* HEAD for LEFT, TAIL for RIGHT. */
+    int where = 0;    /* HEAD for LEFT, TAIL for RIGHT. */
     long count = -1;  /* Reply will consist of up to count elements, depending on the list's length. */
 
     /* Parse the numkeys. */
@@ -1214,7 +1214,7 @@ void lmpopGenericCommand(client *c, int numkeys_idx, int is_block) {
     /* Parse the optional arguments. */
     for (j = where_idx + 1; j < c->argc; j++) {
         char *opt = c->argv[j]->ptr;
-        int   moreargs = (c->argc - 1) - j;
+        int moreargs = (c->argc - 1) - j;
 
         if (count == -1 && !strcasecmp(opt, "COUNT") && moreargs) {
             j++;

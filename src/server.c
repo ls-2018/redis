@@ -37,11 +37,11 @@
 #include <sys/resource.h>
 
 #ifdef __linux__
-#include <sys/mman.h>
+#    include <sys/mman.h>
 #endif
 
 #if defined(HAVE_SYSCTL_KIPC_SOMAXCONN) || defined(HAVE_SYSCTL_KERN_SOMAXCONN)
-#include <sys/sysctl.h>
+#    include <sys/sysctl.h>
 
 #endif
 
@@ -5662,7 +5662,7 @@ void linuxMemoryWarnings(void) {
     }
 }
 
-#ifdef __arm64__
+#    ifdef __arm64__
 
 /* Get size in kilobytes of the Shared_Dirty pages of the calling process for the
  * memory map corresponding to the provided address, or -1 on error. */
@@ -5732,9 +5732,9 @@ int linuxMadvFreeForkBugCheck(void) {
     *(volatile char *)q = 0;
 
     /* Tell the kernel that this page is free to be reclaimed. */
-#ifndef MADV_FREE
-#define MADV_FREE 8
-#endif
+#        ifndef MADV_FREE
+#            define MADV_FREE 8
+#        endif
     ret = madvise(q, page_size, MADV_FREE);
     if (ret < 0) {
         /* MADV_FREE is not available on older kernels that are presumably
@@ -5802,8 +5802,8 @@ exit:
 
     return bug_found;
 }
-#endif /* __arm64__ */
-#endif /* __linux__ */
+#    endif /* __arm64__ */
+#endif     /* __linux__ */
 
 void createPidFile(void) {
     /* If pid_file requested, but no pid_file defined, use
@@ -6501,7 +6501,7 @@ int iAmMaster(void) {
 }
 
 #ifdef REDIS_TEST
-#include "testhelp.h"
+#    include "testhelp.h"
 
 int __failed_tests = 0;
 int __test_num = 0;
@@ -6741,7 +6741,7 @@ int main(int argc, char **argv) {
 #ifdef __linux__
         // 打印内存警告
         linuxMemoryWarnings();
-#if defined(__arm64__)
+#    if defined(__arm64__)
         int ret;
         if ((ret = linuxMadvFreeForkBugCheck())) {
             if (ret == 1)
@@ -6762,7 +6762,7 @@ int main(int argc, char **argv) {
                 exit(1);
             }
         }
-#endif                                 /* __arm64__ */
+#    endif                             /* __arm64__ */
 #endif                                 /* __linux__ */
         moduleInitModulesSystemLast(); // 暂无逻辑
         moduleLoadFromQueue();         // 加载模块

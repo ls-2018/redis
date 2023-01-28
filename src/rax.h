@@ -130,7 +130,7 @@ typedef struct raxStack {
     /* Up to RAXSTACK_STACK_ITEMS items we avoid to allocate on the heap
      * and use this static array of pointers instead. */
     void *static_items[RAX_STACK_STATIC_ITEMS];
-    int   oom; /* True if pushing into this stack failed for OOM at some point. */
+    int oom; /* True if pushing into this stack failed for OOM at some point. */
 } raxStack;
 
 /* Optional callback used for iterators and be notified on each rax node,
@@ -154,16 +154,16 @@ typedef int (*raxNodeCallback)(raxNode **noderef);
 #define RAX_ITER_SAFE (1 << 2)        // 安全的迭代器,允许在迭代时进行操作.但速度较慢.
 
 typedef struct raxIterator {
-    int             flags;
-    rax            *rt;                                     // 我们正在迭代的基数树.
-    unsigned char  *key;                                    // 当前字符串
-    void           *data;                                   // 与此key关联的数据
-    size_t          key_len;                                // 当前key的长度
-    size_t          key_max;                                // 当前迭代过的 最大key长度
-    unsigned char   key_static_string[RAX_ITER_STATIC_LEN]; //
-    raxNode        *node;                                   // 当前节点.只适用于不安全的迭代.
-    raxStack        stack;                                  // 用于不安全迭代的堆栈.
-    raxNodeCallback node_cb;                                // 可选  节点回调函数.通常设置为NULL.
+    int flags;
+    rax *rt;                                              // 我们正在迭代的基数树.
+    unsigned char *key;                                   // 当前字符串
+    void *data;                                           // 与此key关联的数据
+    size_t key_len;                                       // 当前key的长度
+    size_t key_max;                                       // 当前迭代过的 最大key长度
+    unsigned char key_static_string[RAX_ITER_STATIC_LEN]; //
+    raxNode *node;                                        // 当前节点.只适用于不安全的迭代.
+    raxStack stack;                                       // 用于不安全迭代的堆栈.
+    raxNodeCallback node_cb;                              // 可选  节点回调函数.通常设置为NULL.
 } raxIterator;
 
 /* A special pointer returned for not found items. */

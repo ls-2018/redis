@@ -101,9 +101,9 @@ uint64_t intrev64(uint64_t v) {
 }
 
 #ifdef REDIS_TEST
-#include <stdio.h>
+#    include <stdio.h>
 
-#define UNUSED(x) (void)(x)
+#    define UNUSED(x) (void)(x)
 int endianconvTest(int argc, char *argv[], int flags) {
     char buf[32];
 

@@ -40,13 +40,13 @@
  * or Lua scripts.
  * -------------------------------------------------------- */
 struct CallReply {
-    void       *private_data;
-    sds         original_proto; /* Available only for root reply. */
+    void *private_data;
+    sds original_proto; /* Available only for root reply. */
     const char *proto;
-    size_t      proto_len;
-    int         type;  /* REPLY_... */
-    int         flags; /* REPLY_FLAG... */
-    size_t      len;   /* Length of a string, or the number elements in an array. */
+    size_t proto_len;
+    int type;   /* REPLY_... */
+    int flags;  /* REPLY_FLAG... */
+    size_t len; /* Length of a string, or the number elements in an array. */
     union
     {
         const char *str; /* String pointer for string and error replies. This
@@ -57,12 +57,12 @@ struct CallReply {
             const char *str;
             const char *format;
         } verbatim_str;          /* Reply value for verbatim string */
-        long long         ll;    /* Reply value for integer reply. */
-        double            d;     /* Reply value for double reply. */
+        long long ll;            /* Reply value for integer reply. */
+        double d;                /* Reply value for double reply. */
         struct CallReply *array; /* Array of sub-reply elements. used for set, array, map, and attribute */
     } val;
-    list             *deferred_error_list; /* list of errors in sds form or NULL */
-    struct CallReply *attribute;           /* attribute reply, NULL if not exists */
+    list *deferred_error_list;   /* list of errors in sds form or NULL */
+    struct CallReply *attribute; /* attribute reply, NULL if not exists */
 };
 
 static void callReplySetSharedData(CallReply *rep, int type, const char *proto, size_t proto_len, int extra_flags) {

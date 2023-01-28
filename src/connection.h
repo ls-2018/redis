@@ -82,16 +82,16 @@ typedef struct ConnectionType {
 } ConnectionType;
 
 struct connection {
-    ConnectionType        *type;
-    ConnectionState        state;
-    short int              flags;
-    short int              refs;
-    int                    last_errno;
-    void                  *private_data;
+    ConnectionType *type;
+    ConnectionState state;
+    short int flags;
+    short int refs;
+    int last_errno;
+    void *private_data;
     ConnectionCallbackFunc conn_handler;
     ConnectionCallbackFunc write_handler;
     ConnectionCallbackFunc read_handler;
-    int                    fd;
+    int fd;
 };
 
 // 链接建立好之后的回调函数
@@ -174,7 +174,7 @@ static inline int connSetReadHandler(connection *conn, ConnectionCallbackFunc fu
  * fired in the same event loop iteration. Useful when you want to persist
  * things to disk before sending replies, and want to do that in a group fashion. */
 static inline int connSetWriteHandlerWithBarrier(connection *conn, ConnectionCallbackFunc func, int barrier) {
-    //创建可写事件的监听,以及设置回调函数
+    // 创建可写事件的监听,以及设置回调函数
 
     return conn->type->set_write_handler(conn, func, barrier);
 }

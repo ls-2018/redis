@@ -36,7 +36,7 @@ uint64_t crc64Hash(char *key, size_t len) {
 }
 
 uint64_t sha1Hash(char *key, size_t len) {
-    SHA1_CTX      ctx;
+    SHA1_CTX ctx;
     unsigned char hash[20];
 
     SHA1Init(&ctx);
@@ -55,8 +55,8 @@ unsigned long testHashingFunction(uint64_t (*hash)(char *, size_t)) {
     char *prefixes[] = {"object", "message", "user", NULL};
     for (int i = 0; prefixes[i] != NULL; i++) {
         for (int j = 0; j < TABLE_SIZE / 2; j++) {
-            char     keyname[128];
-            size_t   keylen = snprintf(keyname, sizeof(keyname), "%s:%d", prefixes[i], j);
+            char keyname[128];
+            size_t keylen = snprintf(keyname, sizeof(keyname), "%s:%d", prefixes[i], j);
             uint64_t bucket = hash(keyname, keylen) % TABLE_SIZE;
             if (Table[bucket]) {
                 collisions++;

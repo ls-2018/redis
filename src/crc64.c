@@ -87,7 +87,7 @@ static inline uint_fast64_t crc_reflect(uint_fast64_t data, size_t data_len) {
  * \return         The updated crc value.
  ******************************************************************************/
 uint64_t _crc64(uint_fast64_t crc, const void *in_data, const uint64_t len) {
-    const uint8_t     *data = in_data;
+    const uint8_t *data = in_data;
     unsigned long long bit;
 
     for (uint64_t offset = 0; offset < len; offset++) {
@@ -125,9 +125,9 @@ uint64_t crc64(uint64_t crc, const unsigned char *s, uint64_t l) {
 
 /* Test main */
 #ifdef REDIS_TEST
-#include <stdio.h>
+#    include <stdio.h>
 
-#define UNUSED(x) (void)(x)
+#    define UNUSED(x) (void)(x)
 int crc64Test(int argc, char *argv[], int flags) {
     UNUSED(argc);
     UNUSED(argv);

@@ -42,8 +42,8 @@ typedef uint64_t GeoHashFix52Bits;
 typedef uint64_t GeoHashVarBits;
 
 typedef struct {
-    GeoHashBits      hash;
-    GeoHashArea      area;
+    GeoHashBits hash;
+    GeoHashArea area;
     GeoHashNeighbors neighbors;
 } GeoHashRadius;
 

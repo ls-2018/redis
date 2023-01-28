@@ -3,9 +3,9 @@
 #include <sys/time.h>
 
 typedef struct aeApiState {
-    int            kqfd;       // kqueue 句柄
-    struct kevent *events;     //
-    char          *eventsMask; // 事件掩码用于合并读写事件.为了减少内存消耗,我们使用2位来存储一个事件的掩码,因此1字节将存储4个事件的掩码.
+    int kqfd;              // kqueue 句柄
+    struct kevent *events; //
+    char *eventsMask;      // 事件掩码用于合并读写事件.为了减少内存消耗,我们使用2位来存储一个事件的掩码,因此1字节将存储4个事件的掩码.
 } aeApiState;
 
 #define EVENT_MASK_MALLOC_SIZE(sz) (((sz) + 3) / 4)
@@ -101,7 +101,7 @@ kevent 函数
 // 对应描述符要监听对应的事件,
 static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
     // 从eventLoop结构体中获取aeApiState变量,里面保存了epoll实例
-    aeApiState   *state = eventLoop->apidata;
+    aeApiState *state = eventLoop->apidata;
     struct kevent ke;
 
     // 在changes列表中注册标准输入流的读事件 以及 标准输出流的写事件
@@ -124,7 +124,7 @@ static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
 }
 
 static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int mask) {
-    aeApiState   *state = eventLoop->apidata;
+    aeApiState *state = eventLoop->apidata;
     struct kevent ke; // kqueue 封装的结构体
 
     if (mask & AE_READABLE) {
@@ -142,7 +142,7 @@ static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int mask) {
 // 在指定的时间段内,阻塞并等待所有被aeCreateFileEvent函数设置为监听状态的套接字产生文件事件,当有至少一个事件产生,或者等待超时后,函数返回
 static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
     aeApiState *state = eventLoop->apidata;
-    int         retval, numevents = 0;
+    int retval, numevents = 0;
 
     if (tvp != NULL) {
         struct timespec timeout;
@@ -161,8 +161,8 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
         // 然而,在kqueue下,读和写事件将是独立的事件,这将使它不可能控制读和写的顺序.因此,我们存储事件的掩码,并在以后合并相同的fd事件.
         for (j = 0; j < retval; j++) {
             struct kevent *e = state->events + j;
-            int            fd = e->ident;
-            int            mask = 0;
+            int fd = e->ident;
+            int mask = 0;
 
             if (e->filter == EVFILT_READ)
                 mask = AE_READABLE;
@@ -175,8 +175,8 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
         numevents = 0;
         for (j = 0; j < retval; j++) {
             struct kevent *e = state->events + j;
-            int            fd = e->ident;
-            int            mask = getEventMask(state->eventsMask, fd);
+            int fd = e->ident;
+            int mask = getEventMask(state->eventsMask, fd);
 
             if (mask) {
                 eventLoop->fired[numevents].fd = fd;

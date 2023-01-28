@@ -57,20 +57,20 @@ int siptlw(int c) {
 }
 
 #if defined(__has_attribute)
-#if __has_attribute(no_sanitize)
-#define NO_SANITIZE(sanitizer) __attribute__((no_sanitize(sanitizer)))
-#endif
+#    if __has_attribute(no_sanitize)
+#        define NO_SANITIZE(sanitizer) __attribute__((no_sanitize(sanitizer)))
+#    endif
 #endif
 
 #if !defined(NO_SANITIZE)
-#define NO_SANITIZE(sanitizer)
+#    define NO_SANITIZE(sanitizer)
 #endif
 
 /* Test of the CPU is Little Endian and supports not aligned accesses.
  * Two interesting conditions to speedup the function that happen to be
  * in most of x86 servers. */
 #if defined(__X86_64__) || defined(__x86_64__) || defined(__i386__) || defined(__aarch64__) || defined(__arm64__)
-#define UNALIGNED_LE_CPU
+#    define UNALIGNED_LE_CPU
 #endif
 
 #define ROTL(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
@@ -86,9 +86,9 @@ int siptlw(int c) {
     U32TO8_LE((p) + 4, (uint32_t)((v) >> 32));
 
 #ifdef UNALIGNED_LE_CPU
-#define U8TO64_LE(p) (*((uint64_t *)(p)))
+#    define U8TO64_LE(p) (*((uint64_t *)(p)))
 #else
-#define U8TO64_LE(p) (((uint64_t)((p)[0])) | ((uint64_t)((p)[1]) << 8) | ((uint64_t)((p)[2]) << 16) | ((uint64_t)((p)[3]) << 24) | ((uint64_t)((p)[4]) << 32) | ((uint64_t)((p)[5]) << 40) | ((uint64_t)((p)[6]) << 48) | ((uint64_t)((p)[7]) << 56))
+#    define U8TO64_LE(p) (((uint64_t)((p)[0])) | ((uint64_t)((p)[1]) << 8) | ((uint64_t)((p)[2]) << 16) | ((uint64_t)((p)[3]) << 24) | ((uint64_t)((p)[4]) << 32) | ((uint64_t)((p)[5]) << 40) | ((uint64_t)((p)[6]) << 48) | ((uint64_t)((p)[7]) << 56))
 #endif
 
 #define U8TO64_LE_NOCASE(p) (((uint64_t)(siptlw((p)[0]))) | ((uint64_t)(siptlw((p)[1])) << 8) | ((uint64_t)(siptlw((p)[2])) << 16) | ((uint64_t)(siptlw((p)[3])) << 24) | ((uint64_t)(siptlw((p)[4])) << 32) | ((uint64_t)(siptlw((p)[5])) << 40) | ((uint64_t)(siptlw((p)[6])) << 48) | ((uint64_t)(siptlw((p)[7])) << 56))
@@ -119,16 +119,16 @@ uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k) {
     uint64_t hash;
     uint8_t *out = (uint8_t *)&hash;
 #endif
-    uint64_t       v0 = 0x736f6d6570736575ULL;
-    uint64_t       v1 = 0x646f72616e646f6dULL;
-    uint64_t       v2 = 0x6c7967656e657261ULL;
-    uint64_t       v3 = 0x7465646279746573ULL;
-    uint64_t       k0 = U8TO64_LE(k);
-    uint64_t       k1 = U8TO64_LE(k + 8);
-    uint64_t       m;
+    uint64_t v0 = 0x736f6d6570736575ULL;
+    uint64_t v1 = 0x646f72616e646f6dULL;
+    uint64_t v2 = 0x6c7967656e657261ULL;
+    uint64_t v3 = 0x7465646279746573ULL;
+    uint64_t k0 = U8TO64_LE(k);
+    uint64_t k1 = U8TO64_LE(k + 8);
+    uint64_t m;
     const uint8_t *end = in + inlen - (inlen % sizeof(uint64_t));
-    const int      left = inlen & 7;
-    uint64_t       b = ((uint64_t)inlen) << 56;
+    const int left = inlen & 7;
+    uint64_t b = ((uint64_t)inlen) << 56;
     v3 ^= k1;
     v2 ^= k0;
     v1 ^= k1;
@@ -189,16 +189,16 @@ uint64_t siphash_nocase(const uint8_t *in, const size_t inlen, const uint8_t *k)
     uint64_t hash;
     uint8_t *out = (uint8_t *)&hash;
 #endif
-    uint64_t       v0 = 0x736f6d6570736575ULL;
-    uint64_t       v1 = 0x646f72616e646f6dULL;
-    uint64_t       v2 = 0x6c7967656e657261ULL;
-    uint64_t       v3 = 0x7465646279746573ULL;
-    uint64_t       k0 = U8TO64_LE(k);
-    uint64_t       k1 = U8TO64_LE(k + 8);
-    uint64_t       m;
+    uint64_t v0 = 0x736f6d6570736575ULL;
+    uint64_t v1 = 0x646f72616e646f6dULL;
+    uint64_t v2 = 0x6c7967656e657261ULL;
+    uint64_t v3 = 0x7465646279746573ULL;
+    uint64_t k0 = U8TO64_LE(k);
+    uint64_t k1 = U8TO64_LE(k + 8);
+    uint64_t m;
     const uint8_t *end = in + inlen - (inlen % sizeof(uint64_t));
-    const int      left = inlen & 7;
-    uint64_t       b = ((uint64_t)inlen) << 56;
+    const int left = inlen & 7;
+    uint64_t b = ((uint64_t)inlen) << 56;
     v3 ^= k1;
     v2 ^= k0;
     v1 ^= k1;
@@ -907,14 +907,14 @@ const uint8_t vectors_sip64[64][8] = {
  * now it uses 1-2 rounds. */
 int siphash_test(void) {
     uint8_t in[64], k[16];
-    int     i;
-    int     fails = 0;
+    int i;
+    int fails = 0;
 
     for (i = 0; i < 16; ++i) k[i] = i;
 
     for (i = 0; i < 64; ++i) {
         in[i] = i;
-        uint64_t       hash = siphash(in, i, k);
+        uint64_t hash = siphash(in, i, k);
         const uint8_t *v = NULL;
         v = (uint8_t *)vectors_sip64;
         if (memcmp(&hash, v + (i * 8), 8)) {

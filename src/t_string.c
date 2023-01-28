@@ -66,8 +66,8 @@ static int getExpireMillisecondsOrReply(client *c, robj *expire, int flags, int 
 
 void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire, int unit, robj *ok_reply, robj *abort_reply) {
     long long milliseconds = 0; // 过期时间、   可以是间隔 、过期点
-    int       found = 0;
-    int       setkey_flags = 0;
+    int found = 0;
+    int setkey_flags = 0;
     // unit  毫秒、秒      expire 时间长度字符串
     if (expire && getExpireMillisecondsOrReply(c, expire, flags, unit, &milliseconds) != C_OK) {
         return;
@@ -111,8 +111,8 @@ void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire,
 
     /* Propagate without the GET argument (Isn't needed if we had expire since in that case we completely re-written the command argv) */
     if ((flags & OBJ_SET_GET) && !expire) {
-        int    argc = 0;
-        int    j;
+        int argc = 0;
+        int j;
         robj **argv = zmalloc((c->argc - 1) * sizeof(robj *));
         for (j = 0; j < c->argc; j++) {
             char *a = c->argv[j]->ptr;
@@ -225,8 +225,8 @@ int parseExtendedStringArgumentsOrReply(client *c, int *flags, int *unit, robj *
 void setCommand(client *c) {
     // "*4\r\n$3\r\nset\r\n$1\r\na\r\n$1\r\nb\r\n$3\r\nget\r\n"
     robj *expire = NULL;
-    int   unit = UNIT_SECONDS;
-    int   flags = OBJ_NO_FLAGS; // 设置该命令 都有哪些参数
+    int unit = UNIT_SECONDS;
+    int flags = OBJ_NO_FLAGS; // 设置该命令 都有哪些参数
 
     if (parseExtendedStringArgumentsOrReply(c, &flags, &unit, &expire, COMMAND_SET) != C_OK) {
         return;
@@ -295,8 +295,8 @@ void getCommand(client *c) {
  */
 void getexCommand(client *c) {
     robj *expire = NULL;
-    int   unit = UNIT_SECONDS;
-    int   flags = OBJ_NO_FLAGS;
+    int unit = UNIT_SECONDS;
+    int flags = OBJ_NO_FLAGS;
 
     if (parseExtendedStringArgumentsOrReply(c, &flags, &unit, &expire, COMMAND_GET) != C_OK) {
         return;
@@ -382,8 +382,8 @@ void getsetCommand(client *c) {
 
 void setrangeCommand(client *c) {
     robj *o;
-    long  offset;
-    sds   value = c->argv[3]->ptr;
+    long offset;
+    sds value = c->argv[3]->ptr;
 
     if (getLongFromObjectOrReply(c, c->argv[2], &offset, NULL) != C_OK)
         return;
@@ -441,10 +441,10 @@ void setrangeCommand(client *c) {
 }
 
 void getrangeCommand(client *c) {
-    robj     *o;
+    robj *o;
     long long start, end;
-    char     *str, llbuf[32];
-    size_t    strlen;
+    char *str, llbuf[32];
+    size_t strlen;
 
     if (getLongLongFromObjectOrReply(c, c->argv[2], &start, NULL) != C_OK)
         return;
@@ -546,7 +546,7 @@ void msetnxCommand(client *c) {
 
 void incrDecrCommand(client *c, long long incr) {
     long long value, oldvalue;
-    robj     *o, *new;
+    robj *o, *new;
 
     o = lookupKeyWrite(c->db, c->argv[1]);
     if (checkType(c, o, OBJ_STRING))
@@ -611,7 +611,7 @@ void decrbyCommand(client *c) {
 
 void incrbyfloatCommand(client *c) {
     long double incr, value;
-    robj       *o, *new;
+    robj *o, *new;
 
     o = lookupKeyWrite(c->db, c->argv[1]);
     if (checkType(c, o, OBJ_STRING))
@@ -644,7 +644,7 @@ void incrbyfloatCommand(client *c) {
 
 void appendCommand(client *c) {
     size_t totlen;
-    robj  *o, *append;
+    robj *o, *append;
 
     o = lookupKeyWrite(c->db, c->argv[1]);
     if (o == NULL) {
@@ -685,11 +685,11 @@ void strlenCommand(client *c) {
 
 /* LCS key1 key2 [LEN] [IDX] [MINMATCHLEN <len>] [WITHMATCHLEN] */
 void lcsCommand(client *c) {
-    uint32_t  i, j;
+    uint32_t i, j;
     long long minmatchlen = 0;
-    sds       a = NULL, b = NULL;
-    int       getlen = 0, getidx = 0, withmatchlen = 0;
-    robj     *obja = NULL, *objb = NULL;
+    sds a = NULL, b = NULL;
+    int getlen = 0, getidx = 0, withmatchlen = 0;
+    robj *obja = NULL, *objb = NULL;
 
     obja = lookupKeyRead(c->db, c->argv[1]);
     objb = lookupKeyRead(c->db, c->argv[2]);
@@ -708,7 +708,7 @@ void lcsCommand(client *c) {
 
     for (j = 3; j < (uint32_t)c->argc; j++) {
         char *opt = c->argv[j]->ptr;
-        int   moreargs = (c->argc - 1) - j;
+        int moreargs = (c->argc - 1) - j;
 
         if (!strcasecmp(opt, "IDX")) {
             getidx = 1;
@@ -757,7 +757,7 @@ void lcsCommand(client *c) {
     /* Try to allocate the LCS table, and abort on overflow or insufficient memory. */
     unsigned long long lcssize = (unsigned long long)(alen + 1) * (blen + 1); /* Can't overflow due to the size limits above. */
     unsigned long long lcsalloc = lcssize * sizeof(uint32_t);
-    uint32_t          *lcs = NULL;
+    uint32_t *lcs = NULL;
     if (lcsalloc < SIZE_MAX && lcsalloc / lcssize == sizeof(uint32_t)) {
         if (lcsalloc > (size_t)server.proto_max_bulk_len) {
             addReplyError(c, "Insufficient memory, transient memory for LCS exceeds proto-max-bulk-len");
@@ -799,8 +799,8 @@ void lcsCommand(client *c) {
     /* Store the actual LCS string in "result" if needed. We create
      * it backward, but the length is already known, we store it into idx. */
     uint32_t idx = LCS(alen, blen);
-    sds      result = NULL;       /* Resulting LCS string. */
-    void    *arraylenptr = NULL;  /* Deferred length of the array for IDX. */
+    sds result = NULL;            /* Resulting LCS string. */
+    void *arraylenptr = NULL;     /* Deferred length of the array for IDX. */
     uint32_t arange_start = alen, /* alen signals that values are not set. */
         arange_end = 0, brange_start = 0, brange_end = 0;
 

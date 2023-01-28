@@ -41,8 +41,8 @@
  *
  * Clients will normally take frequently requested objects in memory, removing
  * them when invalidation messages are received. */
-rax     *TrackingTable = NULL;
-rax     *PrefixTable = NULL;
+rax *TrackingTable = NULL;
+rax *PrefixTable = NULL;
 uint64_t TrackingTableTotalItems = 0; /* Total number of IDs stored across
                                          the whole tracking table. This gives
                                          an hint about the total memory we
@@ -215,7 +215,7 @@ void trackingRememberKeys(client *c) {
         return;
 
     getKeysResult result = GETKEYS_RESULT_INIT;
-    int           numkeys = getKeysFromCommand(c->cmd, c->argv, c->argc, &result);
+    int numkeys = getKeysFromCommand(c->cmd, c->argv, c->argc, &result);
     if (!numkeys) {
         getKeysFreeResult(&result);
         return;
@@ -230,8 +230,8 @@ void trackingRememberKeys(client *c) {
     keyReference *keys = result.keys;
 
     for (int j = 0; j < numkeys; j++) {
-        int  idx = keys[j].pos;
-        sds  sdskey = c->argv[idx]->ptr;
+        int idx = keys[j].pos;
+        sds sdskey = c->argv[idx]->ptr;
         rax *ids = raxFind(TrackingTable, (unsigned char *)sdskey, sdslen(sdskey));
         if (ids == raxNotFound) {
             ids = raxNew();
@@ -360,7 +360,7 @@ void trackingInvalidateKey(client *c, robj *keyobj, int bcast) {
         return;
 
     unsigned char *key = (unsigned char *)keyobj->ptr;
-    size_t         keylen = sdslen(keyobj->ptr);
+    size_t keylen = sdslen(keyobj->ptr);
 
     if (bcast && raxSize(PrefixTable) > 0)
         trackingRememberKeyToBroadcast(c, (char *)key, keylen);
@@ -422,7 +422,7 @@ void trackingHandlePendingKeyInvalidations() {
         return;
 
     listNode *ln;
-    listIter  li;
+    listIter li;
 
     listRewind(server.tracking_pending_keys, &li);
     while ((ln = listNext(&li)) != NULL) {
@@ -455,7 +455,7 @@ void freeTrackingRadixTree(rax *rt) {
 void trackingInvalidateKeysOnFlush(int async) {
     if (server.tracking_clients) {
         listNode *ln;
-        listIter  li;
+        listIter li;
         listRewind(server.clients, &li);
         while ((ln = listNext(&li)) != NULL) {
             client *c = listNodeValue(ln);
@@ -538,7 +538,7 @@ void trackingLimitUsedSlots(void) {
  * If the resulting array would be empty, NULL is returned instead. */
 sds trackingBuildBroadcastReply(client *c, rax *keys) {
     raxIterator ri;
-    uint64_t    count;
+    uint64_t count;
 
     if (c == NULL) {
         count = raxSize(keys);
@@ -559,9 +559,9 @@ sds trackingBuildBroadcastReply(client *c, rax *keys) {
 
     /* Create the array reply with the list of keys once, then send
      * it to all the clients subscribed to this prefix. */
-    char   buf[32];
+    char buf[32];
     size_t len = ll2string(buf, sizeof(buf), count);
-    sds    proto = sdsempty();
+    sds proto = sdsempty();
     proto = sdsMakeRoomFor(proto, count * 15);
     proto = sdscatlen(proto, "*", 1);
     proto = sdscatlen(proto, buf, len);

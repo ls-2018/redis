@@ -32,7 +32,7 @@
 // 解析允许事件通知类型
 int keyspaceEventsStringToFlags(char *classes) {
     char *p = classes;
-    int   c, flags = 0;
+    int c, flags = 0;
 
     while ((c = *p++) != '\0') {
         switch (c) {
@@ -134,10 +134,10 @@ sds keyspaceEventsFlagsToString(int flags) {
 // event、keys、dbid 分别是事件的名称、产生事件的键、产生事件的数据库号码,
 // 构建事件通知内容、接收通知的频道名
 void notifyKeyspaceEvent(int type, char *event, robj *key, int dbid) {
-    sds   chan;
+    sds chan;
     robj *chanobj, *eventobj;
-    int   len = -1;
-    char  buf[24];
+    int len = -1;
+    char buf[24];
     /* If any modules are interested in events, notify the module system now.
      * This bypasses the notifications configuration, but the module engine
      * will only call event subscribers if the event type matches the types

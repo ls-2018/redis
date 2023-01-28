@@ -42,7 +42,7 @@ void updateLFU(robj *val) {
 robj *lookupKey(redisDb *db, robj *key, int flags) {
     // 1、        通过调用dictFind函数以及dictGetVal函数,来从键空间之中查找到key对应的value.
     dictEntry *de = dictFind(db->dict, key->ptr);
-    robj      *val = NULL;
+    robj *val = NULL;
     if (de) {
         val = dictGetVal(de); // 获取键值对对应的redisObject结构体
 
@@ -138,7 +138,7 @@ robj *lookupKeyWriteOrReply(client *c, robj *key, robj *reply) {
  *
  * The program is aborted if the key already exists. */
 void dbAdd(redisDb *db, robj *key, robj *val) {
-    sds        copy = sdsdup(key->ptr);
+    sds copy = sdsdup(key->ptr);
     dictEntry *de = dictAddRaw(db->dict, copy, NULL);
     serverAssertWithInfo(NULL, key, de != NULL);
     dictSetVal(db->dict, de, val);
@@ -179,7 +179,7 @@ void dbOverwrite(redisDb *db, robj *key, robj *val) {
 
     serverAssertWithInfo(NULL, key, de != NULL);
     dictEntry auxentry = *de;
-    robj     *old = dictGetVal(de);
+    robj *old = dictGetVal(de);
     if (server.maxmemory_policy & MAXMEMORY_FLAG_LFU) {
         val->lru = old->lru;
     }
@@ -242,7 +242,7 @@ robj *dbRandomKey(redisDb *db) {
     int allvolatile = dictSize(db->dict) == dictSize(db->expires);
     // 死循环从哈希表中找到一个不过期的key
     while (1) {
-        sds   key;
+        sds key;
         robj *keyobj;
         // 从实例的哈希表里随机一个元素
         de = dictGetFairRandomKey(db->dict);
@@ -370,7 +370,7 @@ robj *dbUnshareStringValue(redisDb *db, robj *key, robj *o) {
  * The function returns the number of keys removed from the database(s). */
 long long emptyDbStructure(redisDb *dbarray, int dbnum, int async, void(callback)(dict *)) {
     long long removed = 0;
-    int       startdb, enddb;
+    int startdb, enddb;
 
     if (dbnum == -1) {
         startdb = 0;
@@ -413,10 +413,10 @@ long long emptyDbStructure(redisDb *dbarray, int dbnum, int async, void(callback
  * database(s). Otherwise -1 is returned in the specific case the
  * DB number is out of range, and errno is set to EINVAL. */
 long long emptyData(int dbnum, int flags, void(callback)(dict *)) {
-    int                    async = (flags & EMPTYDB_ASYNC);
-    int                    with_functions = !(flags & EMPTYDB_NOFUNCTIONS);
+    int async = (flags & EMPTYDB_ASYNC);
+    int with_functions = !(flags & EMPTYDB_NOFUNCTIONS);
     RedisModuleFlushInfoV1 fi = {REDISMODULE_FLUSHINFO_VERSION, !async, dbnum};
-    long long              removed = 0;
+    long long removed = 0;
 
     if (dbnum < -1 || dbnum >= server.dbnum) {
         errno = EINVAL;
@@ -502,7 +502,7 @@ int selectDb(client *c, int id) {
 
 long long dbTotalServerKeyCount() {
     long long total = 0;
-    int       j;
+    int j;
     for (j = 0; j < server.dbnum; j++) {
         total += dictSize(server.db[j].dict);
     }
@@ -587,7 +587,7 @@ void flushAllDataAndResetRDB(int flags) {
     if (server.saveparamslen > 0) {
         /* Normally rdbSave() will reset dirty, but we don't want this here
          * as otherwise FLUSHALL will not be replicated nor put into the AOF. */
-        int         saved_dirty = server.dirty;
+        int saved_dirty = server.dirty;
         rdbSaveInfo rsi, *rsiptr;
         rsiptr = rdbPopulateSaveInfo(&rsi);
         rdbSave(SLAVE_REQ_NONE, server.rdb_filename, rsiptr);
@@ -670,7 +670,7 @@ void unlinkCommand(client *c) {
  * Return value is the number of keys existing. */
 void existsCommand(client *c) {
     long long count = 0;
-    int       j;
+    int j;
 
     for (j = 1; j < c->argc; j++) {
         if (lookupKeyReadWithFlags(c->db, c->argv[j], LOOKUP_NOTOUCH))
@@ -711,16 +711,16 @@ void randomkeyCommand(client *c) {
 
 void keysCommand(client *c) {
     dictIterator *di;
-    dictEntry    *de;
-    sds           pattern = c->argv[1]->ptr;
-    int           plen = sdslen(pattern), allkeys;
+    dictEntry *de;
+    sds pattern = c->argv[1]->ptr;
+    int plen = sdslen(pattern), allkeys;
     unsigned long numkeys = 0;
-    void         *replylen = addReplyDeferredLen(c);
+    void *replylen = addReplyDeferredLen(c);
 
     di = dictGetSafeIterator(c->db->dict);
     allkeys = (pattern[0] == '*' && plen == 1);
     while ((de = dictNext(di)) != NULL) {
-        sds   key = dictGetKey(de);
+        sds key = dictGetKey(de);
         robj *keyobj;
 
         if (allkeys || stringmatchlen(pattern, plen, key, sdslen(key), 0)) {
@@ -740,9 +740,9 @@ void keysCommand(client *c) {
  * returned by the dictionary iterator into a list. */
 void scanCallback(void *privdata, const dictEntry *de) {
     void **pd = (void **)privdata;
-    list  *keys = pd[0];
-    robj  *o = pd[1];
-    robj  *key, *val = NULL;
+    list *keys = pd[0];
+    robj *o = pd[1];
+    robj *key, *val = NULL;
 
     if (o == NULL) {
         sds sdskey = dictGetKey(de);
@@ -802,13 +802,13 @@ int parseScanCursorOrReply(client *c, robj *o, unsigned long *cursor) {
  * In the case of a Hash object the function returns both the field and value
  * of every element on the Hash. */
 void scanGenericCommand(client *c, robj *o, unsigned long cursor) {
-    int       i, j;
-    list     *keys = listCreate();
+    int i, j;
+    list *keys = listCreate();
     listNode *node, *nextnode;
-    long      count = 10;
-    sds       pat = NULL;
+    long count = 10;
+    sds pat = NULL;
     sds typename = NULL;
-    int   patlen = 0, use_pattern = 0;
+    int patlen = 0, use_pattern = 0;
     dict *ht;
 
     /* Object must be NULL (to iterate keys names), or the type of the object
@@ -898,7 +898,7 @@ void scanGenericCommand(client *c, robj *o, unsigned long cursor) {
         } while (cursor && maxiterations-- && listLength(keys) < (unsigned long)count);
     }
     else if (o->type == OBJ_SET) {
-        int     pos = 0;
+        int pos = 0;
         int64_t ll;
 
         while (intsetGet(o->ptr, pos++, &ll)) listAddNodeTail(keys, createStringObjectFromLongLong(ll));
@@ -907,8 +907,8 @@ void scanGenericCommand(client *c, robj *o, unsigned long cursor) {
     else if (o->type == OBJ_HASH || o->type == OBJ_ZSET) {
         unsigned char *p = lpFirst(o->ptr);
         unsigned char *vstr;
-        int64_t        vlen;
-        unsigned char  intbuf[LP_INTBUF_SIZE];
+        int64_t vlen;
+        unsigned char intbuf[LP_INTBUF_SIZE];
 
         while (p) {
             vstr = lpGet(p, &vlen, intbuf);
@@ -936,7 +936,7 @@ void scanGenericCommand(client *c, robj *o, unsigned long cursor) {
             }
             else {
                 char buf[LONG_STR_SIZE];
-                int  len;
+                int len;
 
                 serverAssert(kobj->encoding == OBJ_ENCODING_INT);
                 len = ll2string(buf, sizeof(buf), (long)kobj->ptr);
@@ -1125,9 +1125,9 @@ void shutdownCommand(client *c) {
 }
 
 void renameGenericCommand(client *c, int nx) {
-    robj     *o;
+    robj *o;
     long long expire;
-    int       samekey = 0;
+    int samekey = 0;
 
     /* When source and dest key is the same, no operation is performed,
      * if the key exists, however we still return an error on unexisting key. */
@@ -1175,9 +1175,9 @@ void renamenxCommand(client *c) {
 }
 
 void moveCommand(client *c) {
-    robj     *o;
-    redisDb  *src, *dst;
-    int       srcid, dbid;
+    robj *o;
+    redisDb *src, *dst;
+    int srcid, dbid;
     long long expire;
 
     if (server.cluster_enabled) {
@@ -1236,11 +1236,11 @@ void moveCommand(client *c) {
 }
 
 void copyCommand(client *c) {
-    robj     *o;
-    redisDb  *src, *dst;
-    int       srcid, dbid;
+    robj *o;
+    redisDb *src, *dst;
+    int srcid, dbid;
     long long expire;
-    int       j, replace = 0, delete = 0;
+    int j, replace = 0, delete = 0;
 
     /* Obtain source and target DB pointers
      * Default target DB is the same as the source DB
@@ -1359,10 +1359,10 @@ void copyCommand(client *c) {
  * and signal the keys as ready if they are of the right type. See the comment
  * where the function is used for more info. */
 void scanDatabaseForReadyKeys(redisDb *db) {
-    dictEntry    *de;
+    dictEntry *de;
     dictIterator *di = dictGetSafeIterator(db->blocking_keys);
     while ((de = dictNext(di)) != NULL) {
-        robj      *key = dictGetKey(de);
+        robj *key = dictGetKey(de);
         dictEntry *kde = dictFind(db->dict, key->ptr);
         if (kde) {
             robj *value = dictGetVal(kde);
@@ -1381,11 +1381,11 @@ void scanDatabaseForDeletedStreams(redisDb *emptied, redisDb *replaced_with) {
     if (!server.blocked_clients_by_type[BLOCKED_STREAM])
         return;
 
-    dictEntry    *de;
+    dictEntry *de;
     dictIterator *di = dictGetSafeIterator(emptied->blocking_keys);
     while ((de = dictNext(di)) != NULL) {
         robj *key = dictGetKey(de);
-        int   was_stream = 0, is_stream = 0;
+        int was_stream = 0, is_stream = 0;
 
         dictEntry *kde = dictFind(emptied->dict, key->ptr);
         if (kde) {
@@ -1419,7 +1419,7 @@ int dbSwapDatabases(int id1, int id2) {
         return C_ERR;
     if (id1 == id2)
         return C_OK;
-    redisDb  aux = server.db[id1];
+    redisDb aux = server.db[id1];
     redisDb *db1 = &server.db[id1], *db2 = &server.db[id2];
 
     /* Swapdb should make transaction fail if there is any
@@ -1471,7 +1471,7 @@ void swapMainDbWithTempDb(redisDb *tempDb) {
     }
 
     for (int i = 0; i < server.dbnum; i++) {
-        redisDb  aux = server.db[i];
+        redisDb aux = server.db[i];
         redisDb *activedb = &server.db[i], *newdb = &tempDb[i];
 
         /* Swapping databases should make transaction fail if there is any
@@ -1748,7 +1748,7 @@ int64_t getAllKeySpecsFlags(struct redisCommand *cmd, int inv) {
  * returns the keys found in other valid keyspecs.
  */
 int getKeysUsingKeySpecs(struct redisCommand *cmd, robj **argv, int argc, int search_flags, getKeysResult *result) {
-    int           j, i, k = 0, last, first, step;
+    int j, i, k = 0, last, first, step;
     keyReference *keys;
 
     for (j = 0; j < cmd->key_specs_num; j++) {
@@ -1933,11 +1933,11 @@ int doesCommandHaveKeys(struct redisCommand *cmd) {
 /* A simplified channel spec table that contains all of the redis commands
  * and which channels they have and how they are accessed. */
 typedef struct ChannelSpecs {
-    redisCommandProc *proc;  /* Command procedure to match against */
-    uint64_t          flags; /* CMD_CHANNEL_* flags for this command */
-    int               start; /* The initial position of the first channel */
-    int               count; /* The number of channels, or -1 if all remaining
-                              * arguments are channels. */
+    redisCommandProc *proc; /* Command procedure to match against */
+    uint64_t flags;         /* CMD_CHANNEL_* flags for this command */
+    int start;              /* The initial position of the first channel */
+    int count;              /* The number of channels, or -1 if all remaining
+                             * arguments are channels. */
 } ChannelSpecs;
 
 ChannelSpecs commands_with_channels[] = {
@@ -2018,7 +2018,7 @@ int getChannelsFromCommand(struct redisCommand *cmd, robj **argv, int argc, getK
  * NOTE: This function does not guarantee populating the flags for
  * the keys, in order to get flags you should use getKeysUsingKeySpecs. */
 int getKeysUsingLegacyRangeSpec(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *result) {
-    int           j, i = 0, last, first, step;
+    int j, i = 0, last, first, step;
     keyReference *keys;
     UNUSED(argv);
 
@@ -2110,7 +2110,7 @@ void getKeysFreeResult(getKeysResult *result) {
  * The commands using this functoin have a fully defined keyspec, so returning
  * flags isn't needed. */
 int genericGetKeys(int storeKeyOfs, int keyCountOfs, int firstKeyOfs, int keyStep, robj **argv, int argc, getKeysResult *result) {
-    int           i, num;
+    int i, num;
     keyReference *keys;
 
     num = atoi(argv[keyCountOfs]->ptr);
@@ -2217,7 +2217,7 @@ int sortROGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult
  * This command declares incomplete keys, so the flags are correctly set for
  * this function */
 int sortGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *result) {
-    int           i, j, num, found_store = 0;
+    int i, j, num, found_store = 0;
     keyReference *keys;
     UNUSED(cmd);
 
@@ -2232,7 +2232,7 @@ int sortGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *
      * provide a list here in order to skip the right number of args. */
     struct {
         char *name;
-        int   skip;
+        int skip;
     } skiplist[] = {
         {"limit", 2}, {"get", 1}, {"by", 1}, {NULL, 0} /* End of elements. */
     };
@@ -2261,7 +2261,7 @@ int sortGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *
 /* This command declares incomplete keys, so the flags are correctly set for
  * this function */
 int migrateGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *result) {
-    int           i, num, first;
+    int i, num, first;
     keyReference *keys;
     UNUSED(cmd);
 
@@ -2296,7 +2296,7 @@ int migrateGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResul
  *
  * This command has a fully defined keyspec, so returning flags isn't needed. */
 int georadiusGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *result) {
-    int           i, num;
+    int i, num;
     keyReference *keys;
     UNUSED(cmd);
 
@@ -2337,7 +2337,7 @@ int georadiusGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysRes
  *
  * This command has a fully defined keyspec, so returning flags isn't needed. */
 int xreadGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *result) {
-    int           i, num = 0;
+    int i, num = 0;
     keyReference *keys;
     UNUSED(cmd);
 
@@ -2420,7 +2420,7 @@ int bitfieldGetKeys(struct redisCommand *cmd, robj **argv, int argc, getKeysResu
     result->numkeys = 1;
 
     for (int i = 2; i < argc; i++) {
-        int   remargs = argc - i - 1; /* Remaining args other than current. */
+        int remargs = argc - i - 1; /* Remaining args other than current. */
         char *arg = argv[i]->ptr;
         if (!strcasecmp(arg, "get") && remargs >= 2) {
             keys[0].flags = CMD_KEY_RO | CMD_KEY_ACCESS;

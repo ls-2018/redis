@@ -43,22 +43,22 @@
 #include <unistd.h>
 
 #ifdef HAVE_BACKTRACE
-#include <execinfo.h>
-#ifndef __OpenBSD__
-#include <ucontext.h>
-#else
+#    include <execinfo.h>
+#    ifndef __OpenBSD__
+#        include <ucontext.h>
+#    else
 typedef ucontext_t sigcontext_t;
-#endif
+#    endif
 #endif /* HAVE_BACKTRACE */
 
 #ifdef __CYGWIN__
-#ifndef SA_ONSTACK
-#define SA_ONSTACK 0x08000000
-#endif
+#    ifndef SA_ONSTACK
+#        define SA_ONSTACK 0x08000000
+#    endif
 #endif
 
 #if defined(__APPLE__) && defined(__arm64__)
-#include <mach/mach.h>
+#    include <mach/mach.h>
 #endif
 
 /* Globals */
@@ -348,18 +348,18 @@ void mallctl_int(client *c, robj **argv, int argc) {
             if (ret == EINVAL) {
                 /* size might be wrong, try a smaller one */
                 sz /= 2;
-#if BYTE_ORDER == BIG_ENDIAN
+#    if BYTE_ORDER == BIG_ENDIAN
                 val <<= 8 * sz;
-#endif
+#    endif
                 continue;
             }
             addReplyErrorFormat(c, "%s", strerror(ret));
             return;
         }
         else {
-#if BYTE_ORDER == BIG_ENDIAN
+#    if BYTE_ORDER == BIG_ENDIAN
             old >>= 64 - 8 * sz;
-#endif
+#    endif
             addReplyLongLong(c, old);
             return;
         }
@@ -1183,77 +1183,77 @@ void bugReportStart(void) {
 
 #ifdef HAVE_BACKTRACE
 static void *getMcontextEip(ucontext_t *uc) {
-#define NOT_SUPPORTED() \
-    do {                \
-        UNUSED(uc);     \
-        return NULL;    \
-    } while (0)
-#if defined(__APPLE__) && !defined(MAC_OS_X_VERSION_10_6)
+#    define NOT_SUPPORTED() \
+        do {                \
+            UNUSED(uc);     \
+            return NULL;    \
+        } while (0)
+#    if defined(__APPLE__) && !defined(MAC_OS_X_VERSION_10_6)
 /* OSX < 10.6 */
-#if defined(__x86_64__)
+#        if defined(__x86_64__)
     return (void *)uc->uc_mcontext->__ss.__rip;
-#elif defined(__i386__)
+#        elif defined(__i386__)
     return (void *)uc->uc_mcontext->__ss.__eip;
-#else
+#        else
     return (void *)uc->uc_mcontext->__ss.__srr0;
-#endif
-#elif defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_6)
+#        endif
+#    elif defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_6)
 /* OSX >= 10.6 */
-#if defined(_STRUCT_X86_THREAD_STATE64) && !defined(__i386__)
+#        if defined(_STRUCT_X86_THREAD_STATE64) && !defined(__i386__)
     return (void *)uc->uc_mcontext->__ss.__rip;
-#elif defined(__i386__)
+#        elif defined(__i386__)
     return (void *)uc->uc_mcontext->__ss.__eip;
-#else
+#        else
     /* OSX ARM64 */
     return (void *)arm_thread_state64_get_pc(uc->uc_mcontext->__ss);
-#endif
-#elif defined(__linux__)
+#        endif
+#    elif defined(__linux__)
 /* Linux */
-#if defined(__i386__) || ((defined(__X86_64__) || defined(__x86_64__)) && defined(__ILP32__))
+#        if defined(__i386__) || ((defined(__X86_64__) || defined(__x86_64__)) && defined(__ILP32__))
     return (void *)uc->uc_mcontext.gregs[14]; /* Linux 32 */
-#elif defined(__X86_64__) || defined(__x86_64__)
+#        elif defined(__X86_64__) || defined(__x86_64__)
     return (void *)uc->uc_mcontext.gregs[16]; /* Linux 64 */
-#elif defined(__ia64__)    /* Linux IA64 */
+#        elif defined(__ia64__)    /* Linux IA64 */
     return (void *)uc->uc_mcontext.sc_ip;
-#elif defined(__arm__)     /* Linux ARM */
+#        elif defined(__arm__)     /* Linux ARM */
     return (void *)uc->uc_mcontext.arm_pc;
-#elif defined(__aarch64__) /* Linux AArch64 */
+#        elif defined(__aarch64__) /* Linux AArch64 */
     return (void *)uc->uc_mcontext.pc;
-#else
+#        else
     NOT_SUPPORTED();
-#endif
-#elif defined(__FreeBSD__)
+#        endif
+#    elif defined(__FreeBSD__)
 /* FreeBSD */
-#if defined(__i386__)
+#        if defined(__i386__)
     return (void *)uc->uc_mcontext.mc_eip;
-#elif defined(__x86_64__)
+#        elif defined(__x86_64__)
     return (void *)uc->uc_mcontext.mc_rip;
-#else
+#        else
     NOT_SUPPORTED();
-#endif
-#elif defined(__OpenBSD__)
+#        endif
+#    elif defined(__OpenBSD__)
 /* OpenBSD */
-#if defined(__i386__)
+#        if defined(__i386__)
     return (void *)uc->sc_eip;
-#elif defined(__x86_64__)
+#        elif defined(__x86_64__)
     return (void *)uc->sc_rip;
-#else
+#        else
     NOT_SUPPORTED();
-#endif
-#elif defined(__NetBSD__)
-#if defined(__i386__)
+#        endif
+#    elif defined(__NetBSD__)
+#        if defined(__i386__)
     return (void *)uc->uc_mcontext.__gregs[_REG_EIP];
-#elif defined(__x86_64__)
+#        elif defined(__x86_64__)
     return (void *)uc->uc_mcontext.__gregs[_REG_RIP];
-#else
+#        else
     NOT_SUPPORTED();
-#endif
-#elif defined(__DragonFly__)
+#        endif
+#    elif defined(__DragonFly__)
     return (void *)uc->uc_mcontext.mc_rip;
-#else
+#    else
     NOT_SUPPORTED();
-#endif
-#undef NOT_SUPPORTED
+#    endif
+#    undef NOT_SUPPORTED
 }
 
 REDIS_NO_SANITIZE("address")
@@ -1273,16 +1273,16 @@ void logStackContent(void **sp) {
 /* Log dump of processor registers */
 void logRegisters(ucontext_t *uc) {
     serverLog(LL_WARNING | LL_RAW, "\n------ REGISTERS ------\n");
-#define NOT_SUPPORTED()                                                                 \
-    do {                                                                                \
-        UNUSED(uc);                                                                     \
-        serverLog(LL_WARNING, "  Dumping of registers not supported for this OS/arch"); \
-    } while (0)
+#    define NOT_SUPPORTED()                                                                 \
+        do {                                                                                \
+            UNUSED(uc);                                                                     \
+            serverLog(LL_WARNING, "  Dumping of registers not supported for this OS/arch"); \
+        } while (0)
 
 /* OSX */
-#if defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_6)
+#    if defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_6)
     /* OSX AMD64 */
-#if defined(_STRUCT_X86_THREAD_STATE64) && !defined(__i386__)
+#        if defined(_STRUCT_X86_THREAD_STATE64) && !defined(__i386__)
     serverLog(
         LL_WARNING,
         "\n"
@@ -1295,7 +1295,7 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->uc_mcontext->__ss.__r8, (unsigned long)uc->uc_mcontext->__ss.__r9, (unsigned long)uc->uc_mcontext->__ss.__r10, (unsigned long)uc->uc_mcontext->__ss.__r11, (unsigned long)uc->uc_mcontext->__ss.__r12, (unsigned long)uc->uc_mcontext->__ss.__r13, (unsigned long)uc->uc_mcontext->__ss.__r14, (unsigned long)uc->uc_mcontext->__ss.__r15,
         (unsigned long)uc->uc_mcontext->__ss.__rip, (unsigned long)uc->uc_mcontext->__ss.__rflags, (unsigned long)uc->uc_mcontext->__ss.__cs, (unsigned long)uc->uc_mcontext->__ss.__fs, (unsigned long)uc->uc_mcontext->__ss.__gs);
     logStackContent((void **)uc->uc_mcontext->__ss.__rsp);
-#elif defined(__i386__)
+#        elif defined(__i386__)
     /* OSX x86 */
     serverLog(
         LL_WARNING,
@@ -1307,7 +1307,7 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->uc_mcontext->__ss.__eax, (unsigned long)uc->uc_mcontext->__ss.__ebx, (unsigned long)uc->uc_mcontext->__ss.__ecx, (unsigned long)uc->uc_mcontext->__ss.__edx, (unsigned long)uc->uc_mcontext->__ss.__edi, (unsigned long)uc->uc_mcontext->__ss.__esi, (unsigned long)uc->uc_mcontext->__ss.__ebp, (unsigned long)uc->uc_mcontext->__ss.__esp,
         (unsigned long)uc->uc_mcontext->__ss.__ss, (unsigned long)uc->uc_mcontext->__ss.__eflags, (unsigned long)uc->uc_mcontext->__ss.__eip, (unsigned long)uc->uc_mcontext->__ss.__cs, (unsigned long)uc->uc_mcontext->__ss.__ds, (unsigned long)uc->uc_mcontext->__ss.__es, (unsigned long)uc->uc_mcontext->__ss.__fs, (unsigned long)uc->uc_mcontext->__ss.__gs);
     logStackContent((void **)uc->uc_mcontext->__ss.__esp);
-#else
+#        else
     /* OSX ARM64 */
     serverLog(
         LL_WARNING,
@@ -1327,11 +1327,11 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->uc_mcontext->__ss.__x[21], (unsigned long)uc->uc_mcontext->__ss.__x[22], (unsigned long)uc->uc_mcontext->__ss.__x[23], (unsigned long)uc->uc_mcontext->__ss.__x[24], (unsigned long)uc->uc_mcontext->__ss.__x[25], (unsigned long)uc->uc_mcontext->__ss.__x[26], (unsigned long)uc->uc_mcontext->__ss.__x[27],
         (unsigned long)uc->uc_mcontext->__ss.__x[28], (unsigned long)arm_thread_state64_get_fp(uc->uc_mcontext->__ss), (unsigned long)arm_thread_state64_get_lr(uc->uc_mcontext->__ss), (unsigned long)arm_thread_state64_get_sp(uc->uc_mcontext->__ss), (unsigned long)arm_thread_state64_get_pc(uc->uc_mcontext->__ss), (unsigned long)uc->uc_mcontext->__ss.__cpsr);
     logStackContent((void **)arm_thread_state64_get_sp(uc->uc_mcontext->__ss));
-#endif
+#        endif
 /* Linux */
-#elif defined(__linux__)
+#    elif defined(__linux__)
 /* Linux x86 */
-#if defined(__i386__) || ((defined(__X86_64__) || defined(__x86_64__)) && defined(__ILP32__))
+#        if defined(__i386__) || ((defined(__X86_64__) || defined(__x86_64__)) && defined(__ILP32__))
     serverLog(
         LL_WARNING,
         "\n"
@@ -1342,7 +1342,7 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->uc_mcontext.gregs[11], (unsigned long)uc->uc_mcontext.gregs[8], (unsigned long)uc->uc_mcontext.gregs[10], (unsigned long)uc->uc_mcontext.gregs[9], (unsigned long)uc->uc_mcontext.gregs[4], (unsigned long)uc->uc_mcontext.gregs[5], (unsigned long)uc->uc_mcontext.gregs[6], (unsigned long)uc->uc_mcontext.gregs[7],
         (unsigned long)uc->uc_mcontext.gregs[18], (unsigned long)uc->uc_mcontext.gregs[17], (unsigned long)uc->uc_mcontext.gregs[14], (unsigned long)uc->uc_mcontext.gregs[15], (unsigned long)uc->uc_mcontext.gregs[3], (unsigned long)uc->uc_mcontext.gregs[2], (unsigned long)uc->uc_mcontext.gregs[1], (unsigned long)uc->uc_mcontext.gregs[0]);
     logStackContent((void **)uc->uc_mcontext.gregs[7]);
-#elif defined(__X86_64__) || defined(__x86_64__)
+#        elif defined(__X86_64__) || defined(__x86_64__)
     /* Linux AMD64 */
     serverLog(
         LL_WARNING,
@@ -1356,7 +1356,7 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->uc_mcontext.gregs[0], (unsigned long)uc->uc_mcontext.gregs[1], (unsigned long)uc->uc_mcontext.gregs[2], (unsigned long)uc->uc_mcontext.gregs[3], (unsigned long)uc->uc_mcontext.gregs[4], (unsigned long)uc->uc_mcontext.gregs[5], (unsigned long)uc->uc_mcontext.gregs[6], (unsigned long)uc->uc_mcontext.gregs[7],
         (unsigned long)uc->uc_mcontext.gregs[16], (unsigned long)uc->uc_mcontext.gregs[17], (unsigned long)uc->uc_mcontext.gregs[18]);
     logStackContent((void **)uc->uc_mcontext.gregs[15]);
-#elif defined(__aarch64__) /* Linux AArch64 */
+#        elif defined(__aarch64__) /* Linux AArch64 */
     serverLog(
         LL_WARNING,
         "\n"
@@ -1369,7 +1369,7 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->uc_mcontext.regs[26], (unsigned long)uc->uc_mcontext.regs[27], (unsigned long)uc->uc_mcontext.regs[28], (unsigned long)uc->uc_mcontext.regs[29], (unsigned long)uc->uc_mcontext.regs[30], (unsigned long)uc->uc_mcontext.pc, (unsigned long)uc->uc_mcontext.sp, (unsigned long)uc->uc_mcontext.pstate,
         (unsigned long)uc->uc_mcontext.fault_address);
     logStackContent((void **)uc->uc_mcontext.sp);
-#elif defined(__arm__)     /* Linux ARM */
+#        elif defined(__arm__)     /* Linux ARM */
     serverLog(
         LL_WARNING,
         "\n"
@@ -1382,11 +1382,11 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->uc_mcontext.arm_r1, (unsigned long)uc->uc_mcontext.arm_r0, (unsigned long)uc->uc_mcontext.error_code, (unsigned long)uc->uc_mcontext.arm_fp, (unsigned long)uc->uc_mcontext.arm_ip, (unsigned long)uc->uc_mcontext.arm_pc, (unsigned long)uc->uc_mcontext.arm_sp, (unsigned long)uc->uc_mcontext.arm_cpsr,
         (unsigned long)uc->uc_mcontext.fault_address);
     logStackContent((void **)uc->uc_mcontext.arm_sp);
-#else
+#        else
     NOT_SUPPORTED();
-#endif
-#elif defined(__FreeBSD__)
-#if defined(__x86_64__)
+#        endif
+#    elif defined(__FreeBSD__)
+#        if defined(__x86_64__)
     serverLog(
         LL_WARNING,
         "\n"
@@ -1399,7 +1399,7 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->uc_mcontext.mc_r9, (unsigned long)uc->uc_mcontext.mc_r10, (unsigned long)uc->uc_mcontext.mc_r11, (unsigned long)uc->uc_mcontext.mc_r12, (unsigned long)uc->uc_mcontext.mc_r13, (unsigned long)uc->uc_mcontext.mc_r14, (unsigned long)uc->uc_mcontext.mc_r15, (unsigned long)uc->uc_mcontext.mc_rip, (unsigned long)uc->uc_mcontext.mc_rflags,
         (unsigned long)uc->uc_mcontext.mc_cs);
     logStackContent((void **)uc->uc_mcontext.mc_rsp);
-#elif defined(__i386__)
+#        elif defined(__i386__)
     serverLog(
         LL_WARNING,
         "\n"
@@ -1410,11 +1410,11 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->uc_mcontext.mc_eax, (unsigned long)uc->uc_mcontext.mc_ebx, (unsigned long)uc->uc_mcontext.mc_ebx, (unsigned long)uc->uc_mcontext.mc_edx, (unsigned long)uc->uc_mcontext.mc_edi, (unsigned long)uc->uc_mcontext.mc_esi, (unsigned long)uc->uc_mcontext.mc_ebp, (unsigned long)uc->uc_mcontext.mc_esp, (unsigned long)uc->uc_mcontext.mc_ss,
         (unsigned long)uc->uc_mcontext.mc_eflags, (unsigned long)uc->uc_mcontext.mc_eip, (unsigned long)uc->uc_mcontext.mc_cs, (unsigned long)uc->uc_mcontext.mc_es, (unsigned long)uc->uc_mcontext.mc_fs, (unsigned long)uc->uc_mcontext.mc_gs);
     logStackContent((void **)uc->uc_mcontext.mc_esp);
-#else
+#        else
     NOT_SUPPORTED();
-#endif
-#elif defined(__OpenBSD__)
-#if defined(__x86_64__)
+#        endif
+#    elif defined(__OpenBSD__)
+#        if defined(__x86_64__)
     serverLog(
         LL_WARNING,
         "\n"
@@ -1426,7 +1426,7 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->sc_rax, (unsigned long)uc->sc_rbx, (unsigned long)uc->sc_rcx, (unsigned long)uc->sc_rdx, (unsigned long)uc->sc_rdi, (unsigned long)uc->sc_rsi, (unsigned long)uc->sc_rbp, (unsigned long)uc->sc_rsp, (unsigned long)uc->sc_r8, (unsigned long)uc->sc_r9, (unsigned long)uc->sc_r10, (unsigned long)uc->sc_r11, (unsigned long)uc->sc_r12,
         (unsigned long)uc->sc_r13, (unsigned long)uc->sc_r14, (unsigned long)uc->sc_r15, (unsigned long)uc->sc_rip, (unsigned long)uc->sc_rflags, (unsigned long)uc->sc_cs);
     logStackContent((void **)uc->sc_rsp);
-#elif defined(__i386__)
+#        elif defined(__i386__)
     serverLog(
         LL_WARNING,
         "\n"
@@ -1437,11 +1437,11 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->sc_eax, (unsigned long)uc->sc_ebx, (unsigned long)uc->sc_ebx, (unsigned long)uc->sc_edx, (unsigned long)uc->sc_edi, (unsigned long)uc->sc_esi, (unsigned long)uc->sc_ebp, (unsigned long)uc->sc_esp, (unsigned long)uc->sc_ss, (unsigned long)uc->sc_eflags, (unsigned long)uc->sc_eip, (unsigned long)uc->sc_cs, (unsigned long)uc->sc_es,
         (unsigned long)uc->sc_fs, (unsigned long)uc->sc_gs);
     logStackContent((void **)uc->sc_esp);
-#else
+#        else
     NOT_SUPPORTED();
-#endif
-#elif defined(__NetBSD__)
-#if defined(__x86_64__)
+#        endif
+#    elif defined(__NetBSD__)
+#        if defined(__x86_64__)
     serverLog(
         LL_WARNING,
         "\n"
@@ -1454,7 +1454,7 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->uc_mcontext.__gregs[_REG_RSP], (unsigned long)uc->uc_mcontext.__gregs[_REG_R8], (unsigned long)uc->uc_mcontext.__gregs[_REG_R9], (unsigned long)uc->uc_mcontext.__gregs[_REG_R10], (unsigned long)uc->uc_mcontext.__gregs[_REG_R11], (unsigned long)uc->uc_mcontext.__gregs[_REG_R12], (unsigned long)uc->uc_mcontext.__gregs[_REG_R13],
         (unsigned long)uc->uc_mcontext.__gregs[_REG_R14], (unsigned long)uc->uc_mcontext.__gregs[_REG_R15], (unsigned long)uc->uc_mcontext.__gregs[_REG_RIP], (unsigned long)uc->uc_mcontext.__gregs[_REG_RFLAGS], (unsigned long)uc->uc_mcontext.__gregs[_REG_CS]);
     logStackContent((void **)uc->uc_mcontext.__gregs[_REG_RSP]);
-#elif defined(__i386__)
+#        elif defined(__i386__)
     serverLog(
         LL_WARNING,
         "\n"
@@ -1464,10 +1464,10 @@ void logRegisters(ucontext_t *uc) {
         "DS :%08lx ES :%08lx FS :%08lx GS:%08lx",
         (unsigned long)uc->uc_mcontext.__gregs[_REG_EAX], (unsigned long)uc->uc_mcontext.__gregs[_REG_EBX], (unsigned long)uc->uc_mcontext.__gregs[_REG_EDX], (unsigned long)uc->uc_mcontext.__gregs[_REG_EDI], (unsigned long)uc->uc_mcontext.__gregs[_REG_ESI], (unsigned long)uc->uc_mcontext.__gregs[_REG_EBP], (unsigned long)uc->uc_mcontext.__gregs[_REG_ESP],
         (unsigned long)uc->uc_mcontext.__gregs[_REG_SS], (unsigned long)uc->uc_mcontext.__gregs[_REG_EFLAGS], (unsigned long)uc->uc_mcontext.__gregs[_REG_EIP], (unsigned long)uc->uc_mcontext.__gregs[_REG_CS], (unsigned long)uc->uc_mcontext.__gregs[_REG_ES], (unsigned long)uc->uc_mcontext.__gregs[_REG_FS], (unsigned long)uc->uc_mcontext.__gregs[_REG_GS]);
-#else
+#        else
     NOT_SUPPORTED();
-#endif
-#elif defined(__DragonFly__)
+#        endif
+#    elif defined(__DragonFly__)
     serverLog(
         LL_WARNING,
         "\n"
@@ -1480,10 +1480,10 @@ void logRegisters(ucontext_t *uc) {
         (unsigned long)uc->uc_mcontext.mc_r9, (unsigned long)uc->uc_mcontext.mc_r10, (unsigned long)uc->uc_mcontext.mc_r11, (unsigned long)uc->uc_mcontext.mc_r12, (unsigned long)uc->uc_mcontext.mc_r13, (unsigned long)uc->uc_mcontext.mc_r14, (unsigned long)uc->uc_mcontext.mc_r15, (unsigned long)uc->uc_mcontext.mc_rip, (unsigned long)uc->uc_mcontext.mc_rflags,
         (unsigned long)uc->uc_mcontext.mc_cs);
     logStackContent((void **)uc->uc_mcontext.mc_rsp);
-#else
+#    else
     NOT_SUPPORTED();
-#endif
-#undef NOT_SUPPORTED
+#    endif
+#    undef NOT_SUPPORTED
 }
 
 #endif /* HAVE_BACKTRACE */
@@ -1628,7 +1628,7 @@ void logCurrentClient(void) {
 
 #if defined(HAVE_PROC_MAPS)
 
-#define MEMTEST_MAX_REGIONS 128
+#    define MEMTEST_MAX_REGIONS 128
 
 /* A non destructive memory test executed during segfault. */
 int memtest_test_linux_anonymous_maps(void) {

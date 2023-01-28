@@ -60,9 +60,9 @@ redisSortOperation *createSortOperation(int type, robj *pattern) {
  * when it is non-NULL. */
 robj *lookupKeyByPattern(redisDb *db, robj *pattern, robj *subst) {
     char *p, *f, *k;
-    sds   spat, ssub;
+    sds spat, ssub;
     robj *keyobj, *fieldobj = NULL, *o;
-    int   prefixlen, sublen, postfixlen, fieldlen;
+    int prefixlen, sublen, postfixlen, fieldlen;
 
     /* If the pattern is "#" return the substitution object itself in order
      * to implement the "SORT ... GET #" feature. */
@@ -144,7 +144,7 @@ noobj:
  * pass sorting parameters via the global 'server' structure */
 int sortCompare(const void *s1, const void *s2) {
     const redisSortObject *so1 = s1, *so2 = s2;
-    int                    cmp;
+    int cmp;
 
     if (!server.sort_alpha) {
         /* Numeric sorting. Here it's trivial as we precomputed scores */
@@ -201,17 +201,17 @@ int sortCompare(const void *s1, const void *s2) {
 /* The SORT command is the most complex command in Redis. Warning: this code
  * is optimized for speed and a bit less for readability */
 void sortCommandGeneric(client *c, int readonly) {
-    list            *operations;
-    unsigned int     outputlen = 0;
-    int              desc = 0, alpha = 0;
-    long             limit_start = 0, limit_count = -1, start, end;
-    int              j, dontsort = 0, vectorlen;
-    int              getop = 0; /* GET operation counter */
-    int              int_conversion_error = 0;
-    int              syntax_error = 0;
-    robj            *sortval, *sortby = NULL, *storekey = NULL;
-    redisSortObject *vector;                       /* Resulting vector to sort */
-    int              user_has_full_key_access = 0; /* ACL - used in order to verify 'get' and 'by' options can be used */
+    list *operations;
+    unsigned int outputlen = 0;
+    int desc = 0, alpha = 0;
+    long limit_start = 0, limit_count = -1, start, end;
+    int j, dontsort = 0, vectorlen;
+    int getop = 0; /* GET operation counter */
+    int int_conversion_error = 0;
+    int syntax_error = 0;
+    robj *sortval, *sortby = NULL, *storekey = NULL;
+    redisSortObject *vector;          /* Resulting vector to sort */
+    int user_has_full_key_access = 0; /* ACL - used in order to verify 'get' and 'by' options can be used */
     /* Create a list of operations to perform for every sorted element.
      * Operations can be GET */
     operations = listCreate();
@@ -383,7 +383,7 @@ void sortCommandGeneric(client *c, int readonly) {
          * way, just getting the required range, as an optimization. */
         if (end >= start) {
             listTypeIterator *li;
-            listTypeEntry     entry;
+            listTypeEntry entry;
             li = listTypeInitIterator(sortval, desc ? (long)(listTypeLength(sortval) - start - 1) : start, desc ? LIST_HEAD : LIST_TAIL);
 
             while (j < vectorlen && listTypeNext(li, &entry)) {
@@ -400,7 +400,7 @@ void sortCommandGeneric(client *c, int readonly) {
     }
     else if (sortval->type == OBJ_LIST) {
         listTypeIterator *li = listTypeInitIterator(sortval, 0, LIST_TAIL);
-        listTypeEntry     entry;
+        listTypeEntry entry;
         while (listTypeNext(li, &entry)) {
             vector[j].obj = listTypeGet(&entry);
             vector[j].u.score = 0;
@@ -411,7 +411,7 @@ void sortCommandGeneric(client *c, int readonly) {
     }
     else if (sortval->type == OBJ_SET) {
         setTypeIterator *si = setTypeInitIterator(sortval);
-        sds              sdsele;
+        sds sdsele;
         while ((sdsele = setTypeNextObject(si)) != NULL) {
             vector[j].obj = createObject(OBJ_STRING, sdsele);
             vector[j].u.score = 0;
@@ -428,11 +428,11 @@ void sortCommandGeneric(client *c, int readonly) {
          * Note that in this case we also handle LIMIT here in a direct
          * way, just getting the required range, as an optimization. */
 
-        zset          *zs = sortval->ptr;
-        zskiplist     *zsl = zs->zsl;
+        zset *zs = sortval->ptr;
+        zskiplist *zsl = zs->zsl;
         zskiplistNode *ln;
-        sds            sdsele;
-        int            rangelen = vectorlen;
+        sds sdsele;
+        int rangelen = vectorlen;
 
         /* Check if starting point is trivial, before doing log(N) lookup. */
         if (desc) {
@@ -462,10 +462,10 @@ void sortCommandGeneric(client *c, int readonly) {
         start = 0;
     }
     else if (sortval->type == OBJ_ZSET) {
-        dict         *set = ((zset *)sortval->ptr)->dict;
+        dict *set = ((zset *)sortval->ptr)->dict;
         dictIterator *di;
-        dictEntry    *setele;
-        sds           sdsele;
+        dictEntry *setele;
+        sds sdsele;
         di = dictGetIterator(set);
         while ((setele = dictNext(di)) != NULL) {
             sdsele = dictGetKey(setele);
@@ -548,14 +548,14 @@ void sortCommandGeneric(client *c, int readonly) {
         addReplyArrayLen(c, outputlen);
         for (j = start; j <= end; j++) {
             listNode *ln;
-            listIter  li;
+            listIter li;
 
             if (!getop)
                 addReplyBulk(c, vector[j].obj);
             listRewind(operations, &li);
             while ((ln = listNext(&li))) {
                 redisSortOperation *sop = ln->value;
-                robj               *val = lookupKeyByPattern(c->db, sop->pattern, vector[j].obj);
+                robj *val = lookupKeyByPattern(c->db, sop->pattern, vector[j].obj);
 
                 if (sop->type == SORT_OP_GET) {
                     if (!val) {
@@ -579,7 +579,7 @@ void sortCommandGeneric(client *c, int readonly) {
         /* STORE option specified, set the sorting result as a List object */
         for (j = start; j <= end; j++) {
             listNode *ln;
-            listIter  li;
+            listIter li;
 
             if (!getop) {
                 listTypePush(sobj, vector[j].obj, LIST_TAIL);
@@ -588,7 +588,7 @@ void sortCommandGeneric(client *c, int readonly) {
                 listRewind(operations, &li);
                 while ((ln = listNext(&li))) {
                     redisSortOperation *sop = ln->value;
-                    robj               *val = lookupKeyByPattern(c->db, sop->pattern, vector[j].obj);
+                    robj *val = lookupKeyByPattern(c->db, sop->pattern, vector[j].obj);
 
                     if (sop->type == SORT_OP_GET) {
                         if (!val)

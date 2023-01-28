@@ -26,8 +26,8 @@ typedef struct cliSSLconfig {
 /* server connection information object, used to describe an ip:port pair, db num user input, and user:pass. */
 typedef struct cliConnInfo {
     char *hostip;
-    int   hostport;
-    int   input_dbnum;
+    int hostport;
+    int input_dbnum;
     char *auth;
     char *user;
 } cliConnInfo;

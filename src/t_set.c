@@ -51,7 +51,7 @@ robj *setTypeCreate(sds value) {
 int setTypeAdd(robj *subject, sds value) {
     long long llval;
     if (subject->encoding == OBJ_ENCODING_HT) {
-        dict      *ht = subject->ptr;
+        dict *ht = subject->ptr;
         dictEntry *de = dictAddRaw(ht, value, NULL);
         if (de) {
             dictSetKey(ht, de, sdsdup(value));
@@ -193,8 +193,8 @@ int setTypeNext(setTypeIterator *si, sds *sdsele, int64_t *llele) {
  * an issue. */
 sds setTypeNextObject(setTypeIterator *si) {
     int64_t intele;
-    sds     sdsele;
-    int     encoding;
+    sds sdsele;
+    int encoding;
 
     encoding = setTypeNext(si, &sdsele, &intele);
     switch (encoding) {
@@ -260,8 +260,8 @@ void setTypeConvert(robj *setobj, int enc) {
 
     if (enc == OBJ_ENCODING_HT) {
         int64_t intele;
-        dict   *d = dictCreate(&setDictType);
-        sds     element;
+        dict *d = dictCreate(&setDictType);
+        sds element;
 
         /* Presize the dict to avoid rehashing */
         dictExpand(d, intsetLen(setobj->ptr));
@@ -289,17 +289,17 @@ void setTypeConvert(robj *setobj, int enc) {
  *
  * The resulting object always has refcount set to 1 */
 robj *setTypeDup(robj *o) {
-    robj            *set;
+    robj *set;
     setTypeIterator *si;
-    sds              elesds;
-    int64_t          intobj;
+    sds elesds;
+    int64_t intobj;
 
     serverAssert(o->type == OBJ_SET);
 
     /* Create a new set object that have the same encoding as the original object's encoding */
     if (o->encoding == OBJ_ENCODING_INTSET) {
         intset *is = o->ptr;
-        size_t  size = intsetBlobLen(is);
+        size_t size = intsetBlobLen(is);
         intset *newis = zmalloc(size);
         memcpy(newis, is, size);
         set = createObject(OBJ_SET, newis);
@@ -323,7 +323,7 @@ robj *setTypeDup(robj *o) {
 
 void saddCommand(client *c) {
     robj *set;
-    int   j, added = 0;
+    int j, added = 0;
 
     set = lookupKeyWrite(c->db, c->argv[1]);
     if (checkType(c, set, OBJ_SET))
@@ -349,7 +349,7 @@ void saddCommand(client *c) {
 
 void sremCommand(client *c) {
     robj *set;
-    int   j, deleted = 0, keyremoved = 0;
+    int j, deleted = 0, keyremoved = 0;
 
     if ((set = lookupKeyWriteOrReply(c, c->argv[1], shared.czero)) == NULL || checkType(c, set, OBJ_SET))
         return;
@@ -442,7 +442,7 @@ void sismemberCommand(client *c) {
 
 void smismemberCommand(client *c) {
     robj *set;
-    int   j;
+    int j;
 
     /* Don't abort when the key cannot be found. Non-existing keys are empty
      * sets, where SMISMEMBER should respond with a series of zeros. */
@@ -478,9 +478,9 @@ void scardCommand(client *c) {
 #define SPOP_MOVE_STRATEGY_MUL 5
 
 void spopWithCountCommand(client *c) {
-    long          l;
+    long l;
     unsigned long count, size;
-    robj         *set;
+    robj *set;
 
     /* Get the count argument */
     if (getPositiveLongFromObjectOrReply(c, c->argv[2], &l, NULL) != C_OK)
@@ -531,10 +531,10 @@ void spopWithCountCommand(client *c) {
     addReplySetLen(c, count);
 
     /* Common iteration vars. */
-    sds           sdsele;
-    robj         *objele;
-    int           encoding;
-    int64_t       llele;
+    sds sdsele;
+    robj *objele;
+    int encoding;
+    int64_t llele;
     unsigned long remaining = size - count; /* Elements left after SPOP. */
 
     /* If we are here, the number of requested elements is less than the
@@ -625,10 +625,10 @@ void spopWithCountCommand(client *c) {
 }
 
 void spopCommand(client *c) {
-    robj   *set, *ele;
-    sds     sdsele;
+    robj *set, *ele;
+    sds sdsele;
     int64_t llele;
-    int     encoding;
+    int encoding;
 
     if (c->argc == 3) {
         spopWithCountCommand(c);
@@ -686,13 +686,13 @@ void spopCommand(client *c) {
 #define SRANDMEMBER_SUB_STRATEGY_MUL 3
 
 void srandmemberWithCountCommand(client *c) {
-    long          l;
+    long l;
     unsigned long count, size;
-    int           uniq = 1;
-    robj         *set;
-    sds           ele;
-    int64_t       llele;
-    int           encoding;
+    int uniq = 1;
+    robj *set;
+    sds ele;
+    int64_t llele;
+    int encoding;
 
     dict *d;
 
@@ -807,7 +807,7 @@ void srandmemberWithCountCommand(client *c) {
      * to reach the specified count. */
     else {
         unsigned long added = 0;
-        sds           sdsele;
+        sds sdsele;
 
         dictExpand(d, count);
         while (added < count) {
@@ -831,7 +831,7 @@ void srandmemberWithCountCommand(client *c) {
     /* CASE 3 & 4: send the result to the user. */
     {
         dictIterator *di;
-        dictEntry    *de;
+        dictEntry *de;
 
         addReplyArrayLen(c, count);
         di = dictGetIterator(d);
@@ -843,10 +843,10 @@ void srandmemberWithCountCommand(client *c) {
 
 /* SRANDMEMBER [<count>] */
 void srandmemberCommand(client *c) {
-    robj   *set;
-    sds     ele;
+    robj *set;
+    sds ele;
     int64_t llele;
-    int     encoding;
+    int encoding;
 
     if (c->argc == 3) {
         srandmemberWithCountCommand(c);
@@ -881,7 +881,7 @@ int qsortCompareSetsByCardinality(const void *s1, const void *s2) {
 /* This is used by SDIFF and in this case we can receive NULL that should
  * be handled as empty sets. */
 int qsortCompareSetsByRevCardinality(const void *s1, const void *s2) {
-    robj         *o1 = *(robj **)s1, *o2 = *(robj **)s2;
+    robj *o1 = *(robj **)s1, *o2 = *(robj **)s2;
     unsigned long first = o1 ? setTypeSize(o1) : 0;
     unsigned long second = o2 ? setTypeSize(o2) : 0;
 
@@ -901,14 +901,14 @@ int qsortCompareSetsByRevCardinality(const void *s1, const void *s2) {
  * Passing a 0 means unlimited.
  */
 void sinterGenericCommand(client *c, robj **setkeys, unsigned long setnum, robj *dstkey, int cardinality_only, unsigned long limit) {
-    robj           **sets = zmalloc(sizeof(robj *) * setnum);
+    robj **sets = zmalloc(sizeof(robj *) * setnum);
     setTypeIterator *si;
-    robj            *dstset = NULL;
-    sds              elesds;
-    int64_t          intobj;
-    void            *replylen = NULL;
-    unsigned long    j, cardinality = 0;
-    int              encoding, empty = 0;
+    robj *dstset = NULL;
+    sds elesds;
+    int64_t intobj;
+    void *replylen = NULL;
+    unsigned long j, cardinality = 0;
+    int encoding, empty = 0;
 
     for (j = 0; j < setnum; j++) {
         robj *setobj = lookupKeyRead(c->db, setkeys[j]);
@@ -1074,7 +1074,7 @@ void sinterCardCommand(client *c) {
 
     for (j = 2 + numkeys; j < c->argc; j++) {
         char *opt = c->argv[j]->ptr;
-        int   moreargs = (c->argc - 1) - j;
+        int moreargs = (c->argc - 1) - j;
 
         if (!strcasecmp(opt, "LIMIT") && moreargs) {
             j++;
@@ -1096,12 +1096,12 @@ void sinterstoreCommand(client *c) {
 }
 
 void sunionDiffGenericCommand(client *c, robj **setkeys, int setnum, robj *dstkey, int op) {
-    robj           **sets = zmalloc(sizeof(robj *) * setnum);
+    robj **sets = zmalloc(sizeof(robj *) * setnum);
     setTypeIterator *si;
-    robj            *dstset = NULL;
-    sds              ele;
-    int              j, cardinality = 0;
-    int              diff_algo = 1;
+    robj *dstset = NULL;
+    sds ele;
+    int j, cardinality = 0;
+    int diff_algo = 1;
 
     for (j = 0; j < setnum; j++) {
         robj *setobj = lookupKeyRead(c->db, setkeys[j]);
@@ -1285,7 +1285,7 @@ void sdiffstoreCommand(client *c) {
 }
 
 void sscanCommand(client *c) {
-    robj         *set;
+    robj *set;
     unsigned long cursor;
 
     if (parseScanCursorOrReply(c, c->argv[2], &cursor) == C_ERR)

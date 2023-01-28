@@ -6,7 +6,7 @@
 // 返回UNIX时间,单位为微秒  // 1 秒 = 1 000 000 微秒
 long long ustime(void) {
     struct timeval tv;
-    long long      ust;
+    long long ust;
 
     gettimeofday(&tv, NULL);
     ust = ((long long)tv.tv_sec) * 1000000;

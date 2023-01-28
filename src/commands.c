@@ -4031,8 +4031,7 @@ struct redisCommand SENTINEL_Subcommands[] = {
      .flags = CMD_ADMIN | CMD_SENTINEL | CMD_ONLY_SENTINEL,
      .acl_categories = 0,
      .args = SENTINEL_INFO_CACHE_Args},
-    {
-     .declared_name = "is-master-down-by-addr",
+    {.declared_name = "is-master-down-by-addr",
      .summary = "申请成为哨兵leader,只给第一个节点投票",
      .complexity = "O(1)",
      .since = "2.8.4",

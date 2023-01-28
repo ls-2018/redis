@@ -25,8 +25,8 @@ static char monotonic_info_string[32];
  */
 
 #if defined(USE_PROCESSOR_CLOCK) && defined(__x86_64__) && defined(__linux__)
-#include <regex.h>
-#include <x86intrin.h>
+#    include <regex.h>
+#    include <x86intrin.h>
 
 static long mono_ticksPerMicrosecond = 0;
 
@@ -35,13 +35,13 @@ static monotime getMonotonicUs_x86() {
 }
 
 static void monotonicInit_x86linux() {
-    const int    bufflen = 256;
-    char         buf[bufflen];
-    regex_t      cpuGhzRegex, constTscRegex;
+    const int bufflen = 256;
+    char buf[bufflen];
+    regex_t cpuGhzRegex, constTscRegex;
     const size_t nmatch = 2;
-    regmatch_t   pmatch[nmatch];
-    int          constantTsc = 0;
-    int          rc;
+    regmatch_t pmatch[nmatch];
+    int constantTsc = 0;
+    int rc;
 
     /* Determine the number of TSC ticks in a micro-second.  This is
      * a constant value matching the standard speed of the processor.

@@ -6,13 +6,13 @@
 #define LATENCY_TS_LEN 160 // 每种事件最多保存160个记录
 
 struct latencySample {
-    int32_t  time;    // 事件的采样时间
+    int32_t time;     // 事件的采样时间
     uint32_t latency; // 事件的执行时长(以毫秒为单位)
 };
 
 struct latencyTimeSeries {
-    int                  idx;                     // 采样事件数组的写入位置
-    uint32_t             max;                     // 当前事件的最大延迟
+    int idx;                                      // 采样事件数组的写入位置
+    uint32_t max;                                 // 当前事件的最大延迟
     struct latencySample samples[LATENCY_TS_LEN]; // 采样事件 数组
 };
 
@@ -23,7 +23,7 @@ struct latencyStats {
     uint32_t max;           /* Max of current samples. */
     uint32_t mad;           /* Mean absolute deviation. */
     uint32_t samples;       /* Number of non-zero samples. */
-    time_t   period;        /* Number of seconds since first event and now. */
+    time_t period;          /* Number of seconds since first event and now. */
 };
 
 void latencyMonitorInit(void);

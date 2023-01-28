@@ -9,7 +9,7 @@ struct commandHelp {
     char *name;
     char *params;
     char *summary;
-    int   group;
+    int group;
     char *since;
 } commandHelp[] = {
     {"ACL", "", "A container for Access List Control commands ", 9, "6.0.0"},

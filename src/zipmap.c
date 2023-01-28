@@ -200,7 +200,7 @@ static unsigned char *zipmapLookupRaw(unsigned char *zm, unsigned char *key, uns
     // zm+1 略过 <zmlen> 属性,将 p 指向 zipmap 的首个节点
 
     unsigned char *p = zm + 1, *k = NULL;
-    unsigned int   l, llen;
+    unsigned int l, llen;
     // 遍历整个 zipmap 来寻找
     // T = O(N^2)
     while (*p != ZIPMAP_END) {
@@ -353,8 +353,8 @@ static inline unsigned char *zipmapResize(unsigned char *zm, unsigned int len) {
 unsigned char *zipmapSet(unsigned char *zm, unsigned char *key, unsigned int klen, unsigned char *val, unsigned int vlen, int *update) {
     unsigned int zmlen, offset;
     // 计算节点所需的长度
-    unsigned int   freelen, reqlen = zipmapRequiredLength(klen, vlen);
-    unsigned int   empty, vempty;
+    unsigned int freelen, reqlen = zipmapRequiredLength(klen, vlen);
+    unsigned int empty, vempty;
     unsigned char *p;
 
     freelen = reqlen;
@@ -663,7 +663,7 @@ int zipmapValidateIntegrity(unsigned char *zm, size_t size, int deep) {
     if (!deep)
         return 1;
 
-    unsigned int   count = 0;
+    unsigned int count = 0;
     unsigned char *p = zm + 1; /* skip the count */
     while (*p != ZIPMAP_END) {
         /* read the field name length encoding type */
@@ -748,7 +748,7 @@ static void zipmapRepr(unsigned char *p) {
     printf("\n");
 }
 
-#define UNUSED(x) (void)(x)
+#    define UNUSED(x) (void)(x)
 int zipmapTest(int argc, char *argv[], int flags) {
     unsigned char *zm;
 
@@ -777,9 +777,9 @@ int zipmapTest(int argc, char *argv[], int flags) {
 
     printf("\nLook up large key:\n");
     {
-        unsigned char  buf[512];
+        unsigned char buf[512];
         unsigned char *value;
-        unsigned int   vlen, i;
+        unsigned int vlen, i;
         for (i = 0; i < 512; i++) buf[i] = 'a';
 
         zm = zipmapSet(zm, buf, 512, (unsigned char *)"long", 4, NULL);
@@ -791,7 +791,7 @@ int zipmapTest(int argc, char *argv[], int flags) {
     printf("\nPerform a direct lookup:\n");
     {
         unsigned char *value;
-        unsigned int   vlen;
+        unsigned int vlen;
 
         if (zipmapGet(zm, (unsigned char *)"foo", 3, &value, &vlen)) {
             printf("  foo is associated to the %d bytes value: %.*s\n", vlen, vlen, value);
@@ -801,7 +801,7 @@ int zipmapTest(int argc, char *argv[], int flags) {
     {
         unsigned char *i = zipmapRewind(zm);
         unsigned char *key, *value;
-        unsigned int   klen, vlen;
+        unsigned int klen, vlen;
 
         while ((i = zipmapNext(i, &key, &klen, &value, &vlen)) != NULL) {
             printf("  %d:%.*s => %d:%.*s\n", klen, klen, key, vlen, vlen, value);

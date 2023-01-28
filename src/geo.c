@@ -209,7 +209,7 @@ int extractBoxOrReply(client *c, robj **argv, double *conversion, double *width,
  * the kilometer. */
 void addReplyDoubleDistance(client *c, double d) {
     char dbuf[128];
-    int  dlen = snprintf(dbuf, sizeof(dbuf), "%.4f", d);
+    int dlen = snprintf(dbuf, sizeof(dbuf), "%.4f", d);
     addReplyBulkCBuffer(c, dbuf, dlen);
 }
 
@@ -260,16 +260,16 @@ int geoGetPointsInRange(robj *zobj, double min, double max, GeoShape *shape, geo
     /* minex 0 = include min in range; maxex 1 = exclude max in range */
     /* That's: min <= val < max */
     zrangespec range = {.min = min, .max = max, .minex = 0, .maxex = 1};
-    size_t     origincount = ga->used;
-    sds        member;
+    size_t origincount = ga->used;
+    sds member;
 
     if (zobj->encoding == OBJ_ENCODING_LISTPACK) {
         unsigned char *zl = zobj->ptr;
         unsigned char *eptr, *sptr;
         unsigned char *vstr = NULL;
-        unsigned int   vlen = 0;
-        long long      vlong = 0;
-        double         score = 0;
+        unsigned int vlen = 0;
+        long long vlong = 0;
+        double score = 0;
 
         if ((eptr = zzlFirstInRange(zl, &range)) == NULL) {
             /* Nothing exists starting at our min.  No results. */
@@ -294,8 +294,8 @@ int geoGetPointsInRange(robj *zobj, double min, double max, GeoShape *shape, geo
         }
     }
     else if (zobj->encoding == OBJ_ENCODING_SKIPLIST) {
-        zset          *zs = zobj->ptr;
-        zskiplist     *zsl = zs->zsl;
+        zset *zs = zobj->ptr;
+        zskiplist *zsl = zs->zsl;
         zskiplistNode *ln;
 
         if ((ln = zslFirstInRange(zsl, &range)) == NULL) {
@@ -361,9 +361,9 @@ int membersOfGeoHashBox(robj *zobj, GeoHashBits hash, geoArray *ga, GeoShape *sh
 
 /* Search all eight neighbors + self geohash box */
 int membersOfAllNeighbors(robj *zobj, const GeoHashRadius *n, GeoShape *shape, geoArray *ga, unsigned long limit) {
-    GeoHashBits  neighbors[9];
+    GeoHashBits neighbors[9];
     unsigned int i, count = 0, last_processed = 0;
-    int          debugmsg = 0;
+    int debugmsg = 0;
 
     neighbors[0] = n->hash;
     neighbors[1] = n->neighbors.north;
@@ -465,8 +465,8 @@ void geoaddCommand(client *c) {
     }
 
     /* Set up the vector for calling ZADD. */
-    int    elements = (c->argc - longidx) / 3;
-    int    argc = longidx + elements * 2; /* ZADD key [CH] [NX|XX] score ele ... */
+    int elements = (c->argc - longidx) / 3;
+    int argc = longidx + elements * 2; /* ZADD key [CH] [NX|XX] score ele ... */
     robj **argv = zcalloc(argc * sizeof(robj *));
     argv[0] = createRawStringObject("zadd", 4);
     for (i = 1; i < longidx; i++) {
@@ -492,8 +492,8 @@ void geoaddCommand(client *c) {
         GeoHashBits hash;
         geohashEncodeWGS84(xy[0], xy[1], GEO_STEP_MAX, &hash);
         GeoHashFix52Bits bits = geohashAlign52Bits(hash);
-        robj            *score = createObject(OBJ_STRING, sdsfromlonglong(bits));
-        robj            *val = c->argv[longidx + i * 3 + 2];
+        robj *score = createObject(OBJ_STRING, sdsfromlonglong(bits));
+        robj *val = c->argv[longidx + i * 3 + 2];
         argv[longidx + i * 2] = score;
         argv[longidx + 1 + i * 2] = val;
         incrRefCount(val);
@@ -524,7 +524,7 @@ void geoaddCommand(client *c) {
  *  */
 void georadiusGeneric(client *c, int srcKeyIndex, int flags) {
     robj *storekey = NULL;
-    int   storedist = 0; /* 0 for STORE, 1 for STOREDIST. */
+    int storedist = 0; /* 0 for STORE, 1 for STOREDIST. */
 
     /* Look up the requested zset */
     robj *zobj = lookupKeyRead(c->db, c->argv[srcKeyIndex]);
@@ -532,7 +532,7 @@ void georadiusGeneric(client *c, int srcKeyIndex, int flags) {
         return;
 
     /* Find long/lat to use for radius or box search based on inquiry type */
-    int      base_args;
+    int base_args;
     GeoShape shape = {0};
     if (flags & RADIUS_COORDS) {
         /* GEORADIUS or GEORADIUS_RO */
@@ -574,10 +574,10 @@ void georadiusGeneric(client *c, int srcKeyIndex, int flags) {
     }
 
     /* Discover and populate all optional parameters. */
-    int       withdist = 0, withhash = 0, withcoords = 0;
-    int       frommember = 0, fromloc = 0, byradius = 0, bybox = 0;
-    int       sort = SORT_NONE;
-    int       any = 0;   /* any=1 means a limited search, stop as soon as enough results were found. */
+    int withdist = 0, withhash = 0, withcoords = 0;
+    int frommember = 0, fromloc = 0, byradius = 0, bybox = 0;
+    int sort = SORT_NONE;
+    int any = 0;         /* any=1 means a limited search, stop as soon as enough results were found. */
     long long count = 0; /* Max number of results to return. 0 means unlimited. */
     if (c->argc > base_args) {
         int remaining = c->argc - base_args;
@@ -797,9 +797,9 @@ void georadiusGeneric(client *c, int srcKeyIndex, int flags) {
     }
     else {
         /* Target key, create a sorted set with the results. */
-        robj  *zobj;
-        zset  *zs;
-        int    i;
+        robj *zobj;
+        zset *zs;
+        int i;
         size_t maxelelen = 0, totelelen = 0;
 
         if (returned_items) {
@@ -809,7 +809,7 @@ void georadiusGeneric(client *c, int srcKeyIndex, int flags) {
 
         for (i = 0; i < returned_items; i++) {
             zskiplistNode *znode;
-            geoPoint      *gp = ga->array + i;
+            geoPoint *gp = ga->array + i;
             gp->dist /= shape.conversion; /* Fix according to unit. */
             double score = storedist ? gp->dist : gp->score;
             size_t elelen = sdslen(gp->member);
@@ -873,7 +873,7 @@ void geosearchstoreCommand(client *c) {
  * position of the specified elements. */
 void geohashCommand(client *c) {
     char *geoalphabet = "0123456789bcdefghjkmnpqrstuvwxyz";
-    int   j;
+    int j;
 
     /* Look up the requested zset */
     robj *zobj = lookupKeyRead(c->db, c->argv[1]);
@@ -904,7 +904,7 @@ void geohashCommand(client *c) {
 
             /* Re-encode */
             GeoHashRange r[2];
-            GeoHashBits  hash;
+            GeoHashBits hash;
             r[0].min = -180;
             r[0].max = 180;
             r[1].min = -90;
@@ -912,7 +912,7 @@ void geohashCommand(client *c) {
             geohashEncode(&r[0], &r[1], xy[0], xy[1], 26, &hash);
 
             char buf[12];
-            int  i;
+            int i;
             for (i = 0; i < 11; i++) {
                 int idx;
                 if (i == 10) {

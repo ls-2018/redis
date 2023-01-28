@@ -179,8 +179,8 @@ int stringmatch(const char *pattern, const char *string, int nocase) {
 int stringmatchlen_fuzz_test(void) {
     char str[32];
     char pat[32];
-    int  cycles = 10000000;
-    int  total_matches = 0;
+    int cycles = 10000000;
+    int total_matches = 0;
     while (cycles--) {
         int strlen = rand() % sizeof(str);
         int patlen = rand() % sizeof(pat);
@@ -199,11 +199,11 @@ int stringmatchlen_fuzz_test(void) {
  * set to 0. On error the function return value is 0, regardless of the
  * fact 'err' is NULL or not. */
 unsigned long long memtoull(const char *p, int *err) {
-    const char        *u;
-    char               buf[128];
-    long               mul; // 进制
+    const char *u;
+    char buf[128];
+    long mul; // 进制
     unsigned long long val;
-    unsigned int       digits;
+    unsigned int digits;
 
     if (err) {
         *err = 0;
@@ -338,7 +338,7 @@ uint32_t sdigits10(int64_t v) {
  * If the buffer is not big enough to store the string, 0 is returned. */
 int ll2string(char *dst, size_t dstlen, long long svalue) {
     unsigned long long value;
-    int                negative = 0;
+    int negative = 0;
 
     /* The ull2string function with 64bit unsigned integers for simplicity, so
      * we convert the number here and remember if it is negative. */
@@ -424,11 +424,11 @@ int ull2string(char *dst, size_t dstlen, unsigned long long value) {
  * Because of its strictness, it is safe to use this function to check if
  * you can convert a string into a long long, and obtain back the string
  * from the number without any loss in the string representation. */
-//转成整型
+// 转成整型
 int string2ll(const char *s, size_t slen, long long *value) {
-    const char        *p = s;
-    size_t             plen = 0;
-    int                negative = 0;
+    const char *p = s;
+    size_t plen = 0;
+    int negative = 0;
     unsigned long long v;
 
     /* 长度为零或超过长度的字符串不是有效数字.*/
@@ -542,9 +542,9 @@ int string2l(const char *s, size_t slen, long *lval) {
  * a double: no spaces or other characters before or after the string
  * representing the number are accepted. */
 int string2ld(const char *s, size_t slen, long double *dp) {
-    char        buf[MAX_LONG_DOUBLE_CHARS];
+    char buf[MAX_LONG_DOUBLE_CHARS];
     long double value;
-    char       *eptr;
+    char *eptr;
 
     if (slen == 0 || slen >= sizeof(buf))
         return 0;
@@ -731,9 +731,9 @@ int ld2string(char *buf, size_t len, long double value, ld2string_mode mode) {
 // 这个函数不是线程安全的,因为其状态是全局的.
 void getRandomBytes(unsigned char *p, size_t len) {
     // 全局状态
-    static int           seed_initialized = 0;
-    static unsigned char seed[64];    /* 512 bit internal block size. */
-    static uint64_t      counter = 0; /* The counter we hash with the seed. */
+    static int seed_initialized = 0;
+    static unsigned char seed[64]; /* 512 bit internal block size. */
+    static uint64_t counter = 0;   /* The counter we hash with the seed. */
 
     if (!seed_initialized) {
         /* Initialize a seed and use SHA1 in counter mode, where we hash
@@ -762,7 +762,7 @@ void getRandomBytes(unsigned char *p, size_t len) {
         /* This implements SHA256-HMAC. */
         unsigned char digest[SHA256_BLOCK_SIZE];
         unsigned char kxor[64];
-        unsigned int  copylen = len > SHA256_BLOCK_SIZE ? SHA256_BLOCK_SIZE : len;
+        unsigned int copylen = len > SHA256_BLOCK_SIZE ? SHA256_BLOCK_SIZE : len;
 
         /* IKEY: key xored with 0x36. */
         memcpy(kxor, seed, sizeof(kxor));
@@ -796,7 +796,7 @@ void getRandomBytes(unsigned char *p, size_t len) {
 
 // 生成Redis的 "Run ID"
 void getRandomHexChars(char *p, size_t len) {
-    char  *charset = "0123456789abcdef";
+    char *charset = "0123456789abcdef";
     size_t j;
 
     getRandomBytes((unsigned char *)p, len); // 生成随机数
@@ -814,8 +814,8 @@ void getRandomHexChars(char *p, size_t len) {
  * relative path. */
 sds getAbsolutePath(char *filename) {
     char cwd[1024];
-    sds  abspath;
-    sds  relpath = sdsnew(filename);
+    sds abspath;
+    sds relpath = sdsnew(filename);
 
     relpath = sdstrim(relpath, " \r\n\t");
     if (relpath[0] == '/')
@@ -840,7 +840,7 @@ sds getAbsolutePath(char *filename) {
         sdsrange(relpath, 3, -1);
         if (sdslen(abspath) > 1) {
             char *p = abspath + sdslen(abspath) - 2;
-            int   trimlen = 1;
+            int trimlen = 1;
 
             while (*p != '/') {
                 p--;
@@ -861,7 +861,7 @@ long getTimeZone(void) {
 #if defined(__linux__) || defined(__sun)
     return timezone;
 #else
-    struct timeval  tv;
+    struct timeval tv;
     struct timezone tz;
     gettimeofday(&tv, &tz); // 获得当前精确时间
     return tz.tz_minuteswest * 60L;
@@ -900,10 +900,10 @@ int dirCreateIfMissing(char *dname) {
 }
 
 int dirRemove(char *dname) {
-    DIR           *dir;
-    struct stat    stat_entry;
+    DIR *dir;
+    struct stat stat_entry;
     struct dirent *entry;
-    char           full_path[PATH_MAX + 1];
+    char full_path[PATH_MAX + 1];
 
     if ((dir = opendir(dname)) == NULL) {
         return -1;
@@ -955,10 +955,10 @@ sds makePath(char *path, char *filename) {
 }
 
 #ifdef REDIS_TEST
-#include <assert.h>
+#    include <assert.h>
 
 static void test_string2ll(void) {
-    char      buf[32];
+    char buf[32];
     long long v;
 
     /* May not start with +. */
@@ -1044,7 +1044,7 @@ static void test_string2l(void) {
     assert(string2l(buf, strlen(buf), &v) == 1);
     assert(v == -99);
 
-#if LONG_MAX != LLONG_MAX
+#    if LONG_MAX != LLONG_MAX
     strcpy(buf, "-2147483648");
     assert(string2l(buf, strlen(buf), &v) == 1);
     assert(v == LONG_MIN);
@@ -1058,13 +1058,13 @@ static void test_string2l(void) {
 
     strcpy(buf, "2147483648"); /* overflow */
     assert(string2l(buf, strlen(buf), &v) == 0);
-#endif
+#    endif
 }
 
 static void test_ll2string(void) {
-    char      buf[32];
+    char buf[32];
     long long v;
-    int       sz;
+    int sz;
 
     v = 0;
     sz = ll2string(buf, sizeof buf, v);
@@ -1102,7 +1102,7 @@ static void test_ll2string(void) {
     assert(!strcmp(buf, "9223372036854775807"));
 }
 
-#define UNUSED(x) (void)(x)
+#    define UNUSED(x) (void)(x)
 int utilTest(int argc, char **argv, int flags) {
     UNUSED(argc);
     UNUSED(argv);

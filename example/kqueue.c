@@ -52,7 +52,7 @@ int main() {
     EV_SET(&changes[k++], stdin_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, &stdin_fd);
     EV_SET(&changes[k++], stdout_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, &stdout_fd);
 
-    int  nev, nread, nwrote = 0; // 发生事件的数量, 已读字节数, 已写字节数
+    int nev, nread, nwrote = 0; // 发生事件的数量, 已读字节数, 已写字节数
     char buffer[BUFFER_SIZE];
 
     while (1) {

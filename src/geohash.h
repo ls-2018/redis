@@ -55,7 +55,7 @@ typedef enum { GEOHASH_NORTH = 0, GEOHASH_EAST, GEOHASH_WEST, GEOHASH_SOUTH, GEO
 
 typedef struct {
     uint64_t bits;
-    uint8_t  step;
+    uint8_t step;
 } GeoHashBits;
 
 typedef struct {
@@ -64,7 +64,7 @@ typedef struct {
 } GeoHashRange;
 
 typedef struct {
-    GeoHashBits  hash;
+    GeoHashBits hash;
     GeoHashRange longitude;
     GeoHashRange latitude;
 } GeoHashArea;
@@ -83,7 +83,7 @@ typedef struct {
 #define CIRCULAR_TYPE 1
 #define RECTANGLE_TYPE 2
 typedef struct {
-    int    type;       /* search type */
+    int type;          /* search type */
     double xy[2];      /* search center point, xy[0]: lon, xy[1]: lat */
     double conversion; /* km: 1000 */
     double bounds[4];  /* bounds[0]: min_lon, bounds[1]: min_lat

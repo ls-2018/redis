@@ -64,14 +64,14 @@ static int evport_debug = 0;
 #define MAX_EVENT_BATCHSZ 512
 
 typedef struct aeApiState {
-    int    portfd;                           /* event port */
-    uint_t npending;                         /* # of pending fds */
-    int    pending_fds[MAX_EVENT_BATCHSZ];   /* pending fds */
-    int    pending_masks[MAX_EVENT_BATCHSZ]; /* pending fds' masks */
+    int portfd;                           /* event port */
+    uint_t npending;                      /* # of pending fds */
+    int pending_fds[MAX_EVENT_BATCHSZ];   /* pending fds */
+    int pending_masks[MAX_EVENT_BATCHSZ]; /* pending fds' masks */
 } aeApiState;
 
 static int aeApiCreate(aeEventLoop *eventLoop) {
-    int         i;
+    int i;
     aeApiState *state = zmalloc(sizeof(aeApiState));
     if (!state)
         return -1;
@@ -152,7 +152,7 @@ static int aeApiAssociate(const char *where, int portfd, int fd, int mask) {
 
 static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
     aeApiState *state = eventLoop->apidata;
-    int         fullmask, pfd;
+    int fullmask, pfd;
 
     if (evport_debug)
         fprintf(stderr, "aeApiAddEvent: fd %d mask 0x%x\n", fd, mask);
@@ -183,7 +183,7 @@ static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
 
 static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int mask) {
     aeApiState *state = eventLoop->apidata;
-    int         fullmask, pfd;
+    int fullmask, pfd;
 
     if (evport_debug)
         fprintf(stderr, "del fd %d mask 0x%x\n", fd, mask);
@@ -242,11 +242,11 @@ static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int mask) {
 }
 
 static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
-    aeApiState     *state = eventLoop->apidata;
+    aeApiState *state = eventLoop->apidata;
     struct timespec timeout, *tsp;
-    uint_t          mask, i;
-    uint_t          nevents;
-    port_event_t    event[MAX_EVENT_BATCHSZ];
+    uint_t mask, i;
+    uint_t nevents;
+    port_event_t event[MAX_EVENT_BATCHSZ];
 
     /*
      * If we've returned fd events before, we must re-associate them with the

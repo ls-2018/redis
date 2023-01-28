@@ -120,7 +120,7 @@ int _dictExpand(dict *d, unsigned long size, int *malloc_failed) {
     }
 
     // 新的hash表
-    dictEntry   **new_ht_table;
+    dictEntry **new_ht_table;
     unsigned long new_ht_used;
     // 计算新的哈希表指数
     signed char new_ht_size_exp = _dictNextExp(size);
@@ -245,7 +245,7 @@ long long timeInMilliseconds(void) {
 int dictRehashMilliseconds(dict *d, int ms) {
     // 记录开始时间
     long long start = timeInMilliseconds();
-    int       rehashes = 0;
+    int rehashes = 0;
 
     while (dictRehash(d, 100)) {
         rehashes += 100;
@@ -283,9 +283,9 @@ int dictAdd(dict *d, void *key, void *val) {
 // 尝试将键插入到字典中,如果键已经在字典存在,那么返回 NULL,
 // 如果键不存在,那么程序创建新的哈希节点,将节点和键关联,并插入到字典,然后返回节点本身.
 dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing) {
-    long       index;
+    long index;
     dictEntry *entry;
-    int        htidx;
+    int htidx;
 
     if (dictIsRehashing(d)) {
         _dictRehashStep(d);
@@ -351,9 +351,9 @@ dictEntry *dictAddOrFind(dict *d, void *key) {
 // * 参数 nofree 决定是否调用键和值的释放函数 0 表示调用,1 表示不调用
 // * 找到并成功删除返回 DICT_OK ,没找到则返回 DICT_ERR
 static dictEntry *dictGenericDelete(dict *d, const void *key, int nofree) {
-    uint64_t   h, idx;
+    uint64_t h, idx;
     dictEntry *he, *prevHe;
-    int        table;
+    int table;
 
     if (dictSize(d) == 0) {
         return NULL;
@@ -481,7 +481,7 @@ void dictRelease(dict *d) {
 // 返回字典中包含键 key 的节点 ,找到返回节点,找不到返回 NULL
 dictEntry *dictFind(dict *d, const void *key) {
     dictEntry *he;
-    uint64_t   h, idx, table;
+    uint64_t h, idx, table;
     // 字典（的哈希表）为空
     if (dictSize(d) == 0) {
         return NULL;
@@ -533,7 +533,7 @@ void *dictFetchValue(dict *d, const void *key) {
 // 返回一个64bit的值,代表了当前ht[0] ht[1]的状态
 unsigned long long dictFingerprint(dict *d) {
     unsigned long long integers[6], hash = 0;
-    int                j;
+    int j;
 
     integers[0] = (long)d->ht_table[0];
     integers[1] = d->ht_size_exp[0];
@@ -657,9 +657,9 @@ void dictReleaseIterator(dictIterator *iter) {
 
 // 随机返回字典中任意一个节点. 可用于实现随机化算法. 如果字典为空,返回 NULL .
 dictEntry *dictGetRandomKey(dict *d) {
-    dictEntry    *he, *orighe;
+    dictEntry *he, *orighe;
     unsigned long h;
-    int           listlen, listele;
+    int listlen, listele;
 
     if (dictSize(d) == 0)
         return NULL;
@@ -816,7 +816,7 @@ unsigned int dictGetSomeKeys(dict *d, dictEntry **des, unsigned int count) {
 #define GETFAIR_NUM_ENTRIES 15
 
 dictEntry *dictGetFairRandomKey(dict *d) {
-    dictEntry   *entries[GETFAIR_NUM_ENTRIES];
+    dictEntry *entries[GETFAIR_NUM_ENTRIES];
     unsigned int count = dictGetSomeKeys(d, entries, GETFAIR_NUM_ENTRIES);
     /* Note that dictGetSomeKeys() may return zero elements in an unlucky
      * run() even if there are actually elements inside the hash table. So
@@ -892,9 +892,9 @@ static unsigned long rev(unsigned long v) {
  * 3) 对游标进行翻转（reverse）的原因初看上去比较难以理解,不过阅读这份注释应该会有所帮助.
  */
 unsigned long dictScan(dict *d, unsigned long v, dictScanFunction *fn, dictScanBucketFunction *bucketfn, void *privdata) {
-    int              htidx0, htidx1;
+    int htidx0, htidx1;
     const dictEntry *de, *next;
-    unsigned long    m0, m1;
+    unsigned long m0, m1;
     // 跳过空字典
     if (dictSize(d) == 0)
         return 0;
@@ -1048,7 +1048,7 @@ static signed char _dictNextExp(unsigned long size) {
 
 static long _dictKeyIndex(dict *d, const void *key, uint64_t hash, dictEntry **existing) {
     unsigned long idx, table;
-    dictEntry    *he;
+    dictEntry *he;
     if (existing) {
         *existing = NULL;
     }
@@ -1111,7 +1111,7 @@ uint64_t dictGetHash(dict *d, const void *key) {
  * no string / key comparison is performed.
  * return value is the reference to the dictEntry if found, or NULL if not found. */
 dictEntry **dictFindEntryRefByPtrAndHash(dict *d, const void *oldptr, uint64_t hash) {
-    dictEntry    *he, **heref;
+    dictEntry *he, **heref;
     unsigned long idx, table;
 
     if (dictSize(d) == 0)
@@ -1140,7 +1140,7 @@ size_t _dictGetStatsHt(char *buf, size_t bufsize, dict *d, int htidx) {
     unsigned long i, slots = 0, chainlen, maxchainlen = 0;
     unsigned long totchainlen = 0;
     unsigned long clvector[DICT_STATS_VECTLEN];
-    size_t        l = 0;
+    size_t l = 0;
 
     if (d->ht_used[htidx] == 0) {
         return snprintf(buf, bufsize, "No stats available for empty dictionaries\n");
@@ -1198,7 +1198,7 @@ size_t _dictGetStatsHt(char *buf, size_t bufsize, dict *d, int htidx) {
 
 void dictGetStats(char *buf, size_t bufsize, dict *d) {
     size_t l;
-    char  *orig_buf = buf;
+    char *orig_buf = buf;
     size_t orig_bufsize = bufsize;
 
     l = _dictGetStatsHt(buf, bufsize, d, 0);
@@ -1215,9 +1215,9 @@ void dictGetStats(char *buf, size_t bufsize, dict *d) {
 /* ------------------------------- Benchmark ---------------------------------*/
 
 #ifdef REDIS_TEST
-#include "testhelp.h"
+#    include "testhelp.h"
 
-#define UNUSED(V) ((void)V)
+#    define UNUSED(V) ((void)V)
 
 uint64_t hashCallback(const void *key) {
     return dictGenHashFunction((unsigned char *)key, strlen((char *)key));
@@ -1241,8 +1241,8 @@ void freeCallback(dict *d, void *val) {
 }
 
 char *stringFromLongLong(long long value) {
-    char  buf[32];
-    int   len;
+    char buf[32];
+    int len;
     char *s;
 
     len = sprintf(buf, "%lld", value);
@@ -1254,20 +1254,20 @@ char *stringFromLongLong(long long value) {
 
 dictType BenchmarkDictType = {hashCallback, NULL, NULL, compareCallback, freeCallback, NULL, NULL};
 
-#define start_benchmark() start = timeInMilliseconds()
-#define end_benchmark(msg)                                      \
-    do {                                                        \
-        elapsed = timeInMilliseconds() - start;                 \
-        printf(msg ": %ld items in %lld ms\n", count, elapsed); \
-    } while (0)
+#    define start_benchmark() start = timeInMilliseconds()
+#    define end_benchmark(msg)                                      \
+        do {                                                        \
+            elapsed = timeInMilliseconds() - start;                 \
+            printf(msg ": %ld items in %lld ms\n", count, elapsed); \
+        } while (0)
 
 /* ./redis-server test dict [<count> | --accurate] */
 int dictTest(int argc, char **argv, int flags) {
-    long      j;
+    long j;
     long long start, elapsed;
-    dict     *dict = dictCreate(&BenchmarkDictType);
-    long      count = 0;
-    int       accurate = (flags & REDIS_TEST_ACCURATE);
+    dict *dict = dictCreate(&BenchmarkDictType);
+    long count = 0;
+    int accurate = (flags & REDIS_TEST_ACCURATE);
 
     if (argc == 4) {
         if (accurate) {
@@ -1296,7 +1296,7 @@ int dictTest(int argc, char **argv, int flags) {
 
     start_benchmark();
     for (j = 0; j < count; j++) {
-        char      *key = stringFromLongLong(j);
+        char *key = stringFromLongLong(j);
         dictEntry *de = dictFind(dict, key);
         assert(de != NULL);
         zfree(key);
@@ -1305,7 +1305,7 @@ int dictTest(int argc, char **argv, int flags) {
 
     start_benchmark();
     for (j = 0; j < count; j++) {
-        char      *key = stringFromLongLong(j);
+        char *key = stringFromLongLong(j);
         dictEntry *de = dictFind(dict, key);
         assert(de != NULL);
         zfree(key);
@@ -1314,7 +1314,7 @@ int dictTest(int argc, char **argv, int flags) {
 
     start_benchmark();
     for (j = 0; j < count; j++) {
-        char      *key = stringFromLongLong(rand() % count);
+        char *key = stringFromLongLong(rand() % count);
         dictEntry *de = dictFind(dict, key);
         assert(de != NULL);
         zfree(key);
@@ -1341,7 +1341,7 @@ int dictTest(int argc, char **argv, int flags) {
     start_benchmark();
     for (j = 0; j < count; j++) {
         char *key = stringFromLongLong(j);
-        int   retval = dictDelete(dict, key);
+        int retval = dictDelete(dict, key);
         assert(retval == DICT_OK);
         key[0] += 17; /* Change first number to letter. */
         retval = dictAdd(dict, key, (void *)j);

@@ -109,17 +109,17 @@ void nolocks_localtime(struct tm *tmp, time_t t, time_t tz, int dst) {
 }
 
 #ifdef LOCALTIME_TEST_MAIN
-#include <stdio.h>
+#    include <stdio.h>
 
 int main(void) {
     /* Obtain timezone and daylight info. */
     tzset(); /* Now 'timezone' global is populated. */
-    time_t     t = time(NULL);
+    time_t t = time(NULL);
     struct tm *aux = localtime(&t);
-    int        daylight_active = aux->tm_isdst;
+    int daylight_active = aux->tm_isdst;
 
     struct tm tm;
-    char      buf[1024];
+    char buf[1024];
 
     nolocks_localtime(&tm, t, timezone, daylight_active);
     strftime(buf, sizeof(buf), "%d %b %H:%M:%S", &tm);

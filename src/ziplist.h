@@ -38,17 +38,17 @@
 typedef struct {
     /* When string is used, it is provided with the length (slen). */
     unsigned char *sval;
-    unsigned int   slen;
+    unsigned int slen;
     /* When integer is used, 'sval' is NULL, and lval holds the value. */
     long long lval;
 } ziplistEntry;
 
-//创建并返回一个新的 ziplist
+// 创建并返回一个新的 ziplist
 unsigned char *ziplistNew(void);
 
 unsigned char *ziplistMerge(unsigned char **first, unsigned char **second);
 
-//创建一个包含给定值的新节点,并将这个新节点添加到压缩列表的表头或表尾    平均O(N) 最坏O(n^2)
+// 创建一个包含给定值的新节点,并将这个新节点添加到压缩列表的表头或表尾    平均O(N) 最坏O(n^2)
 unsigned char *ziplistPush(unsigned char *zl, unsigned char *s, unsigned int slen, int where);
 
 // 返回压缩列表给定索引上节点 O(N)
@@ -75,9 +75,9 @@ unsigned char *ziplistReplace(unsigned char *zl, unsigned char *p, unsigned char
 
 unsigned int ziplistCompare(unsigned char *p, unsigned char *s, unsigned int slen);
 
-//在压缩列表中查找并返回包含了给定值的节点
-// 因为节点的值可能是一个字节数组,所以检查节点值和给定值是否相同的复杂度是O(N)
-// 而查找整个列表的复杂度则为O(n^2)
+// 在压缩列表中查找并返回包含了给定值的节点
+//  因为节点的值可能是一个字节数组,所以检查节点值和给定值是否相同的复杂度是O(N)
+//  而查找整个列表的复杂度则为O(n^2)
 unsigned char *ziplistFind(unsigned char *zl, unsigned char *p, unsigned char *vstr, unsigned int vlen, unsigned int skip);
 
 // 返回压缩列表目前包含的节点数量
@@ -85,7 +85,7 @@ unsigned char *ziplistFind(unsigned char *zl, unsigned char *p, unsigned char *v
 // 节点数量大于65535 时为O(n)
 unsigned int ziplistLen(unsigned char *zl);
 
-//返回压缩列表目前的内存字节数
+// 返回压缩列表目前的内存字节数
 size_t ziplistBlobLen(unsigned char *zl);
 
 void ziplistRepr(unsigned char *zl);

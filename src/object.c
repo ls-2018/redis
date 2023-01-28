@@ -4,16 +4,16 @@
 #include <ctype.h>
 
 #ifdef __CYGWIN__
-#define strtold(a, b) ((long double)strtod((a), (b)))
+#    define strtold(a, b) ((long double)strtod((a), (b)))
 #endif
 
 /* ===================== Creation and parsing of objects ==================== */
 
 robj *createObject(int type, void *ptr) {
-    robj *o = zmalloc(sizeof(*o));  //给redisObject结构体分配空间
-    o->type = type;                 //设置redisObject的类型
-    o->encoding = OBJ_ENCODING_RAW; //设置redisObject的编码类型,此处是OBJ_ENCODING_RAW,表示常规的SDS
-    o->ptr = ptr;                   //直接将传入的指针赋值给redisObject中的指针.
+    robj *o = zmalloc(sizeof(*o));  // 给redisObject结构体分配空间
+    o->type = type;                 // 设置redisObject的类型
+    o->encoding = OBJ_ENCODING_RAW; // 设置redisObject的编码类型,此处是OBJ_ENCODING_RAW,表示常规的SDS
+    o->ptr = ptr;                   // 直接将传入的指针赋值给redisObject中的指针.
 
     o->refcount = 1;
 
@@ -27,7 +27,7 @@ robj *createObject(int type, void *ptr) {
         o->lru = (LFUGetTimeInMinutes() << 8) | LFU_INIT_VAL; // | 5
     }
     else {
-        //否则,调用LRU_CLOCK函数获取LRU时钟值
+        // 否则,调用LRU_CLOCK函数获取LRU时钟值
         o->lru = LRU_CLOCK();
     }
     return o;
@@ -59,7 +59,7 @@ robj *createRawStringObject(const char *ptr, size_t len) {
 // 创建一个编码为OBJ_ENCODING_EMBSTR的字符串对象,
 // 该对象的sds字符串实际上是一个不可修改的字符串,与对象本身分配在同一块中.
 robj *createEmbeddedStringObject(const char *ptr, size_t len) {
-    robj           *o = zmalloc(sizeof(robj) + sizeof(struct sdshdr8) + len + 1);
+    robj *o = zmalloc(sizeof(robj) + sizeof(struct sdshdr8) + len + 1);
     struct sdshdr8 *sh = (void *)(o + 1); // 跳过了一个redisObject的长度
     o->type = OBJ_STRING;                 //
     o->encoding = OBJ_ENCODING_EMBSTR;    // embstr编码的简单动态字符串 , 嵌入式 小于44 字节
@@ -90,11 +90,11 @@ robj *createEmbeddedStringObject(const char *ptr, size_t len) {
 #define OBJ_ENCODING_EMBSTR_SIZE_LIMIT 44
 
 robj *createStringObject(const char *ptr, size_t len) {
-    //创建嵌入式字符串,字符串长度小于等于44字节
+    // 创建嵌入式字符串,字符串长度小于等于44字节
     if (len <= OBJ_ENCODING_EMBSTR_SIZE_LIMIT)
         return createEmbeddedStringObject(ptr, len);
     else
-        //创建普通字符串,字符串长度大于44字节
+        // 创建普通字符串,字符串长度大于44字节
         return createRawStringObject(ptr, len);
 }
 
@@ -169,7 +169,7 @@ robj *createStringObjectFromLongLongForValue(long long value) {
  * The 'humanfriendly' option is used for INCRBYFLOAT and HINCRBYFLOAT. */
 robj *createStringObjectFromLongDouble(long double value, int humanfriendly) {
     char buf[MAX_LONG_DOUBLE_CHARS];
-    int  len = ld2string(buf, sizeof(buf), value, humanfriendly ? LD_STR_HUMAN : LD_STR_AUTO);
+    int len = ld2string(buf, sizeof(buf), value, humanfriendly ? LD_STR_HUMAN : LD_STR_AUTO);
     return createStringObject(buf, len);
 }
 
@@ -204,7 +204,7 @@ robj *dupStringObject(const robj *o) {
 
 robj *createQuicklistObject(void) {
     quicklist *l = quicklistCreate();
-    robj      *o = createObject(OBJ_LIST, l);
+    robj *o = createObject(OBJ_LIST, l);
     o->encoding = OBJ_ENCODING_QUICKLIST; //
     return o;
 }
@@ -218,19 +218,19 @@ robj *createSetObject(void) {
 
 robj *createIntsetObject(void) {
     intset *is = intsetNew();
-    robj   *o = createObject(OBJ_SET, is);
+    robj *o = createObject(OBJ_SET, is);
     o->encoding = OBJ_ENCODING_INTSET;
     return o;
 }
 
 robj *createHashObject(void) {
     unsigned char *zl = lpNew(0);
-    robj          *o = createObject(OBJ_HASH, zl);
+    robj *o = createObject(OBJ_HASH, zl);
     o->encoding = OBJ_ENCODING_LISTPACK;
     return o;
 }
 
-//创建一个 SKIPLIST 编码的有序集合
+// 创建一个 SKIPLIST 编码的有序集合
 robj *createZsetObject(void) {
     zset *zs = zmalloc(sizeof(*zs));
     robj *o;
@@ -245,14 +245,14 @@ robj *createZsetObject(void) {
 // 创建一个 ZIPLIST 编码的有序集合
 robj *createZsetListpackObject(void) {
     unsigned char *lp = lpNew(0);
-    robj          *o = createObject(OBJ_ZSET, lp);
+    robj *o = createObject(OBJ_ZSET, lp);
     o->encoding = OBJ_ENCODING_LISTPACK;
     return o;
 }
 
 robj *createStreamObject(void) {
     stream *s = streamNew();
-    robj   *o = createObject(OBJ_STREAM, s);
+    robj *o = createObject(OBJ_STREAM, s);
     o->encoding = OBJ_ENCODING_STREAM;
     return o;
 }
@@ -430,7 +430,7 @@ void dismissSetObject(robj *o, size_t size_hint) {
         /* We iterate all nodes only when average member size is bigger than a
          * page size, and there's a high chance we'll actually dismiss something. */
         if (size_hint / dictSize(set) >= server.page_size) {
-            dictEntry    *de;
+            dictEntry *de;
             dictIterator *di = dictGetIterator(set);
             while ((de = dictNext(di)) != NULL) {
                 dismissSds(dictGetKey(de));
@@ -453,7 +453,7 @@ void dismissSetObject(robj *o, size_t size_hint) {
 /* See dismissObject() */
 void dismissZsetObject(robj *o, size_t size_hint) {
     if (o->encoding == OBJ_ENCODING_SKIPLIST) {
-        zset      *zs = o->ptr;
+        zset *zs = o->ptr;
         zskiplist *zsl = zs->zsl;
         serverAssert(zsl->length != 0);
         /* We iterate all nodes only when average member size is bigger than a
@@ -487,7 +487,7 @@ void dismissHashObject(robj *o, size_t size_hint) {
         /* We iterate all fields only when average field/value size is bigger than
          * a page size, and there's a high chance we'll actually dismiss something. */
         if (size_hint / dictSize(d) >= server.page_size) {
-            dictEntry    *de;
+            dictEntry *de;
             dictIterator *di = dictGetIterator(d);
             while ((de = dictNext(di)) != NULL) {
                 /* Only dismiss values memory since the field size
@@ -512,7 +512,7 @@ void dismissHashObject(robj *o, size_t size_hint) {
 /* See dismissObject() */
 void dismissStreamObject(robj *o, size_t size_hint) {
     stream *s = o->ptr;
-    rax    *rax = s->rax;
+    rax *rax = s->rax;
     if (raxSize(rax) == 0)
         return;
 
@@ -624,8 +624,8 @@ void trimStringObjectIfNeeded(robj *o) {
 
 // 尝试编码字符串对象以节省空间  ,
 robj *tryObjectEncoding(robj *o) {
-    long   value;
-    sds    s = o->ptr;
+    long value;
+    sds s = o->ptr;
     size_t len;
 
     // 确保这是一个字符串对象,我们在这个函数中编码的唯一类型.其他类型使用编码内存高效表示,但由实现该类型的命令处理.
@@ -715,7 +715,7 @@ robj *getDecodedObject(robj *o) {
 
 int compareStringObjectsWithFlags(robj *a, robj *b, int flags) {
     serverAssertWithInfo(NULL, a, a->type == OBJ_STRING && b->type == OBJ_STRING);
-    char   bufa[128], bufb[128], *astr, *bstr;
+    char bufa[128], bufb[128], *astr, *bstr;
     size_t alen, blen, minlen;
 
     if (a == b)
@@ -1013,11 +1013,11 @@ size_t streamRadixTreeMemoryUsage(rax *rax) {
 #define OBJ_COMPUTE_SIZE_DEF_SAMPLES 5 /* Default sample size. */
 
 size_t objectComputeSize(robj *key, robj *o, size_t sample_size, int dbid) {
-    sds               ele, ele2;
-    dict             *d;
-    dictIterator     *di;
+    sds ele, ele2;
+    dict *d;
+    dictIterator *di;
     struct dictEntry *de;
-    size_t            asize = 0, elesize = 0, samples = 0;
+    size_t asize = 0, elesize = 0, samples = 0;
 
     if (o->type == OBJ_STRING) {
         if (o->encoding == OBJ_ENCODING_INT) {
@@ -1035,7 +1035,7 @@ size_t objectComputeSize(robj *key, robj *o, size_t sample_size, int dbid) {
     }
     else if (o->type == OBJ_LIST) {
         if (o->encoding == OBJ_ENCODING_QUICKLIST) {
-            quicklist     *ql = o->ptr;
+            quicklist *ql = o->ptr;
             quicklistNode *node = ql->head;
             asize = sizeof(*o) + sizeof(quicklist);
             do {
@@ -1078,7 +1078,7 @@ size_t objectComputeSize(robj *key, robj *o, size_t sample_size, int dbid) {
         }
         else if (o->encoding == OBJ_ENCODING_SKIPLIST) {
             d = ((zset *)o->ptr)->dict;
-            zskiplist     *zsl = ((zset *)o->ptr)->zsl;
+            zskiplist *zsl = ((zset *)o->ptr)->zsl;
             zskiplistNode *znode = zsl->header->level[0].forward;
             asize = sizeof(*o) + sizeof(zset) + sizeof(zskiplist) + sizeof(dict) + (sizeof(struct dictEntry *) * dictSlots(d)) + zmalloc_size(zsl->header);
             while (znode != NULL && samples < sample_size) {
@@ -1200,10 +1200,10 @@ void freeMemoryOverheadData(struct redisMemOverhead *mh) {
  * information used for the MEMORY OVERHEAD and INFO command. The returned
  * structure pointer should be freed calling freeMemoryOverheadData(). */
 struct redisMemOverhead *getMemoryOverheadData(void) {
-    int                      j;
-    size_t                   mem_total = 0;
-    size_t                   mem = 0;
-    size_t                   zmalloc_used = zmalloc_used_memory();
+    int j;
+    size_t mem_total = 0;
+    size_t mem = 0;
+    size_t zmalloc_used = zmalloc_used_memory();
     struct redisMemOverhead *mh = zcalloc(sizeof(*mh));
 
     mh->total_allocated = zmalloc_used;
@@ -1262,7 +1262,7 @@ struct redisMemOverhead *getMemoryOverheadData(void) {
     mem_total += mh->functions_caches;
 
     for (j = 0; j < server.dbnum; j++) {
-        redisDb  *db = server.db + j;
+        redisDb *db = server.db + j;
         long long keyscount = dictSize(db->dict);
         if (keyscount == 0)
             continue;
@@ -1313,16 +1313,16 @@ void inputCatSds(void *result, const char *str) {
 /* This implements MEMORY DOCTOR. An human readable analysis of the Redis
  * memory condition. */
 sds getMemoryDoctorReport(void) {
-    int                      empty = 0;           /* Instance is empty or almost empty. */
-    int                      big_peak = 0;        /* Memory peak is much larger than used mem. */
-    int                      high_frag = 0;       /* High fragmentation. */
-    int                      high_alloc_frag = 0; /* High allocator fragmentation. */
-    int                      high_proc_rss = 0;   /* High process rss overhead. */
-    int                      high_alloc_rss = 0;  /* High rss overhead. */
-    int                      big_slave_buf = 0;   /* Slave buffers are too big. */
-    int                      big_client_buf = 0;  /* Client buffers are too big. */
-    int                      many_scripts = 0;    /* Script cache has too many scripts. */
-    int                      num_reports = 0;
+    int empty = 0;           /* Instance is empty or almost empty. */
+    int big_peak = 0;        /* Memory peak is much larger than used mem. */
+    int high_frag = 0;       /* High fragmentation. */
+    int high_alloc_frag = 0; /* High allocator fragmentation. */
+    int high_proc_rss = 0;   /* High process rss overhead. */
+    int high_alloc_rss = 0;  /* High rss overhead. */
+    int big_slave_buf = 0;   /* Slave buffers are too big. */
+    int big_client_buf = 0;  /* Client buffers are too big. */
+    int many_scripts = 0;    /* Script cache has too many scripts. */
+    int num_reports = 0;
     struct redisMemOverhead *mh = getMemoryOverheadData();
 
     if (mh->total_allocated < (1024 * 1024 * 5)) {
@@ -1579,7 +1579,7 @@ void memoryCommand(client *c) {
     }
     else if (!strcasecmp(c->argv[1]->ptr, "usage") && c->argc >= 3) {
         dictEntry *de;
-        long long  samples = OBJ_COMPUTE_SIZE_DEF_SAMPLES;
+        long long samples = OBJ_COMPUTE_SIZE_DEF_SAMPLES;
         for (int j = 3; j < c->argc; j++) {
             if (!strcasecmp(c->argv[j]->ptr, "samples") && j + 1 < c->argc) {
                 if (getLongLongFromObjectOrReply(c, c->argv[j + 1], &samples, NULL) == C_ERR)

@@ -71,10 +71,10 @@ void lwTranslatePixelsGroup(int byte, char *output) {
  * requested by the caller. */
 lwCanvas *lwDrawSchotter(int console_cols, int squares_per_row, int squares_per_col) {
     /* Calculate the canvas size. */
-    int       canvas_width = console_cols * 2;
-    int       padding = canvas_width > 4 ? 2 : 0;
-    float     square_side = (float)(canvas_width - padding * 2) / squares_per_row;
-    int       canvas_height = square_side * squares_per_col + padding * 2;
+    int canvas_width = console_cols * 2;
+    int padding = canvas_width > 4 ? 2 : 0;
+    float square_side = (float)(canvas_width - padding * 2) / squares_per_row;
+    int canvas_height = square_side * squares_per_col + padding * 2;
     lwCanvas *canvas = lwCreateCanvas(canvas_width, canvas_height, 0);
 
     for (int y = 0; y < squares_per_col; y++) {
@@ -182,7 +182,7 @@ void lolwut5Command(client *c) {
 
     /* Generate some computer art and reply. */
     lwCanvas *canvas = lwDrawSchotter(cols, squares_per_row, squares_per_col);
-    sds       rendered = renderCanvas(canvas);
+    sds rendered = renderCanvas(canvas);
     rendered = sdscat(rendered, "\nGeorg Nees - schotter, plotter on paper, 1968. Redis ver. ");
     rendered = sdscat(rendered, REDIS_VERSION);
     rendered = sdscatlen(rendered, "\n", 1);

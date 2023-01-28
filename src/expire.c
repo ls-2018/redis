@@ -71,16 +71,16 @@ void activeExpireCycle(int type) {
     unsigned long config_cycle_acceptable_stale = ACTIVE_EXPIRE_CYCLE_ACCEPTABLE_STALE - effort;
 
     // static 变量,下次调用值不变
-    static unsigned int current_db = 0;     // 静态变量,用来累积函数连续执行时的数据
-    static int          timelimit_exit = 0; // 上一次调用设置的 时间限制
-                                            // 如果 timelimit_exit 为真,那么说明还有更多删除工作要做,
-                                            // 那么在 beforeSleep() 函数调用时,程序会再次执行这个函数.
+    static unsigned int current_db = 0; // 静态变量,用来累积函数连续执行时的数据
+    static int timelimit_exit = 0;      // 上一次调用设置的 时间限制
+                                        // 如果 timelimit_exit 为真,那么说明还有更多删除工作要做,
+                                        // 那么在 beforeSleep() 函数调用时,程序会再次执行这个函数.
 
     static long long last_fast_cycle = 0; // 上一次循环的时间
 
-    int       j, iteration = 0;
-    int       dbs_per_call = CRON_DBS_PER_CALL; // 默认每次处理的数据库数量
-    long long start = ustime();                 // 函数开始的时间
+    int j, iteration = 0;
+    int dbs_per_call = CRON_DBS_PER_CALL; // 默认每次处理的数据库数量
+    long long start = ustime();           // 函数开始的时间
     long long timelimit;
     long long elapsed;
 
@@ -160,8 +160,8 @@ void activeExpireCycle(int type) {
          * is not fixed, but depends on the Redis configured "expire effort". */
         do {
             unsigned long num, slots;
-            long long     now, ttl_sum;
-            int           ttl_samples;
+            long long now, ttl_sum;
+            int ttl_samples;
             iteration++; // 更新遍历次数
 
             /* If there is nothing to expire try next DB ASAP. */
@@ -215,7 +215,7 @@ void activeExpireCycle(int type) {
                     unsigned long idx = db->expires_cursor;
                     idx &= DICTHT_SIZE_MASK(db->expires->ht_size_exp[table]);
                     dictEntry *de = db->expires->ht_table[table][idx];
-                    long long  ttl;
+                    long long ttl;
 
                     /* Scan the current bucket of the current table. */
                     checked_buckets++;
@@ -351,22 +351,22 @@ void expireSlaveKeys(void) {
     if (slaveKeysWithExpire == NULL || dictSize(slaveKeysWithExpire) == 0)
         return;
 
-    int      cycles = 0, noexpire = 0;
+    int cycles = 0, noexpire = 0;
     mstime_t start = mstime();
     while (1) {
         dictEntry *de = dictGetRandomKey(slaveKeysWithExpire);
-        sds        keyname = dictGetKey(de);
-        uint64_t   dbids = dictGetUnsignedIntegerVal(de);
-        uint64_t   new_dbids = 0;
+        sds keyname = dictGetKey(de);
+        uint64_t dbids = dictGetUnsignedIntegerVal(de);
+        uint64_t new_dbids = 0;
 
         /* Check the key against every database corresponding to the
          * bits set in the value bitmap. */
         int dbid = 0;
         while (dbids && dbid < server.dbnum) {
             if ((dbids & 1) != 0) {
-                redisDb   *db = server.db + dbid;
+                redisDb *db = server.db + dbid;
                 dictEntry *expire = dictFind(db->expires, keyname);
-                int        expired = 0;
+                int expired = 0;
 
                 if (expire && activeExpireCycleTryExpire(server.db + dbid, expire, start)) {
                     expired = 1;
@@ -538,10 +538,10 @@ int parseExtendedExpireArgumentsOrReply(client *c, int *flags) {
  *
  * Additional flags are supported and parsed via parseExtendedExpireArguments */
 void expireGenericCommand(client *c, long long basetime, int unit) {
-    robj     *key = c->argv[1], *param = c->argv[2];
+    robj *key = c->argv[1], *param = c->argv[2];
     long long when; /* unix time in milliseconds when the key will expire. */
     long long current_expire = -1;
-    int       flag = 0;
+    int flag = 0;
 
     /* checking optional flags */
     if (parseExtendedExpireArgumentsOrReply(c, &flag) != C_OK) {

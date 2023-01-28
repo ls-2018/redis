@@ -14,13 +14,13 @@ typedef struct streamID {
 } streamID;
 
 typedef struct stream {
-    rax     *rax;                  // 保存消息的Radix Tree
+    rax *rax;                      // 保存消息的Radix Tree
     uint64_t length;               // 消息流中的消息个数
     streamID last_id;              // 当前消息流中最后插入的消息的ID
     streamID first_id;             /* The first non-tombstone entry, zero if empty. */
     streamID max_deleted_entry_id; /* The maximal ID that was deleted. */
     uint64_t entries_added;        /* All time count of elements added. */
-    rax     *cgroups;              //当前消息流的消费组信息,也是用Radix Tree保存
+    rax *cgroups;                  // 当前消息流的消费组信息,也是用Radix Tree保存
 } stream;
 
 /* We define an iterator to iterate stream items in an abstract way, without
@@ -30,17 +30,17 @@ typedef struct stream {
  * rewriting code that also needs to iterate the stream to emit the XADD
  * commands. */
 typedef struct streamIterator {
-    stream        *stream;              /* The stream we are iterating. */
-    streamID       master_id;           /* ID of the master entry at listpack head. */
-    uint64_t       master_fields_count; /* Master entries # of fields. */
+    stream *stream;                     /* The stream we are iterating. */
+    streamID master_id;                 /* ID of the master entry at listpack head. */
+    uint64_t master_fields_count;       /* Master entries # of fields. */
     unsigned char *master_fields_start; /* Master entries start in listpack. */
     unsigned char *master_fields_ptr;   /* Master field to emit next. */
-    int            entry_flags;         /* Flags of entry we are emitting. */
-    int            rev;                 /* True if iterating end to start (reverse). */
-    int            skip_tombstones;     /* True if not emitting tombstone entries. */
-    uint64_t       start_key[2];        /* Start key as 128 bit big endian. */
-    uint64_t       end_key[2];          /* End key as 128 bit big endian. */
-    raxIterator    ri;                  /* Rax iterator. */
+    int entry_flags;                    /* Flags of entry we are emitting. */
+    int rev;                            /* True if iterating end to start (reverse). */
+    int skip_tombstones;                /* True if not emitting tombstone entries. */
+    uint64_t start_key[2];              /* Start key as 128 bit big endian. */
+    uint64_t end_key[2];                /* End key as 128 bit big endian. */
+    raxIterator ri;                     /* Rax iterator. */
     unsigned char *lp;                  /* Current listpack. */
     unsigned char *lp_ele;              /* Current listpack cursor. */
     unsigned char *lp_flags;            /* Current entry flags pointer. */
@@ -75,7 +75,7 @@ typedef struct streamCG {
 /* A specific consumer in a consumer group.  */
 typedef struct streamConsumer {
     mstime_t seen_time; /* Last time this consumer was active. */
-    sds      name;      /* Consumer name. This is how the consumer
+    sds name;           /* Consumer name. This is how the consumer
                            will be identified in the consumer group
                            protocol. Case sensitive. */
     rax *pel;           /* Consumer specific pending entries list: all
@@ -89,10 +89,10 @@ typedef struct streamConsumer {
 
 /* Pending (yet not acknowledged) message in a consumer group. */
 typedef struct streamNACK {
-    mstime_t        delivery_time;  /* Last time this message was delivered. */
-    uint64_t        delivery_count; /* Number of times this message was delivered.*/
-    streamConsumer *consumer;       /* The consumer this message was delivered to
-                                       in the last delivery. */
+    mstime_t delivery_time;   /* Last time this message was delivered. */
+    uint64_t delivery_count;  /* Number of times this message was delivered.*/
+    streamConsumer *consumer; /* The consumer this message was delivered to
+                                 in the last delivery. */
 } streamNACK;
 
 /* Stream propagation information, passed to functions in order to propagate

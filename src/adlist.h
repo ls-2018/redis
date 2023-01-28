@@ -3,15 +3,15 @@
 
 // 双端链表节点
 typedef struct listNode {
-    struct listNode *prev;  // 前置节点
-    struct listNode *next;  // 后置节点
-    void            *value; // 节点的值
+    struct listNode *prev; // 前置节点
+    struct listNode *next; // 后置节点
+    void *value;           // 节点的值
 } listNode;
 
 // 迭代器
 typedef struct listIter {
     listNode *next;
-    int       direction;
+    int direction;
 } listIter;
 
 // 无环双向链表结构
@@ -72,10 +72,10 @@ listNode *listNext(listIter *iter);
 
 void listReleaseIterator(listIter *iter);
 
-list     *listDup(list *orig);                  // 复制一个给定链表的副本
+list *listDup(list *orig);                      // 复制一个给定链表的副本
 listNode *listSearchKey(list *list, void *key); // 从链表中查找并返回指定值的节点
 listNode *listIndex(list *list, long index);    // 返回链表在给定索引上的节点
-void      listRewind(list *list, listIter *li);
+void listRewind(list *list, listIter *li);
 
 void listRewindTail(list *list, listIter *li);
 

@@ -50,16 +50,16 @@ static inline void swapfunc(char *, char *, size_t, int);
 /*
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
  */
-#define swapcode(TYPE, parmi, parmj, n)      \
-    {                                        \
-        size_t i = (n) / sizeof(TYPE);       \
-        TYPE  *pi = (TYPE *)(void *)(parmi); \
-        TYPE  *pj = (TYPE *)(void *)(parmj); \
-        do {                                 \
-            TYPE t = *pi;                    \
-            *pi++ = *pj;                     \
-            *pj++ = t;                       \
-        } while (--i > 0);                   \
+#define swapcode(TYPE, parmi, parmj, n)     \
+    {                                       \
+        size_t i = (n) / sizeof(TYPE);      \
+        TYPE *pi = (TYPE *)(void *)(parmi); \
+        TYPE *pj = (TYPE *)(void *)(parmj); \
+        do {                                \
+            TYPE t = *pi;                   \
+            *pi++ = *pj;                    \
+            *pj++ = t;                      \
+        } while (--i > 0);                  \
     }
 
 #define SWAPINIT(a, es) swaptype = (uintptr_t)a % sizeof(long) || es % sizeof(long) ? 2 : es == sizeof(long) ? 0 : 1;
@@ -87,9 +87,9 @@ static inline char *med3(char *a, char *b, char *c, int (*cmp)(const void *, con
 }
 
 static void _pqsort(void *a, size_t n, size_t es, int (*cmp)(const void *, const void *), void *lrange, void *rrange) {
-    char  *pa, *pb, *pc, *pd, *pl, *pm, *pn;
+    char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
     size_t d, r;
-    int    swaptype, cmp_result;
+    int swaptype, cmp_result;
 
 loop:
     SWAPINIT(a, es);

@@ -66,14 +66,14 @@ typedef struct luaFunctionCtx {
 
 typedef struct loadCtx {
     functionLibInfo *li;
-    monotime         start_time;
+    monotime start_time;
 } loadCtx;
 
 typedef struct registerFunctionArgs {
-    sds             name;
-    sds             desc;
+    sds name;
+    sds desc;
     luaFunctionCtx *lua_f_ctx;
-    uint64_t        f_flags;
+    uint64_t f_flags;
 } registerFunctionArgs;
 
 /* Hook for FUNCTION LOAD execution.
@@ -100,9 +100,9 @@ static void luaEngineLoadHook(lua_State *lua, lua_Debug *ar) {
  * Return NULL on compilation error and set the error to the err variable
  */
 static int luaEngineCreate(void *engine_ctx, functionLibInfo *li, sds blob, sds *err) {
-    int           ret = C_ERR;
+    int ret = C_ERR;
     luaEngineCtx *lua_engine_ctx = engine_ctx;
-    lua_State    *lua = lua_engine_ctx->lua;
+    lua_State *lua = lua_engine_ctx->lua;
 
     /* set load library globals */
     lua_getmetatable(lua, LUA_GLOBALSINDEX);
@@ -157,8 +157,8 @@ done:
  * Invole the give function with the given keys and args
  */
 static void luaEngineCall(scriptRunCtx *run_ctx, void *engine_ctx, void *compiled_function, robj **keys, size_t nkeys, robj **args, size_t nargs) {
-    luaEngineCtx   *lua_engine_ctx = engine_ctx;
-    lua_State      *lua = lua_engine_ctx->lua;
+    luaEngineCtx *lua_engine_ctx = engine_ctx;
+    lua_State *lua = lua_engine_ctx->lua;
     luaFunctionCtx *f_ctx = compiled_function;
 
     /* Push error handler */
@@ -188,8 +188,8 @@ static size_t luaEngineMemoryOverhead(void *engine_ctx) {
 }
 
 static void luaEngineFreeFunction(void *engine_ctx, void *compiled_function) {
-    luaEngineCtx   *lua_engine_ctx = engine_ctx;
-    lua_State      *lua = lua_engine_ctx->lua;
+    luaEngineCtx *lua_engine_ctx = engine_ctx;
+    lua_State *lua = lua_engine_ctx->lua;
     luaFunctionCtx *f_ctx = compiled_function;
     lua_unref(lua, f_ctx->lua_function_ref);
     zfree(f_ctx);
@@ -233,7 +233,7 @@ static int luaRegisterFunctionReadFlags(lua_State *lua, uint64_t *flags) {
         }
 
         const char *flag_str = lua_tostring(lua, -1);
-        int         found = 0;
+        int found = 0;
         for (scriptFlag *flag = scripts_flags_def; flag->str; ++flag) {
             if (!strcasecmp(flag->str, flag_str)) {
                 f_flags |= flag->flag;
@@ -257,11 +257,11 @@ done:
 }
 
 static int luaRegisterFunctionReadNamedArgs(lua_State *lua, registerFunctionArgs *register_f_args) {
-    char           *err = NULL;
-    sds             name = NULL;
-    sds             desc = NULL;
+    char *err = NULL;
+    sds name = NULL;
+    sds desc = NULL;
     luaFunctionCtx *lua_f_ctx = NULL;
-    uint64_t        flags = 0;
+    uint64_t flags = 0;
     if (!lua_istable(lua, 1)) {
         err = "calling redis.register_function with a single argument is only applicable to Lua table (representing named arguments).";
         goto error;
@@ -345,9 +345,9 @@ error:
 }
 
 static int luaRegisterFunctionReadPositionalArgs(lua_State *lua, registerFunctionArgs *register_f_args) {
-    char           *err = NULL;
-    sds             name = NULL;
-    sds             desc = NULL;
+    char *err = NULL;
+    sds name = NULL;
+    sds desc = NULL;
     luaFunctionCtx *lua_f_ctx = NULL;
     if (!(name = luaGetStringSds(lua, 1))) {
         err = "first argument to redis.register_function must be a string";

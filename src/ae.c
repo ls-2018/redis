@@ -18,23 +18,23 @@
 /* Include the best multiplexing layer supported by this system.
  * The following should be ordered by performances, descending. */
 #ifdef HAVE_EVPORT
-#include "ae_evport.c"
+#    include "ae_evport.c"
 #else
-    #ifdef HAVE_EPOLL
-    #include "ae_epoll.c"
-    #else
-        #ifdef HAVE_KQUEUE
-        #include "ae_kqueue.c"
-        #else
-        #include "ae_select.c"
-        #endif
-    #endif
+#    ifdef HAVE_EPOLL
+#        include "ae_epoll.c"
+#    else
+#        ifdef HAVE_KQUEUE
+#            include "ae_kqueue.c"
+#        else
+#            include "ae_select.c"
+#        endif
+#    endif
 #endif
 
 // 初始化事件处理器状态
 aeEventLoop *aeCreateEventLoop(int setsize) {
     aeEventLoop *eventLoop;
-    int          i;
+    int i;
 
     monotonicInit(); // 单调时钟初始化
 
@@ -42,7 +42,7 @@ aeEventLoop *aeCreateEventLoop(int setsize) {
     if ((eventLoop = zmalloc(sizeof(*eventLoop))) == NULL) {
         goto err;
     }
-    //给IO事件、已触发事件分配内存空间
+    // 给IO事件、已触发事件分配内存空间
     eventLoop->events = zmalloc(sizeof(aeFileEvent) * setsize); // 10128
     eventLoop->fired = zmalloc(sizeof(aeFiredEvent) * setsize);
     if (eventLoop->events == NULL || eventLoop->fired == NULL) {
@@ -52,7 +52,7 @@ aeEventLoop *aeCreateEventLoop(int setsize) {
     // 设置数组大小
 
     eventLoop->setsize = setsize;
-    //设置时间事件的链表头为NULL
+    // 设置时间事件的链表头为NULL
     eventLoop->timeEventHead = NULL;
     eventLoop->timeEventNextId = 0;
     eventLoop->stop = 0;
@@ -60,17 +60,17 @@ aeEventLoop *aeCreateEventLoop(int setsize) {
     eventLoop->beforesleep = NULL;
     eventLoop->aftersleep = NULL;
     eventLoop->flags = 0;
-    //调用aeApiCreate函数,去实际调用操作系统提供的IO多路复用函数
+    // 调用aeApiCreate函数,去实际调用操作系统提供的IO多路复用函数
     if (aeApiCreate(eventLoop) == -1) { // IO多路复用初始化
         goto err;
     }
-    //将所有网络IO事件对应文件描述符的掩码设置为AE_NONE
+    // 将所有网络IO事件对应文件描述符的掩码设置为AE_NONE
     for (i = 0; i < setsize; i++) {
         eventLoop->events[i].mask = AE_NONE;
     }
     // 返回事件循环
     return eventLoop;
-    //初始化失败后的处理逻辑,
+    // 初始化失败后的处理逻辑,
 err:
     if (eventLoop) {
         zfree(eventLoop->events);
@@ -227,8 +227,8 @@ int aeGetFileEvents(aeEventLoop *eventLoop, int fd) {
 // 将一个新的时间事件添加到服务器,这个时间事件将在当前时间的milliseconds毫秒后到达
 // proc 所创建时间事件触发后的回调函数.
 long long aeCreateTimeEvent(aeEventLoop *eventLoop, long long milliseconds, aeTimeProc *proc, void *clientData, aeEventFinalizerProc *finalizerProc) {
-    long long    id = eventLoop->timeEventNextId++; // 更新时间计数器
-    aeTimeEvent *te;                                // 创建时间事件结构
+    long long id = eventLoop->timeEventNextId++; // 更新时间计数器
+    aeTimeEvent *te;                             // 创建时间事件结构
 
     te = zmalloc(sizeof(*te));
     if (te == NULL) {
@@ -289,13 +289,13 @@ static int64_t usUntilEarliestTimer(aeEventLoop *eventLoop) {
 
 // 处理所有已到达的时间事件
 static int processTimeEvents(aeEventLoop *eventLoop) {
-    int          processed = 0;
+    int processed = 0;
     aeTimeEvent *te;
-    long long    maxId;
+    long long maxId;
 
     te = eventLoop->timeEventHead; // 从时间事件链表上逐一取出每一个事件
     maxId = eventLoop->timeEventNextId - 1;
-    monotime now = getMonotonicUs(); //获取当前时间
+    monotime now = getMonotonicUs(); // 获取当前时间
 
     while (te) {
         long long id;
@@ -340,7 +340,7 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
             id = te->id;
             te->refcount++;
             // retVal 为时间事件执行的间隔
-            retval = te->timeProc(eventLoop, id, te->clientData); //调用注册的回调函数处理     serverCron、evictionTimeProc、moduleTimerHandler   返回执行状态
+            retval = te->timeProc(eventLoop, id, te->clientData); // 调用注册的回调函数处理     serverCron、evictionTimeProc、moduleTimerHandler   返回执行状态
             te->refcount--;
             processed++;
             now = getMonotonicUs();    // 获取当前时间
@@ -352,7 +352,7 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
                 te->when = now + retval * 1000; // 下一次要执行的时间         serverCron
             }
         }
-        te = te->next; //获取下一个时间事件
+        te = te->next; // 获取下一个时间事件
     }
     return processed;
 }
@@ -372,9 +372,9 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
     // eventLoop->maxfd 应该是6  [0,1,2  3,4 5,6:6379端口描述符 ]
     if (eventLoop->maxfd != -1 || ((flags & AE_TIME_EVENTS) && !(flags & AE_DONT_WAIT))) {
         // aemain 函数进来的
-        int            j;
+        int j;
         struct timeval tv, *tvp;
-        int64_t        usUntilTimer = -1;
+        int64_t usUntilTimer = -1;
         // 获取最近的时间事件
 
         // 如果时间事件存在的话
@@ -414,7 +414,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
             eventLoop->beforesleep(eventLoop);
         }
 
-        //调用aeApiPoll获取就绪的描述符
+        // 调用aeApiPoll获取就绪的描述符
         numevents = aeApiPoll(eventLoop, tvp); // int类型
 
         // epoll 等待之后的回调函数
@@ -423,10 +423,10 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
         }
 
         for (j = 0; j < numevents; j++) {
-            int          fd = eventLoop->fired[j].fd;
+            int fd = eventLoop->fired[j].fd;
             aeFileEvent *fe = &eventLoop->events[fd]; // 从已就绪数组中获取事件
-            int          mask = eventLoop->fired[j].mask;
-            int          fired = 0; /* 当前fd触发的事件数. */
+            int mask = eventLoop->fired[j].mask;
+            int fired = 0; /* 当前fd触发的事件数. */
 
             //            通常我们先执行可读事件,然后再执行可写事件.这很有用,因为有时我们可能能够在处理查询之后立即提供查询的回复.
             //            然而,如果AE_BARRIER是在掩码中设置的,我们的应用程序会要求我们做相反的事情:永远不要在可读事件之后触发可写事件.在这种情况下,我们颠倒调用.
@@ -438,14 +438,14 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
             //
             // 对于同一个 fe  我们先处理 read,在处理write
             // 如果翻转了  先处理write 在处理read
-            //如果触发的是可读事件,调用事件注册时设置的读事件回调处理函数
+            // 如果触发的是可读事件,调用事件注册时设置的读事件回调处理函数
             if (!invert && fe->mask & mask & AE_READABLE) {         // & & 检查事件是否仍然有效
                 fe->rfileProc(eventLoop, fd, fe->clientData, mask); // 可以读的,回调函数
                 fired++;
                 fe = &eventLoop->events[fd]; /* 在调整大小时刷新.*/ // todo 为啥要写这一行
             }
 
-            //如果触发的是可写事件,调用事件注册时设置的写事件回调处理函数
+            // 如果触发的是可写事件,调用事件注册时设置的写事件回调处理函数
             if (fe->mask & mask & AE_WRITABLE) {
                 // 如果没有处理过可读事件 或 可读、可写的处理函数不一样
                 if (!fired || fe->wfileProc != fe->rfileProc) {         // 同时处罚可读写,只要处理函数不一样,就处理
@@ -477,7 +477,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
 // 在给定的时间内阻塞并等待套接字的给定类型事件产生,当事件成功产生,或者等待超时后,函数返回
 int aeWait(int fd, int mask, long long milliseconds) {
     struct pollfd pfd;
-    int           retmask = 0, retval;
+    int retmask = 0, retval;
 
     memset(&pfd, 0, sizeof(pfd));
     pfd.fd = fd;

@@ -43,15 +43,15 @@ void rdbLoadProgressCallback(rio *r, const void *buf, size_t len);
 int rdbCheckMode = 0;
 
 struct {
-    rio          *rio;
-    robj         *key;             /* Current key we are reading. */
-    int           key_type;        /* Current key type if != -1. */
+    rio *rio;
+    robj *key;                     /* Current key we are reading. */
+    int key_type;                  /* Current key type if != -1. */
     unsigned long keys;            /* Number of keys processed. */
     unsigned long expires;         /* Number of keys with an expire. */
     unsigned long already_expired; /* Number of keys already expired. */
-    int           doing;           /* The state while reading the RDB. */
-    int           error_set;       /* True if error is populated. */
-    char          error[1024];
+    int doing;                     /* The state while reading the RDB. */
+    int error_set;                 /* True if error is populated. */
+    char error[1024];
 } rdbstate;
 
 /* At every loading step try to remember what we were about to do, so that
@@ -81,7 +81,7 @@ void rdbShowGenericInfo(void) {
 /* Called on RDB errors. Provides details about the RDB and the offset
  * we were when the error was detected. */
 void rdbCheckError(const char *fmt, ...) {
-    char    msg[1024];
+    char msg[1024];
     va_list ap;
 
     va_start(ap, fmt);
@@ -100,7 +100,7 @@ void rdbCheckError(const char *fmt, ...) {
 
 /* Print information during RDB checking. */
 void rdbCheckInfo(const char *fmt, ...) {
-    char    msg[1024];
+    char msg[1024];
     va_list ap;
 
     va_start(ap, fmt);
@@ -151,12 +151,12 @@ void rdbCheckSetupSignals(void) {
  * The file is specified as a filename in 'rdbfilename' if 'fp' is not NULL,
  * otherwise the already open file 'fp' is checked. */
 int redis_check_rdb(char *rdbfilename, FILE *fp) {
-    uint64_t    dbid;
-    int         selected_dbid = -1;
-    int         type, rdbver;
-    char        buf[1024];
-    long long   expiretime, now = mstime();
-    static rio  rdb; /* Pointed by global struct riostate. */
+    uint64_t dbid;
+    int selected_dbid = -1;
+    int type, rdbver;
+    char buf[1024];
+    long long expiretime, now = mstime();
+    static rio rdb; /* Pointed by global struct riostate. */
     struct stat sb;
 
     int closefile = (fp == NULL);

@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 typedef struct intset {
-    uint32_t encoding;   // 编码方式  INTSET_ENC_INT64、INTSET_ENC_INT32、INTSET_ENC_INT16
-    uint32_t length;     // 集合包含的元素数量
-    int8_t   contents[]; // 保存元素的数组,  实际存储的值可能是int16、int32、int64 ..  但是使用int8存储 ,例如 int16用2个int8存储
+    uint32_t encoding; // 编码方式  INTSET_ENC_INT64、INTSET_ENC_INT32、INTSET_ENC_INT16
+    uint32_t length;   // 集合包含的元素数量
+    int8_t contents[]; // 保存元素的数组,  实际存储的值可能是int16、int32、int64 ..  但是使用int8存储 ,例如 int16用2个int8存储
     // 只支持升级、不支持降级
 } intset;
 

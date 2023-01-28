@@ -42,9 +42,9 @@
 #include <ctype.h>
 
 #ifdef USE_OPENSSL
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <hiredis_ssl.h>
+#    include <openssl/ssl.h>
+#    include <openssl/err.h>
+#    include <hiredis_ssl.h>
 #endif
 
 #define UNUSED(V) ((void)V)
@@ -91,12 +91,12 @@ int cliSecureConnection(redisContext *c, cliSSLconfig config, const char **err) 
             *err = "Error while configuring ciphers";
             goto error;
         }
-#ifdef TLS1_3_VERSION
+#    ifdef TLS1_3_VERSION
         if (config.ciphersuites && !SSL_CTX_set_ciphersuites(ssl_ctx, config.ciphersuites)) {
             *err = "Error while setting cypher suites";
             goto error;
         }
-#endif
+#    endif
     }
 
     SSL *ssl = SSL_new(ssl_ctx);
@@ -204,7 +204,7 @@ int cliSecureInit() {
 /* Create an sds from stdin */
 sds readArgFromStdin(void) {
     char buf[1024];
-    sds  arg = sdsempty();
+    sds arg = sdsempty();
 
     while (1) {
         int nread = read(fileno(stdin), buf, 1024);
@@ -250,9 +250,9 @@ sds *getSdsArrayFromArgv(int argc, char **argv, int quoted) {
 
 /* Unquote a null-terminated string and return it as a binary-safe sds. */
 sds unquoteCString(char *str) {
-    int  count;
+    int count;
     sds *unquoted = sdssplitargs(str, &count);
-    sds  res = NULL;
+    sds res = NULL;
 
     if (unquoted && count == 1) {
         res = unquoted[0];
@@ -272,7 +272,7 @@ sds unquoteCString(char *str) {
 
 static sds percentDecode(const char *pe, size_t len) {
     const char *end = pe + len;
-    sds         ret = sdsempty();
+    sds ret = sdsempty();
     const char *curr = pe;
 
     while (curr < end) {

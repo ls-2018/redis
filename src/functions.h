@@ -82,7 +82,7 @@ typedef struct engine {
 /* Hold information about an engine.
  * Used on rdb.c so it must be declared here. */
 typedef struct engineInfo {
-    sds     name;   /* Name of the engine */
+    sds name;       /* Name of the engine */
     engine *engine; /* engine callbacks that allows to interact with the engine */
     client *c;      /* Client that is used to run commands */
 } engineInfo;
@@ -90,21 +90,21 @@ typedef struct engineInfo {
 /* Hold information about the specific function.
  * Used on rdb.c so it must be declared here. */
 typedef struct functionInfo {
-    sds   name;               /* Function name */
-    void *function;           /* Opaque object that set by the function's engine and allow it
-                                 to run the function, usually it's the function compiled code. */
-    functionLibInfo *li;      /* Pointer to the library created the function */
-    sds              desc;    /* Function description */
-    uint64_t         f_flags; /* Function flags */
+    sds name;            /* Function name */
+    void *function;      /* Opaque object that set by the function's engine and allow it
+                            to run the function, usually it's the function compiled code. */
+    functionLibInfo *li; /* Pointer to the library created the function */
+    sds desc;            /* Function description */
+    uint64_t f_flags;    /* Function flags */
 } functionInfo;
 
 /* Hold information about the specific library.
  * Used on rdb.c so it must be declared here. */
 struct functionLibInfo {
-    sds         name;      /* Library name */
-    dict       *functions; /* Functions dictionary */
-    engineInfo *ei;        /* Pointer to the function engine */
-    sds         code;      /* Library code */
+    sds name;        /* Library name */
+    dict *functions; /* Functions dictionary */
+    engineInfo *ei;  /* Pointer to the function engine */
+    sds code;        /* Library code */
 };
 
 int functionsRegisterEngine(const char *engine_name, engine *engine_ctx);

@@ -38,7 +38,7 @@
  * listpack to a real hash. Note that we only check string encoded objects
  * as their string length can be queried in constant time. */
 void hashTypeTryConversion(robj *o, robj **argv, int start, int end) {
-    int    i;
+    int i;
     size_t sum = 0;
 
     if (o->encoding != OBJ_ENCODING_LISTPACK)
@@ -133,8 +133,8 @@ int hashTypeGetValue(robj *o, sds field, unsigned char **vstr, unsigned int *vle
  * a newly allocated string object with the value is returned. */
 robj *hashTypeGetValueObject(robj *o, sds field) {
     unsigned char *vstr;
-    unsigned int   vlen;
-    long long      vll;
+    unsigned int vlen;
+    long long vll;
 
     if (hashTypeGetValue(o, field, &vstr, &vlen, &vll) == C_ERR)
         return NULL;
@@ -148,10 +148,10 @@ robj *hashTypeGetValueObject(robj *o, sds field) {
  * object associated with the requested field, or 0 if the field does not
  * exist. */
 size_t hashTypeGetValueLength(robj *o, sds field) {
-    size_t         len = 0;
+    size_t len = 0;
     unsigned char *vstr = NULL;
-    unsigned int   vlen = UINT_MAX;
-    long long      vll = LLONG_MAX;
+    unsigned int vlen = UINT_MAX;
+    long long vll = LLONG_MAX;
 
     if (hashTypeGetValue(o, field, &vstr, &vlen, &vll) == C_OK)
         len = vstr ? vlen : sdigits10(vll);
@@ -163,8 +163,8 @@ size_t hashTypeGetValueLength(robj *o, sds field) {
  * exists, and 0 when it doesn't. */
 int hashTypeExists(robj *o, sds field) {
     unsigned char *vstr = NULL;
-    unsigned int   vlen = UINT_MAX;
-    long long      vll = LLONG_MAX;
+    unsigned int vlen = UINT_MAX;
+    long long vll = LLONG_MAX;
 
     return hashTypeGetValue(o, field, &vstr, &vlen, &vll) == C_OK;
 }
@@ -449,8 +449,8 @@ void hashTypeCurrentObject(hashTypeIterator *hi, int what, unsigned char **vstr,
  * SDS string. */
 sds hashTypeCurrentObjectNewSds(hashTypeIterator *hi, int what) {
     unsigned char *vstr;
-    unsigned int   vlen;
-    long long      vll;
+    unsigned int vlen;
+    long long vll;
 
     hashTypeCurrentObject(hi, what, &vstr, &vlen, &vll);
     if (vstr)
@@ -477,8 +477,8 @@ void hashTypeConvertListpack(robj *o, int enc) {
     }
     else if (enc == OBJ_ENCODING_HT) {
         hashTypeIterator *hi;
-        dict             *dict;
-        int               ret;
+        dict *dict;
+        int ret;
 
         hi = hashTypeInitIterator(o);
         dict = dictCreate(&hashDictType);
@@ -528,14 +528,14 @@ void hashTypeConvert(robj *o, int enc) {
  *
  * The resulting object always has refcount set to 1 */
 robj *hashTypeDup(robj *o) {
-    robj             *hobj;
+    robj *hobj;
     hashTypeIterator *hi;
 
     serverAssert(o->type == OBJ_HASH);
 
     if (o->encoding == OBJ_ENCODING_LISTPACK) {
         unsigned char *zl = o->ptr;
-        size_t         sz = lpBytes(zl);
+        size_t sz = lpBytes(zl);
         unsigned char *new_zl = zmalloc(sz);
         memcpy(new_zl, zl, sz);
         hobj = createObject(OBJ_HASH, new_zl);
@@ -589,7 +589,7 @@ void hashReplyFromListpackEntry(client *c, listpackEntry *e) {
 void hashTypeRandomElement(robj *hashobj, unsigned long hashsize, listpackEntry *key, listpackEntry *val) {
     if (hashobj->encoding == OBJ_ENCODING_HT) {
         dictEntry *de = dictGetFairRandomKey(hashobj->ptr);
-        sds        s = dictGetKey(de);
+        sds s = dictGetKey(de);
         key->sval = (unsigned char *)s;
         key->slen = sdslen(s);
         if (val) {
@@ -629,7 +629,7 @@ void hsetnxCommand(client *c) {
 }
 
 void hsetCommand(client *c) {
-    int   i, created = 0;
+    int i, created = 0;
     robj *o;
 
     if ((c->argc % 2) == 1) {
@@ -660,10 +660,10 @@ void hsetCommand(client *c) {
 
 void hincrbyCommand(client *c) {
     long long value, incr, oldvalue;
-    robj     *o;
+    robj *o;
     sds new;
     unsigned char *vstr;
-    unsigned int   vlen;
+    unsigned int vlen;
 
     if (getLongLongFromObjectOrReply(c, c->argv[3], &incr, NULL) != C_OK)
         return;
@@ -697,11 +697,11 @@ void hincrbyCommand(client *c) {
 
 void hincrbyfloatCommand(client *c) {
     long double value, incr;
-    long long   ll;
-    robj       *o;
+    long long ll;
+    robj *o;
     sds new;
     unsigned char *vstr;
-    unsigned int   vlen;
+    unsigned int vlen;
 
     if (getLongDoubleFromObjectOrReply(c, c->argv[3], &incr, NULL) != C_OK)
         return;
@@ -729,7 +729,7 @@ void hincrbyfloatCommand(client *c) {
     }
 
     char buf[MAX_LONG_DOUBLE_CHARS];
-    int  len = ld2string(buf, sizeof(buf), value, LD_STR_HUMAN);
+    int len = ld2string(buf, sizeof(buf), value, LD_STR_HUMAN);
     new = sdsnewlen(buf, len);
     hashTypeSet(o, c->argv[2]->ptr, new, HASH_SET_TAKE_VALUE);
     addReplyBulkCBuffer(c, buf, len);
@@ -754,8 +754,8 @@ static void addHashFieldToReply(client *c, robj *o, sds field) {
     }
 
     unsigned char *vstr = NULL;
-    unsigned int   vlen = UINT_MAX;
-    long long      vll = LLONG_MAX;
+    unsigned int vlen = UINT_MAX;
+    long long vll = LLONG_MAX;
 
     if (hashTypeGetValue(o, field, &vstr, &vlen, &vll) == C_OK) {
         if (vstr) {
@@ -781,7 +781,7 @@ void hgetCommand(client *c) {
 
 void hmgetCommand(client *c) {
     robj *o;
-    int   i;
+    int i;
 
     /* Don't abort when the key cannot be found. Non-existing keys are empty
      * hashes, where HMGET should respond with a series of null bulks. */
@@ -797,7 +797,7 @@ void hmgetCommand(client *c) {
 
 void hdelCommand(client *c) {
     robj *o;
-    int   j, deleted = 0, keyremoved = 0;
+    int j, deleted = 0, keyremoved = 0;
 
     if ((o = lookupKeyWriteOrReply(c, c->argv[1], shared.czero)) == NULL || checkType(c, o, OBJ_HASH))
         return;
@@ -842,8 +842,8 @@ void hstrlenCommand(client *c) {
 static void addHashIteratorCursorToReply(client *c, hashTypeIterator *hi, int what) {
     if (hi->encoding == OBJ_ENCODING_LISTPACK) {
         unsigned char *vstr = NULL;
-        unsigned int   vlen = UINT_MAX;
-        long long      vll = LLONG_MAX;
+        unsigned int vlen = UINT_MAX;
+        long long vll = LLONG_MAX;
 
         hashTypeCurrentFromListpack(hi, what, &vstr, &vlen, &vll);
         if (vstr)
@@ -861,9 +861,9 @@ static void addHashIteratorCursorToReply(client *c, hashTypeIterator *hi, int wh
 }
 
 void genericHgetallCommand(client *c, int flags) {
-    robj             *o;
+    robj *o;
     hashTypeIterator *hi;
-    int               length, count = 0;
+    int length, count = 0;
 
     robj *emptyResp = (flags & OBJ_HASH_KEY && flags & OBJ_HASH_VALUE) ? shared.emptymap[c->resp] : shared.emptyarray;
     if ((o = lookupKeyReadOrReply(c, c->argv[1], emptyResp)) == NULL || checkType(c, o, OBJ_HASH))
@@ -920,7 +920,7 @@ void hexistsCommand(client *c) {
 }
 
 void hscanCommand(client *c) {
-    robj         *o;
+    robj *o;
     unsigned long cursor;
 
     if (parseScanCursorOrReply(c, c->argv[2], &cursor) == C_ERR)
@@ -959,8 +959,8 @@ static void hrandfieldReplyWithListpack(client *c, unsigned int count, listpackE
 
 void hrandfieldWithCountCommand(client *c, long l, int withvalues) {
     unsigned long count, size;
-    int           uniq = 1;
-    robj         *hash;
+    int uniq = 1;
+    robj *hash;
 
     if ((hash = lookupKeyReadOrReply(c, c->argv[1], shared.emptyarray)) == NULL || checkType(c, hash, OBJ_HASH))
         return;
@@ -1005,7 +1005,7 @@ void hrandfieldWithCountCommand(client *c, long l, int withvalues) {
         }
         else if (hash->encoding == OBJ_ENCODING_LISTPACK) {
             listpackEntry *keys, *vals = NULL;
-            unsigned long  limit, sample_count;
+            unsigned long limit, sample_count;
 
             limit = count > HRANDFIELD_RANDOM_SAMPLE_LIMIT ? HRANDFIELD_RANDOM_SAMPLE_LIMIT : count;
             keys = zmalloc(sizeof(listpackEntry) * limit);
@@ -1088,7 +1088,7 @@ void hrandfieldWithCountCommand(client *c, long l, int withvalues) {
 
         /* Reply with what's in the dict and release memory */
         dictIterator *di;
-        dictEntry    *de;
+        dictEntry *de;
         di = dictGetIterator(d);
         while ((de = dictNext(di)) != NULL) {
             sds key = dictGetKey(de);
@@ -1126,7 +1126,7 @@ void hrandfieldWithCountCommand(client *c, long l, int withvalues) {
         /* Hashtable encoding (generic implementation) */
         unsigned long added = 0;
         listpackEntry key, value;
-        dict         *d = dictCreate(&hashDictType);
+        dict *d = dictCreate(&hashDictType);
         dictExpand(d, count);
         while (added < count) {
             hashTypeRandomElement(hash, size, &key, withvalues ? &value : NULL);
@@ -1156,9 +1156,9 @@ void hrandfieldWithCountCommand(client *c, long l, int withvalues) {
 
 /* HRANDFIELD key [<count> [WITHVALUES]] */
 void hrandfieldCommand(client *c) {
-    long          l;
-    int           withvalues = 0;
-    robj         *hash;
+    long l;
+    int withvalues = 0;
+    robj *hash;
     listpackEntry ele;
 
     if (c->argc >= 3) {

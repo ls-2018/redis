@@ -13,7 +13,7 @@
 
 int main(int argc, char **argv) {
     struct stat stat;
-    int         fd, cycles;
+    int fd, cycles;
 
     if (argc != 3) {
         fprintf(stderr, "Usage: <filename> <cycles>\n");
@@ -33,8 +33,8 @@ int main(int argc, char **argv) {
     while (cycles--) {
         unsigned char buf[32];
         unsigned long offset = rand() % stat.st_size;
-        int           writelen = 1 + rand() % 31;
-        int           j;
+        int writelen = 1 + rand() % 31;
+        int j;
 
         for (j = 0; j < writelen; j++) buf[j] = (char)rand();
         lseek(fd, offset, SEEK_SET);

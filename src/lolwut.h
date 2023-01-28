@@ -39,8 +39,8 @@
 #define __LOLWUT_H
 
 typedef struct lwCanvas {
-    int   width;
-    int   height;
+    int width;
+    int height;
     char *pixels;
 } lwCanvas;
 

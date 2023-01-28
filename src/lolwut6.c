@@ -48,7 +48,7 @@ static sds renderCanvas(lwCanvas *canvas) {
     sds text = sdsempty();
     for (int y = 0; y < canvas->height; y++) {
         for (int x = 0; x < canvas->width; x++) {
-            int   color = lwGetPixel(canvas, x, y);
+            int color = lwGetPixel(canvas, x, y);
             char *ce; /* Color escape sequence. */
 
             /* Note that we set both the foreground and background color.

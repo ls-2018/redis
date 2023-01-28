@@ -43,17 +43,17 @@
 
 // 创建慢日志
 slowlogEntry *slowlogCreateEntry(client *c, robj **argv, int argc, long long duration) {
-    slowlogEntry *se = zmalloc(sizeof(*se)); //分配日志项空间
-    int           j, slargc = argc;          //待记录的参数个数,默认为当前命令的参数个数
+    slowlogEntry *se = zmalloc(sizeof(*se)); // 分配日志项空间
+    int j, slargc = argc;                    // 待记录的参数个数,默认为当前命令的参数个数
 
-    //如果当前命令参数个数超出阈值,则只记录阈值个数的参数
+    // 如果当前命令参数个数超出阈值,则只记录阈值个数的参数
     if (slargc > SLOWLOG_ENTRY_MAX_ARGC) {
         slargc = SLOWLOG_ENTRY_MAX_ARGC;
     }
     se->argc = slargc;
     se->argv = zmalloc(sizeof(robj *) * slargc);
-    for (j = 0; j < slargc; j++) { //逐一记录命令及参数
-        //如果命令参数个数超出阈值,使用最后一个参数记录当前命令实际剩余的参数个数
+    for (j = 0; j < slargc; j++) { // 逐一记录命令及参数
+        // 如果命令参数个数超出阈值,使用最后一个参数记录当前命令实际剩余的参数个数
         if (slargc != argc && j == slargc - 1) {
             se->argv[j] = createObject(OBJ_STRING, sdscatprintf(sdsempty(), "... (%d more arguments)", argc - slargc + 1));
         }
@@ -69,12 +69,12 @@ slowlogEntry *slowlogCreateEntry(client *c, robj **argv, int argc, long long dur
                 se->argv[j] = argv[j];
             }
             else {
-                //将命令参数填充到日志项中
+                // 将命令参数填充到日志项中
                 se->argv[j] = dupStringObject(argv[j]);
             }
         }
     }
-    //将命令执行时长、客户端地址等信息填充到日志项中
+    // 将命令执行时长、客户端地址等信息填充到日志项中
     se->time = time(NULL);
     se->duration = duration;
     se->id = server.slowlog_entry_id++;
@@ -86,7 +86,7 @@ slowlogEntry *slowlogCreateEntry(client *c, robj **argv, int argc, long long dur
 /* 释放慢速日志条目.参数为void,因此该函数的原型与adlist.c中的'free'方法匹配.这个函数将负责释放所有被保留的对象. */
 void slowlogFreeEntry(void *septr) {
     slowlogEntry *se = septr;
-    int           j;
+    int j;
 
     for (j = 0; j < se->argc; j++) {
         decrRefCount(se->argv[j]);
@@ -138,10 +138,10 @@ void slowlogCommand(client *c) {
         addReplyLongLong(c, listLength(server.slowlog));
     }
     else if ((c->argc == 2 || c->argc == 3) && !strcasecmp(c->argv[1]->ptr, "get")) {
-        long          count = 10, sent = 0;
-        listIter      li;
-        void         *totentries;
-        listNode     *ln;
+        long count = 10, sent = 0;
+        listIter li;
+        void *totentries;
+        listNode *ln;
         slowlogEntry *se;
 
         if (c->argc == 3) {

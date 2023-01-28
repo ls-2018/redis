@@ -10,7 +10,7 @@
 #include <assert.h>
 
 #ifdef __linux__
-#include <sys/mman.h>
+#    include <sys/mman.h>
 #endif
 
 /* This function provide us access to the original libc free(). This is useful
@@ -27,15 +27,15 @@ void zlibc_free(void *ptr) {
 #include "atomicvar.h"
 
 #ifdef HAVE_MALLOC_SIZE
-#define PREFIX_SIZE (0)
-#define ASSERT_NO_SIZE_OVERFLOW(sz)
+#    define PREFIX_SIZE (0)
+#    define ASSERT_NO_SIZE_OVERFLOW(sz)
 #else
-#if defined(__sun) || defined(__sparc) || defined(__sparc__)
-#define PREFIX_SIZE (sizeof(long long))
-#else
-#define PREFIX_SIZE (sizeof(size_t))
-#endif
-#define ASSERT_NO_SIZE_OVERFLOW(sz) assert((sz) + PREFIX_SIZE > (sz))
+#    if defined(__sun) || defined(__sparc) || defined(__sparc__)
+#        define PREFIX_SIZE (sizeof(long long))
+#    else
+#        define PREFIX_SIZE (sizeof(size_t))
+#    endif
+#    define ASSERT_NO_SIZE_OVERFLOW(sz) assert((sz) + PREFIX_SIZE > (sz))
 #endif
 
 /* When using the libc allocator, use a minimum allocation size to match the
@@ -45,17 +45,17 @@ void zlibc_free(void *ptr) {
 
 /* Explicitly override malloc/free etc when using tcmalloc. */
 #if defined(USE_TCMALLOC)
-#define malloc(size) tc_malloc(size)
-#define calloc(count, size) tc_calloc(count, size)
-#define realloc(ptr, size) tc_realloc(ptr, size)
-#define free(ptr) tc_free(ptr)
+#    define malloc(size) tc_malloc(size)
+#    define calloc(count, size) tc_calloc(count, size)
+#    define realloc(ptr, size) tc_realloc(ptr, size)
+#    define free(ptr) tc_free(ptr)
 #elif defined(USE_JEMALLOC)
-#define malloc(size) je_malloc(size)
-#define calloc(count, size) je_calloc(count, size)
-#define realloc(ptr, size) je_realloc(ptr, size)
-#define free(ptr) je_free(ptr)
-#define mallocx(size, flags) je_mallocx(size, flags)
-#define dallocx(ptr, flags) je_dallocx(ptr, flags)
+#    define malloc(size) je_malloc(size)
+#    define calloc(count, size) je_calloc(count, size)
+#    define realloc(ptr, size) je_realloc(ptr, size)
+#    define free(ptr) je_free(ptr)
+#    define mallocx(size, flags) je_mallocx(size, flags)
+#    define dallocx(ptr, flags) je_dallocx(ptr, flags)
 #endif
 
 #define update_zmalloc_stat_alloc(__n) atomicIncr(used_memory, (__n))
@@ -96,7 +96,7 @@ void *ztrymalloc_usable(size_t size, size_t *usable) {
 #endif
 }
 
-//分配内存或panic.
+// 分配内存或panic.
 void *zmalloc(size_t size) {
     void *ptr = ztrymalloc_usable(size, NULL);
     if (!ptr)
@@ -104,13 +104,13 @@ void *zmalloc(size_t size) {
     return ptr;
 }
 
-//尝试分配内存,失败返回null
+// 尝试分配内存,失败返回null
 void *ztrymalloc(size_t size) {
     void *ptr = ztrymalloc_usable(size, NULL);
     return ptr;
 }
 
-//分配内存或panic.
+// 分配内存或panic.
 void *zmalloc_usable(size_t size, size_t *usable) {
     void *ptr = ztrymalloc_usable(size, usable);
     if (!ptr)
@@ -208,7 +208,7 @@ void *ztryrealloc_usable(void *ptr, size_t size, size_t *usable) {
     void *realptr;
 #endif
     size_t oldsize;
-    void  *newptr;
+    void *newptr;
 
     /* not allocating anything, just redirect to free. */
     if (size == 0 && ptr != NULL) {
@@ -284,7 +284,7 @@ void *zrealloc_usable(void *ptr, size_t size, size_t *usable) {
 #ifndef HAVE_MALLOC_SIZE
 
 size_t zmalloc_size(void *ptr) {
-    void  *realptr = (char *)ptr - PREFIX_SIZE;
+    void *realptr = (char *)ptr - PREFIX_SIZE;
     size_t size = *((size_t *)realptr);
     return size + PREFIX_SIZE;
 }
@@ -297,7 +297,7 @@ size_t zmalloc_usable_size(void *ptr) {
 
 void zfree(void *ptr) {
 #ifndef HAVE_MALLOC_SIZE
-    void  *realptr;
+    void *realptr;
     size_t oldsize;
 #endif
 
@@ -317,7 +317,7 @@ void zfree(void *ptr) {
 /* Similar to zfree, '*usable' is set to the usable size being freed. */
 void zfree_usable(void *ptr, size_t *usable) {
 #ifndef HAVE_MALLOC_SIZE
-    void  *realptr;
+    void *realptr;
     size_t oldsize;
 #endif
 
@@ -338,7 +338,7 @@ void zfree_usable(void *ptr, size_t *usable) {
 // CPU一次性 能读取数据的二进制位数称为字长,也就是我们通常所说的32位系统(字长4个字节)、64位系统(字长8个字节)的由来
 char *zstrdup(const char *s) {
     size_t l = strlen(s) + 1;
-    char  *p = zmalloc(l);
+    char *p = zmalloc(l);
     memcpy(p, s, l);
     return p;
 }
@@ -392,17 +392,17 @@ void zmadvise_dontneed(void *ptr) {
  * version of the function. */
 
 #if defined(HAVE_PROC_STAT)
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#    include <sys/types.h>
+#    include <sys/stat.h>
+#    include <fcntl.h>
 
 size_t zmalloc_get_rss(void) {
-    int    page = sysconf(_SC_PAGESIZE);
+    int page = sysconf(_SC_PAGESIZE);
     size_t rss;
-    char   buf[4096];
-    char   filename[256];
-    int    fd, count;
-    char  *p, *x;
+    char buf[4096];
+    char filename[256];
+    int fd, count;
+    char *p, *x;
 
     snprintf(filename, 256, "/proc/%ld/stat", (long)getpid());
     if ((fd = open(filename, O_RDONLY)) == -1)
@@ -433,10 +433,10 @@ size_t zmalloc_get_rss(void) {
 }
 #elif defined(HAVE_TASKINFO)
 
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <mach/task.h>
-#include <mach/mach_init.h>
+#    include <sys/types.h>
+#    include <sys/sysctl.h>
+#    include <mach/task.h>
+#    include <mach/mach_init.h>
 
 size_t zmalloc_get_rss(void) {
     task_t task = MACH_PORT_NULL;
@@ -451,42 +451,42 @@ size_t zmalloc_get_rss(void) {
 }
 
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <sys/user.h>
+#    include <sys/types.h>
+#    include <sys/sysctl.h>
+#    include <sys/user.h>
 
 size_t zmalloc_get_rss(void) {
     struct kinfo_proc info;
-    size_t            infolen = sizeof(info);
-    int               mib[4];
+    size_t infolen = sizeof(info);
+    int mib[4];
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
     mib[3] = getpid();
 
     if (sysctl(mib, 4, &info, &infolen, NULL, 0) == 0)
-#if defined(__FreeBSD__)
+#    if defined(__FreeBSD__)
         return (size_t)info.ki_rssize * getpagesize();
-#else
+#    else
         return (size_t)info.kp_vm_rssize * getpagesize();
-#endif
+#    endif
 
     return 0L;
 }
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-#include <sys/types.h>
-#include <sys/sysctl.h>
+#    include <sys/types.h>
+#    include <sys/sysctl.h>
 
-#if defined(__OpenBSD__)
-#define kinfo_proc2 kinfo_proc
-#define KERN_PROC2 KERN_PROC
-#define __arraycount(a) (sizeof(a) / sizeof(a[0]))
-#endif
+#    if defined(__OpenBSD__)
+#        define kinfo_proc2 kinfo_proc
+#        define KERN_PROC2 KERN_PROC
+#        define __arraycount(a) (sizeof(a) / sizeof(a[0]))
+#    endif
 
 size_t zmalloc_get_rss(void) {
     struct kinfo_proc2 info;
-    size_t             infolen = sizeof(info);
-    int                mib[6];
+    size_t infolen = sizeof(info);
+    int mib[6];
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC2;
     mib[2] = KERN_PROC_PID;
@@ -499,14 +499,14 @@ size_t zmalloc_get_rss(void) {
     return 0L;
 }
 #elif defined(HAVE_PSINFO)
-#include <unistd.h>
-#include <sys/procfs.h>
-#include <fcntl.h>
+#    include <unistd.h>
+#    include <sys/procfs.h>
+#    include <fcntl.h>
 
 size_t zmalloc_get_rss(void) {
     struct prpsinfo info;
-    char            filename[256];
-    int             fd;
+    char filename[256];
+    int fd;
 
     snprintf(filename, 256, "/proc/%ld/psinfo", (long)getpid());
 
@@ -537,7 +537,7 @@ size_t zmalloc_get_rss(void) {
 
 int zmalloc_get_allocator_info(size_t *allocated, size_t *active, size_t *resident) {
     uint64_t epoch = 1;
-    size_t   sz;
+    size_t sz;
     *allocated = *resident = *active = 0;
     /* Update the statistics cached by mallctl. */
     sz = sizeof(epoch);
@@ -564,9 +564,9 @@ void set_jemalloc_bg_thread(int enable) {
 
 int jemalloc_purge() {
     /* return all unused (reserved) pages to the OS */
-    char     tmp[32];
+    char tmp[32];
     unsigned narenas = 0;
-    size_t   sz = sizeof(unsigned);
+    size_t sz = sizeof(unsigned);
     if (!je_mallctl("arenas.narenas", &narenas, &sz, NULL, 0)) {
         sprintf(tmp, "arena.%d.purge", narenas);
         if (!je_mallctl(tmp, NULL, 0, NULL, 0))
@@ -597,7 +597,7 @@ int jemalloc_purge() {
  * Note that this file cannot be included in zmalloc.h because it includes
  * a Darwin queue.h file where there is a "LIST_HEAD" macro (!) defined
  * conficting with Redis user code. */
-#include <libproc.h>
+#    include <libproc.h>
 
 #endif
 
@@ -613,10 +613,10 @@ int jemalloc_purge() {
  */
 #if defined(HAVE_PROC_SMAPS)
 size_t zmalloc_get_smap_bytes_by_field(char *field, long pid) {
-    char   line[1024];
+    char line[1024];
     size_t bytes = 0;
-    int    flen = strlen(field);
-    FILE  *fp;
+    int flen = strlen(field);
+    FILE *fp;
 
     if (pid == -1) {
         fp = fopen("/proc/self/smaps", "r");
@@ -651,7 +651,7 @@ size_t zmalloc_get_smap_bytes_by_field(char *field, long pid) {
  * is not supported in this platform
  */
 size_t zmalloc_get_smap_bytes_by_field(char *field, long pid) {
-#if defined(__APPLE__)
+#    if defined(__APPLE__)
     struct proc_regioninfo pri;
     if (pid == -1)
         pid = getpid();
@@ -668,7 +668,7 @@ size_t zmalloc_get_smap_bytes_by_field(char *field, long pid) {
         }
     }
     return 0;
-#endif
+#    endif
     ((void)field);
     ((void)pid);
     return 0;
@@ -700,48 +700,48 @@ size_t zmalloc_get_private_dirty(long pid) {
  */
 size_t zmalloc_get_memory_size(void) {
 #if defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
-#if defined(CTL_HW) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM64))
+#    if defined(CTL_HW) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM64))
     int mib[2];
     mib[0] = CTL_HW;
-#if defined(HW_MEMSIZE)
+#        if defined(HW_MEMSIZE)
     mib[1] = HW_MEMSIZE; /* OSX. --------------------- */
-#elif defined(HW_PHYSMEM64)
+#        elif defined(HW_PHYSMEM64)
     mib[1] = HW_PHYSMEM64; /* NetBSD, OpenBSD. --------- */
-#endif
+#        endif
     int64_t size = 0; /* 64-bit */
-    size_t  len = sizeof(size);
+    size_t len = sizeof(size);
     if (sysctl(mib, 2, &size, &len, NULL, 0) == 0)
         return (size_t)size;
     return 0L; /* Failed? */
 
-#elif defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE)
+#    elif defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE)
     /* FreeBSD, Linux, OpenBSD, and Solaris. -------------------- */
     return (size_t)sysconf(_SC_PHYS_PAGES) * (size_t)sysconf(_SC_PAGESIZE);
 
-#elif defined(CTL_HW) && (defined(HW_PHYSMEM) || defined(HW_REALMEM))
+#    elif defined(CTL_HW) && (defined(HW_PHYSMEM) || defined(HW_REALMEM))
     /* DragonFly BSD, FreeBSD, NetBSD, OpenBSD, and OSX. -------- */
     int mib[2];
     mib[0] = CTL_HW;
-#if defined(HW_REALMEM)
+#        if defined(HW_REALMEM)
     mib[1] = HW_REALMEM;   /* FreeBSD. ----------------- */
-#elif defined(HW_PHYSMEM)
+#        elif defined(HW_PHYSMEM)
     mib[1] = HW_PHYSMEM; /* Others. ------------------ */
-#endif
+#        endif
     unsigned int size = 0; /* 32-bit */
-    size_t       len = sizeof(size);
+    size_t len = sizeof(size);
     if (sysctl(mib, 2, &size, &len, NULL, 0) == 0)
         return (size_t)size;
     return 0L; /* Failed? */
-#else
+#    else
     return 0L; /* Unknown method to get the data. */
-#endif
+#    endif
 #else
     return 0L; /* Unknown OS. */
 #endif
 }
 
 #ifdef REDIS_TEST
-#define UNUSED(x) ((void)(x))
+#    define UNUSED(x) ((void)(x))
 int zmalloc_test(int argc, char **argv, int flags) {
     void *ptr;
 

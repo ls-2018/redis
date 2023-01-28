@@ -33,14 +33,14 @@
 /* A sequence is represented of many "samples" */
 struct sample {
     double value;
-    char  *label;
+    char *label;
 };
 
 struct sequence {
-    int            length;
-    int            labels;
+    int length;
+    int labels;
     struct sample *samples;
-    double         min, max;
+    double min, max;
 };
 
 #define SPARKLINE_NO_FLAGS 0

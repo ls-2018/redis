@@ -180,7 +180,7 @@
  */
 
 struct hllhdr {
-    char    magic[4];    /* "HYLL" */
+    char magic[4];       /* "HYLL" */
     uint8_t encoding;    /* HLL_DENSE or HLL_SPARSE. */
     uint8_t notused[3];  /* Reserved for future use, must be zero. */
     uint8_t card[8];     /* Cached cardinality, little endian. */
@@ -339,7 +339,7 @@ static char *invalid_hll_err = "-INVALIDOBJ Corrupted HLL object detected";
  * 'p' is an array of unsigned bytes. */
 #define HLL_DENSE_GET_REGISTER(target, p, regnum)                 \
     do {                                                          \
-        uint8_t      *_p = (uint8_t *)p;                          \
+        uint8_t *_p = (uint8_t *)p;                               \
         unsigned long _byte = regnum * HLL_BITS / 8;              \
         unsigned long _fb = regnum * HLL_BITS & 7;                \
         unsigned long _fb8 = 8 - _fb;                             \
@@ -352,7 +352,7 @@ static char *invalid_hll_err = "-INVALIDOBJ Corrupted HLL object detected";
  * 'p' is an array of unsigned bytes. */
 #define HLL_DENSE_SET_REGISTER(p, regnum, val)        \
     do {                                              \
-        uint8_t      *_p = (uint8_t *)p;              \
+        uint8_t *_p = (uint8_t *)p;                   \
         unsigned long _byte = regnum * HLL_BITS / 8;  \
         unsigned long _fb = regnum * HLL_BITS & 7;    \
         unsigned long _fb8 = 8 - _fb;                 \
@@ -403,8 +403,8 @@ REDIS_NO_SANITIZE("alignment")
 
 uint64_t MurmurHash64A(const void *key, int len, unsigned int seed) {
     const uint64_t m = 0xc6a4a7935bd1e995;
-    const int      r = 47;
-    uint64_t       h = seed ^ (len * m);
+    const int r = 47;
+    uint64_t h = seed ^ (len * m);
     const uint8_t *data = (const uint8_t *)key;
     const uint8_t *end = data + (len - (len & 7));
 
@@ -412,11 +412,11 @@ uint64_t MurmurHash64A(const void *key, int len, unsigned int seed) {
         uint64_t k;
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-#ifdef USE_ALIGNED_ACCESS
+#    ifdef USE_ALIGNED_ACCESS
         memcpy(&k, data, sizeof(uint64_t));
-#else
+#    else
         k = *((uint64_t *)data);
-#endif
+#    endif
 #else
         k = (uint64_t)data[0];
         k |= (uint64_t)data[1] << 8;
@@ -465,7 +465,7 @@ uint64_t MurmurHash64A(const void *key, int len, unsigned int seed) {
  * set to the register index this element hashes to. */
 int hllPatLen(unsigned char *ele, size_t elesize, long *regp) {
     uint64_t hash, bit, index;
-    int      count;
+    int count;
 
     /* Count the number of zeroes starting from bit HLL_REGISTERS
      * (that is a power of two corresponding to the first bit we don't use
@@ -525,7 +525,7 @@ int hllDenseSet(uint8_t *registers, long index, uint8_t count) {
  * This is just a wrapper to hllDenseSet(), performing the hashing of the
  * element in order to retrieve the index and zero-run count. */
 int hllDenseAdd(uint8_t *registers, unsigned char *ele, size_t elesize) {
-    long    index;
+    long index;
     uint8_t count = hllPatLen(ele, elesize, &index);
     /* Update the register if this element produced a longer run of zeroes. */
     return hllDenseSet(registers, index, count);
@@ -539,7 +539,7 @@ void hllDenseRegHisto(uint8_t *registers, int *reghisto) {
      * with other values by modifying the defines, but for our target value
      * we take a faster path with unrolled loops. */
     if (HLL_REGISTERS == 16384 && HLL_BITS == 6) {
-        uint8_t      *r = registers;
+        uint8_t *r = registers;
         unsigned long r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
         for (j = 0; j < 1024; j++) {
             /* Handle 16 registers per iteration. */
@@ -598,10 +598,10 @@ void hllDenseRegHisto(uint8_t *registers, int *reghisto) {
  * The function returns C_OK if the sparse representation was valid,
  * otherwise C_ERR is returned if the representation was corrupted. */
 int hllSparseToDense(robj *o) {
-    sds            sparse = o->ptr, dense;
+    sds sparse = o->ptr, dense;
     struct hllhdr *hdr, *oldhdr = (struct hllhdr *)sparse;
-    int            idx = 0, runlen, regval;
-    uint8_t       *p = (uint8_t *)sparse, *end = p + sdslen(sparse);
+    int idx = 0, runlen, regval;
+    uint8_t *p = (uint8_t *)sparse, *end = p + sdslen(sparse);
 
     /* If the representation is already the right one return ASAP. */
     hdr = (struct hllhdr *)sparse;
@@ -673,9 +673,9 @@ int hllSparseToDense(robj *o) {
  * size would be greater than server.hll_sparse_max_bytes. */
 int hllSparseSet(robj *o, long index, uint8_t count) {
     struct hllhdr *hdr;
-    uint8_t        oldcount, *sparse, *end, *p, *prev, *next;
-    long           first, span;
-    long           is_zero = 0, is_xzero = 0, is_val = 0, runlen = 0;
+    uint8_t oldcount, *sparse, *end, *p, *prev, *next;
+    long first, span;
+    long is_zero = 0, is_xzero = 0, is_val = 0, runlen = 0;
 
     /* If the count is too big to be representable by the sparse representation
      * switch to dense representation. */
@@ -804,8 +804,8 @@ int hllSparseSet(robj *o, long index, uint8_t count) {
      * of the old one, possibly moving what is on the right a few bytes
      * if the new sequence is longer than the older one. */
     uint8_t seq[5], *n = seq;
-    int     last = first + span - 1; /* Last register covered by the sequence. */
-    int     len;
+    int last = first + span - 1; /* Last register covered by the sequence. */
+    int len;
 
     if (is_zero || is_xzero) {
         /* Handle splitting of ZERO / XZERO. */
@@ -936,7 +936,7 @@ promote: /* Promote to dense representation. */
  * This function is actually a wrapper for hllSparseSet(), it only performs
  * the hashing of the element to obtain the index and zeros run length. */
 int hllSparseAdd(robj *o, unsigned char *ele, size_t elesize) {
-    long    index;
+    long index;
     uint8_t count = hllPatLen(ele, elesize, &index);
     /* Update the register if this element produced a longer run of zeroes. */
     return hllSparseSet(o, index, count);
@@ -944,7 +944,7 @@ int hllSparseAdd(robj *o, unsigned char *ele, size_t elesize) {
 
 /* Compute the register histogram in the sparse representation. */
 void hllSparseRegHisto(uint8_t *sparse, int sparselen, int *invalid, int *reghisto) {
-    int      idx = 0, runlen, regval;
+    int idx = 0, runlen, regval;
     uint8_t *end = sparse + sparselen, *p = sparse;
 
     while (p < end) {
@@ -982,8 +982,8 @@ void hllSparseRegHisto(uint8_t *sparse, int sparselen, int *invalid, int *reghis
  * which is only used internally as speedup for PFCOUNT with multiple keys. */
 void hllRawRegHisto(uint8_t *registers, int *reghisto) {
     uint64_t *word = (uint64_t *)registers;
-    uint8_t  *bytes;
-    int       j;
+    uint8_t *bytes;
+    int j;
 
     for (j = 0; j < HLL_REGISTERS / 8; j++) {
         if (*word == 0) {
@@ -1054,7 +1054,7 @@ double hllTau(double x) {
 uint64_t hllCount(struct hllhdr *hdr, int *invalid) {
     double m = HLL_REGISTERS;
     double E;
-    int    j;
+    int j;
     /* Note that reghisto size could be just HLL_Q+2, because HLL_Q+1 is
      * the maximum frequency of the "000...1" sequence the hash function is
      * able to return. However it is slow to check for sanity of the
@@ -1113,7 +1113,7 @@ int hllAdd(robj *o, unsigned char *ele, size_t elesize) {
  * is returned, otherwise the function always succeeds. */
 int hllMerge(uint8_t *max, robj *hll) {
     struct hllhdr *hdr = hll->ptr;
-    int            i;
+    int i;
 
     if (hdr->encoding == HLL_DENSE) {
         uint8_t val;
@@ -1126,7 +1126,7 @@ int hllMerge(uint8_t *max, robj *hll) {
     }
     else {
         uint8_t *p = hll->ptr, *end = p + sdslen(hll->ptr);
-        long     runlen, regval;
+        long runlen, regval;
 
         p += HLL_HDR_SIZE;
         i = 0;
@@ -1165,12 +1165,12 @@ int hllMerge(uint8_t *max, robj *hll) {
 /* Create an HLL object. We always create the HLL using sparse encoding.
  * This will be upgraded to the dense representation as needed. */
 robj *createHLLObject(void) {
-    robj          *o;
+    robj *o;
     struct hllhdr *hdr;
-    sds            s;
-    uint8_t       *p;
-    int            sparselen = HLL_HDR_SIZE + (((HLL_REGISTERS + (HLL_SPARSE_XZERO_MAX_LEN - 1)) / HLL_SPARSE_XZERO_MAX_LEN) * 2);
-    int            aux;
+    sds s;
+    uint8_t *p;
+    int sparselen = HLL_HDR_SIZE + (((HLL_REGISTERS + (HLL_SPARSE_XZERO_MAX_LEN - 1)) / HLL_SPARSE_XZERO_MAX_LEN) * 2);
+    int aux;
 
     /* Populate the sparse representation with as many XZERO opcodes as
      * needed to represent all the registers. */
@@ -1235,9 +1235,9 @@ invalid:
 
 /* PFADD var ele ele ele ... ele => :0 or :1 */
 void pfaddCommand(client *c) {
-    robj          *o = lookupKeyWrite(c->db, c->argv[1]);
+    robj *o = lookupKeyWrite(c->db, c->argv[1]);
     struct hllhdr *hdr;
-    int            updated = 0, j;
+    int updated = 0, j;
 
     if (o == NULL) {
         /* Create the key with a string value of the exact length to
@@ -1276,9 +1276,9 @@ void pfaddCommand(client *c) {
 
 /* PFCOUNT var -> approximated cardinality of set. */
 void pfcountCommand(client *c) {
-    robj          *o;
+    robj *o;
     struct hllhdr *hdr;
-    uint64_t       card;
+    uint64_t card;
 
     /* Case 1: multi-key keys, cardinality of the union.
      *
@@ -1286,7 +1286,7 @@ void pfcountCommand(client *c) {
      * the cardinality of the merge of the N HLLs specified. */
     if (c->argc > 2) {
         uint8_t max[HLL_HDR_SIZE + HLL_REGISTERS], *registers;
-        int     j;
+        int j;
 
         /* Compute an HLL with M[i] = MAX(M[i]_j). */
         memset(max, 0, sizeof(max));
@@ -1377,10 +1377,10 @@ void pfcountCommand(client *c) {
 
 /* PFMERGE dest src1 src2 src3 ... srcN => OK */
 void pfmergeCommand(client *c) {
-    uint8_t        max[HLL_REGISTERS];
+    uint8_t max[HLL_REGISTERS];
     struct hllhdr *hdr;
-    int            j;
-    int            use_dense = 0; /* Use dense representation as target? */
+    int j;
+    int use_dense = 0; /* Use dense representation as target? */
 
     /* Compute an HLL with M[i] = MAX(M[i]_j).
      * We store the maximum into the max array of registers. We'll write
@@ -1466,11 +1466,11 @@ void pfmergeCommand(client *c) {
 #define HLL_TEST_CYCLES 1000
 
 void pfselftestCommand(client *c) {
-    unsigned int   j, i;
-    sds            bitcounters = sdsnewlen(NULL, HLL_DENSE_SIZE);
+    unsigned int j, i;
+    sds bitcounters = sdsnewlen(NULL, HLL_DENSE_SIZE);
     struct hllhdr *hdr = (struct hllhdr *)bitcounters, *hdr2;
-    robj          *o = NULL;
-    uint8_t        bytecounters[HLL_REGISTERS];
+    robj *o = NULL;
+    uint8_t bytecounters[HLL_REGISTERS];
 
     /* Test 1: access registers.
      * The test is conceived to test that the different counters of our data
@@ -1509,8 +1509,8 @@ void pfselftestCommand(client *c) {
      * time also verifying that the computed cardinality is the same. */
     memset(hdr->registers, 0, HLL_DENSE_SIZE - HLL_HDR_SIZE);
     o = createHLLObject();
-    double   relerr = 1.04 / sqrt(HLL_REGISTERS);
-    int64_t  checkpoint = 1;
+    double relerr = 1.04 / sqrt(HLL_REGISTERS);
+    int64_t checkpoint = 1;
     uint64_t seed = (uint64_t)rand() | (uint64_t)rand() << 32;
     uint64_t ele;
     for (j = 1; j <= 10000000; j++) {
@@ -1536,7 +1536,7 @@ void pfselftestCommand(client *c) {
 
         /* Check error. */
         if (j == checkpoint) {
-            int64_t  abserr = checkpoint - (int64_t)hllCount(hdr, NULL);
+            int64_t abserr = checkpoint - (int64_t)hllCount(hdr, NULL);
             uint64_t maxerr = ceil(relerr * 6 * checkpoint);
 
             /* Adjust the max error we expect for cardinality 10
@@ -1568,10 +1568,10 @@ cleanup:
 /* PFDEBUG <subcommand> <key> ... args ...
  * Different debugging related operations about the HLL implementation. */
 void pfdebugCommand(client *c) {
-    char          *cmd = c->argv[1]->ptr;
+    char *cmd = c->argv[1]->ptr;
     struct hllhdr *hdr;
-    robj          *o;
-    int            j;
+    robj *o;
+    int j;
 
     o = lookupKeyWrite(c->db, c->argv[2]);
     if (o == NULL) {
@@ -1611,7 +1611,7 @@ void pfdebugCommand(client *c) {
             goto arityerr;
 
         uint8_t *p = o->ptr, *end = p + sdslen(o->ptr);
-        sds      decoded = sdsempty();
+        sds decoded = sdsempty();
 
         if (hdr->encoding != HLL_SPARSE) {
             sdsfree(decoded);

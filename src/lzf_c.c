@@ -45,15 +45,15 @@
  * it works ;)
  */
 #ifndef FRST
-#define FRST(p) (((p[0]) << 8) | p[1])
-#define NEXT(v, p) (((v) << 8) | p[2])
-#if ULTRA_FAST
-#define IDX(h) (((h >> (3 * 8 - HLOG)) - h) & (HSIZE - 1))
-#elif VERY_FAST
-#define IDX(h) (((h >> (3 * 8 - HLOG)) - h * 5) & (HSIZE - 1))
-#else
-#define IDX(h) ((((h ^ (h << 5)) >> (3 * 8 - HLOG)) - h * 5) & (HSIZE - 1))
-#endif
+#    define FRST(p) (((p[0]) << 8) | p[1])
+#    define NEXT(v, p) (((v) << 8) | p[2])
+#    if ULTRA_FAST
+#        define IDX(h) (((h >> (3 * 8 - HLOG)) - h) & (HSIZE - 1))
+#    elif VERY_FAST
+#        define IDX(h) (((h >> (3 * 8 - HLOG)) - h * 5) & (HSIZE - 1))
+#    else
+#        define IDX(h) ((((h ^ (h << 5)) >> (3 * 8 - HLOG)) - h * 5) & (HSIZE - 1))
+#    endif
 #endif
 /*
  * IDX works because it is very similar to a multiplicative hash, e.g.
@@ -66,9 +66,9 @@
 
 #if 0
 /* original lzv-like hash function, much worse and thus slower */
-#define FRST(p) (p[0] << 5) ^ p[1]
-#define NEXT(v, p) ((v) << 5) ^ p[2]
-#define IDX(h) ((h) & (HSIZE - 1))
+#    define FRST(p) (p[0] << 5) ^ p[1]
+#    define NEXT(v, p) ((v) << 5) ^ p[2]
+#    define IDX(h) ((h) & (HSIZE - 1))
 #endif
 
 #define MAX_LIT (1 << 5)
@@ -76,24 +76,24 @@
 #define MAX_REF ((1 << 8) + (1 << 3))
 
 #if __GNUC__ >= 3
-#define expect(expr, value) __builtin_expect((expr), (value))
-#define inline inline
+#    define expect(expr, value) __builtin_expect((expr), (value))
+#    define inline inline
 #else
-#define expect(expr, value) (expr)
-#define inline static
+#    define expect(expr, value) (expr)
+#    define inline static
 #endif
 
 #define expect_false(expr) expect((expr) != 0, 0)
 #define expect_true(expr) expect((expr) != 0, 1)
 
 #if defined(__has_attribute)
-#if __has_attribute(no_sanitize)
-#define NO_SANITIZE(sanitizer) __attribute__((no_sanitize(sanitizer)))
-#endif
+#    if __has_attribute(no_sanitize)
+#        define NO_SANITIZE(sanitizer) __attribute__((no_sanitize(sanitizer)))
+#    endif
 #endif
 
 #if !defined(NO_SANITIZE)
-#define NO_SANITIZE(sanitizer)
+#    define NO_SANITIZE(sanitizer)
 #endif
 
 /*
@@ -117,9 +117,9 @@ size_t lzf_compress(
     LZF_STATE htab;
 #endif
     const u8 *ip = (const u8 *)in_data;
-    u8       *op = (u8 *)out_data;
+    u8 *op = (u8 *)out_data;
     const u8 *in_end = ip + in_len;
-    u8       *out_end = op + out_len;
+    u8 *out_end = op + out_len;
     const u8 *ref;
 
     /* off requires a type wide enough to hold a general pointer difference.
@@ -135,7 +135,7 @@ size_t lzf_compress(
     size_t off;
 #endif
     unsigned int hval;
-    int          lit;
+    int lit;
 
     if (!in_len || !out_len)
         return 0;
@@ -169,7 +169,7 @@ size_t lzf_compress(
         ) {
             /* match found at *ref++ */
             unsigned int len = 2;
-            size_t       maxlen = in_end - ip - len;
+            size_t maxlen = in_end - ip - len;
             maxlen = maxlen > MAX_REF ? MAX_REF : maxlen;
 
             if (expect_false(op + 3 + 1 >= out_end)) /* first a faster conservative test */
@@ -263,20 +263,20 @@ size_t lzf_compress(
 
 #if ULTRA_FAST || VERY_FAST
             --ip;
-#if VERY_FAST && !ULTRA_FAST
+#    if VERY_FAST && !ULTRA_FAST
             --ip;
-#endif
+#    endif
             hval = FRST(ip);
 
             hval = NEXT(hval, ip);
             htab[IDX(hval)] = ip - LZF_HSLOT_BIAS;
             ip++;
 
-#if VERY_FAST && !ULTRA_FAST
+#    if VERY_FAST && !ULTRA_FAST
             hval = NEXT(hval, ip);
             htab[IDX(hval)] = ip - LZF_HSLOT_BIAS;
             ip++;
-#endif
+#    endif
 #else
             ip -= len + 1;
 

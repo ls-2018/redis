@@ -27,15 +27,15 @@ typedef struct dictEntry {
     void *key; // *string 对象    redisObject 对象
     union
     {
-        void    *val; // redisObject对象   值为整数或双精度浮点数时,本身就是64位,就可以不用指针指向了,而是可以直接存在键值对的结构体中,这样就避免了再用一个指针,从而节省了内存空间.
+        void *val;    // redisObject对象   值为整数或双精度浮点数时,本身就是64位,就可以不用指针指向了,而是可以直接存在键值对的结构体中,这样就避免了再用一个指针,从而节省了内存空间.
         uint64_t u64; // 无符号64位
-        int64_t  s64;
-        double   d;
+        int64_t s64;
+        double d;
     } v;
-    struct dictEntry *next;       // 指向下个哈希表节点,形成链表
-    void             *metadata[]; /* An arbitrary number of bytes (starting at a
-                                   * pointer-aligned address) of size as returned
-                                   * by dictType's dictEntryMetadataBytes(). */
+    struct dictEntry *next; // 指向下个哈希表节点,形成链表
+    void *metadata[];       /* An arbitrary number of bytes (starting at a
+                             * pointer-aligned address) of size as returned
+                             * by dictType's dictEntryMetadataBytes(). */
 } dictEntry;
 
 /*
@@ -60,12 +60,12 @@ typedef struct dictType {
 
 // 字典
 struct dict {
-    dictType     *type;        // 类型特定函数
-    dictEntry   **ht_table[2]; // 哈希表;一般情况下,字典只使用ht[0]哈希表,ht[1]哈希表只会在对ht[0]哈希表进行rehash时使用
-    unsigned long ht_used[2];  // 该哈希表已有节点的数量
-    long          rehashidx;   // rehash 索引; 当 rehash 不在进行时,值为 -1 , >=0正在rehash
+    dictType *type;           // 类型特定函数
+    dictEntry **ht_table[2];  // 哈希表;一般情况下,字典只使用ht[0]哈希表,ht[1]哈希表只会在对ht[0]哈希表进行rehash时使用
+    unsigned long ht_used[2]; // 该哈希表已有节点的数量
+    long rehashidx;           // rehash 索引; 当 rehash 不在进行时,值为 -1 , >=0正在rehash
     /* Keep small vars at end for optimal (minimal) struct padding */
-    int16_t     pauserehash;    // >0 表示rehash被暂停了
+    int16_t pauserehash;        // >0 表示rehash被暂停了
     signed char ht_size_exp[2]; // 记录了大小指数,实际大小是1<<n
 };
 
@@ -80,12 +80,12 @@ struct dict {
 // 如果 safe 不为 1 ,那么程序只会调用 dictNext 对字典进行迭代,
 // 而不对字典进行修改.
 typedef struct dictIterator {
-    dict              *d;           // 被迭代的字典
-    long               index;       // 迭代器当前所指向的哈希表索引位置.
-    int                table;       // 正在被迭代的哈希表号码,值可以是 0 或 1 .
-    int                safe;        // 标识这个迭代器是否安全 0不安全 1安全
-    dictEntry         *entry;       // 当前迭代到的节点的指针
-    dictEntry         *nextEntry;   // 当前迭代节点的下一个节点,  因为在安全迭代器运作时, entry 所指向的节点可能会被修改,所以需要一个额外的指针来保存下一节点的位置,从而防止指针丢失
+    dict *d;                        // 被迭代的字典
+    long index;                     // 迭代器当前所指向的哈希表索引位置.
+    int table;                      // 正在被迭代的哈希表号码,值可以是 0 或 1 .
+    int safe;                       // 标识这个迭代器是否安全 0不安全 1安全
+    dictEntry *entry;               // 当前迭代到的节点的指针
+    dictEntry *nextEntry;           // 当前迭代节点的下一个节点,  因为在安全迭代器运作时, entry 所指向的节点可能会被修改,所以需要一个额外的指针来保存下一节点的位置,从而防止指针丢失
     unsigned long long fingerprint; // 不安全迭代时的ht[0] ht[1]状态
 } dictIterator;
 
@@ -158,9 +158,9 @@ typedef void(dictScanBucketFunction)(dict *d, dictEntry **bucketref);
 
 /* If our unsigned long type can store a 64 bit number, use a 64 bit PRNG. */
 #if ULONG_MAX >= 0xffffffffffffffff
-#define randomULong() ((unsigned long)genrand64_int64())
+#    define randomULong() ((unsigned long)genrand64_int64())
 #else
-#define randomULong() random()
+#    define randomULong() random()
 #endif
 
 /* API */

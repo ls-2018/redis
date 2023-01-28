@@ -49,9 +49,9 @@
 #include <hiredis.h>
 
 #ifdef USE_OPENSSL
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <hiredis_ssl.h>
+#    include <openssl/ssl.h>
+#    include <openssl/err.h>
+#    include <hiredis_ssl.h>
 #endif
 
 #include "adlist.h"
@@ -81,103 +81,103 @@ struct clusterNode;
 struct redisConfig;
 
 static struct config {
-    aeEventLoop             *el;
-    cliConnInfo              conn_info;
-    const char              *hostsocket;
-    int                      tls;
-    struct cliSSLconfig      sslconfig;
-    int                      numclients;
-    redisAtomic int          liveclients;
-    int                      requests;
-    redisAtomic int          requests_issued;
-    redisAtomic int          requests_finished;
-    redisAtomic int          previous_requests_finished;
-    int                      last_printed_bytes;
-    long long                previous_tick;
-    int                      keysize;
-    int                      datasize;
-    int                      randomkeys;
-    int                      randomkeys_keyspacelen;
-    int                      keepalive;
-    int                      pipeline;
-    long long                start;
-    long long                totlatency;
-    const char              *title;
-    list                    *clients;
-    int                      quiet;
-    int                      csv;
-    int                      loop;
-    int                      idlemode;
-    sds                      input_dbnumstr;
-    char                    *tests;
-    int                      stdinarg; /* get last arg from stdin. (-x option) */
-    int                      precision;
-    int                      num_threads;
+    aeEventLoop *el;
+    cliConnInfo conn_info;
+    const char *hostsocket;
+    int tls;
+    struct cliSSLconfig sslconfig;
+    int numclients;
+    redisAtomic int liveclients;
+    int requests;
+    redisAtomic int requests_issued;
+    redisAtomic int requests_finished;
+    redisAtomic int previous_requests_finished;
+    int last_printed_bytes;
+    long long previous_tick;
+    int keysize;
+    int datasize;
+    int randomkeys;
+    int randomkeys_keyspacelen;
+    int keepalive;
+    int pipeline;
+    long long start;
+    long long totlatency;
+    const char *title;
+    list *clients;
+    int quiet;
+    int csv;
+    int loop;
+    int idlemode;
+    sds input_dbnumstr;
+    char *tests;
+    int stdinarg; /* get last arg from stdin. (-x option) */
+    int precision;
+    int num_threads;
     struct benchmarkThread **threads;
-    int                      cluster_mode;
-    int                      cluster_node_count;
-    struct clusterNode     **cluster_nodes;
-    struct redisConfig      *redis_config;
-    struct hdr_histogram    *latency_histogram;
-    struct hdr_histogram    *current_sec_latency_histogram;
-    redisAtomic int          is_fetching_slots;
-    redisAtomic int          is_updating_slots;
-    redisAtomic int          slots_last_update;
-    int                      enable_tracking;
-    pthread_mutex_t          liveclients_mutex;
-    pthread_mutex_t          is_updating_slots_mutex;
-    int                      resp3; /* use RESP3 */
+    int cluster_mode;
+    int cluster_node_count;
+    struct clusterNode **cluster_nodes;
+    struct redisConfig *redis_config;
+    struct hdr_histogram *latency_histogram;
+    struct hdr_histogram *current_sec_latency_histogram;
+    redisAtomic int is_fetching_slots;
+    redisAtomic int is_updating_slots;
+    redisAtomic int slots_last_update;
+    int enable_tracking;
+    pthread_mutex_t liveclients_mutex;
+    pthread_mutex_t is_updating_slots_mutex;
+    int resp3; /* use RESP3 */
 } config;
 
 typedef struct _client {
     redisContext *context;
-    sds           obuf;
-    char        **randptr;         /* Pointers to :rand: strings inside the command buf */
-    size_t        randlen;         /* Number of pointers in client->randptr */
-    size_t        randfree;        /* Number of unused pointers in client->randptr */
-    char        **stagptr;         /* Pointers to slot hashtags (cluster mode only) */
-    size_t        staglen;         /* Number of pointers in client->stagptr */
-    size_t        stagfree;        /* Number of unused pointers in client->stagptr */
-    size_t        written;         /* Bytes of 'obuf' already written */
-    long long     start;           /* Start time of a request */
-    long long     latency;         /* Request latency */
-    int           pending;         /* Number of pending requests (replies to consume) */
-    int           prefix_pending;  /* If non-zero, number of pending prefix commands. Commands
-                                      such as auth and select are prefixed to the pipeline of
-                                      benchmark commands and discarded after the first send. */
-    int                 prefixlen; /* Size in bytes of the pending prefix commands */
-    int                 thread_id;
+    sds obuf;
+    char **randptr;     /* Pointers to :rand: strings inside the command buf */
+    size_t randlen;     /* Number of pointers in client->randptr */
+    size_t randfree;    /* Number of unused pointers in client->randptr */
+    char **stagptr;     /* Pointers to slot hashtags (cluster mode only) */
+    size_t staglen;     /* Number of pointers in client->stagptr */
+    size_t stagfree;    /* Number of unused pointers in client->stagptr */
+    size_t written;     /* Bytes of 'obuf' already written */
+    long long start;    /* Start time of a request */
+    long long latency;  /* Request latency */
+    int pending;        /* Number of pending requests (replies to consume) */
+    int prefix_pending; /* If non-zero, number of pending prefix commands. Commands
+                           such as auth and select are prefixed to the pipeline of
+                           benchmark commands and discarded after the first send. */
+    int prefixlen;      /* Size in bytes of the pending prefix commands */
+    int thread_id;
     struct clusterNode *cluster_node;
-    int                 slots_last_update;
-} * client;
+    int slots_last_update;
+} *client;
 
 /* Threads. */
 
 typedef struct benchmarkThread {
-    int          index;
-    pthread_t    thread;
+    int index;
+    pthread_t thread;
     aeEventLoop *el;
 } benchmarkThread;
 
 /* Cluster. */
 typedef struct clusterNode {
     char *ip;
-    int   port;
-    sds   name;
-    int   flags;
-    sds   replicate; /* Master ID if node is a slave */
-    int  *slots;
-    int   slots_count;
-    int   current_slot_index;
-    int  *updated_slots;       /* Used by updateClusterSlotsConfiguration */
-    int   updated_slots_count; /* Used by updateClusterSlotsConfiguration */
-    int   replicas_count;
-    sds  *migrating;                     /* An array of sds where even strings are slots and odd
-                                          * strings are the destination node IDs. */
-    sds *importing;                      /* An array of sds where even strings are slots and odd
-                                          * strings are the source node IDs. */
-    int                 migrating_count; /* Length of the migrating array (migrating slots*2) */
-    int                 importing_count; /* Length of the importing array (importing slots*2) */
+    int port;
+    sds name;
+    int flags;
+    sds replicate; /* Master ID if node is a slave */
+    int *slots;
+    int slots_count;
+    int current_slot_index;
+    int *updated_slots;      /* Used by updateClusterSlotsConfiguration */
+    int updated_slots_count; /* Used by updateClusterSlotsConfiguration */
+    int replicas_count;
+    sds *migrating;      /* An array of sds where even strings are slots and odd
+                          * strings are the destination node IDs. */
+    sds *importing;      /* An array of sds where even strings are slots and odd
+                          * strings are the source node IDs. */
+    int migrating_count; /* Length of the migrating array (migrating slots*2) */
+    int importing_count; /* Length of the importing array (importing slots*2) */
     struct redisConfig *redis_config;
 } clusterNode;
 
@@ -239,7 +239,7 @@ static int dictSdsKeyCompare(dict *d, const void *key1, const void *key2);
 // 微秒
 static long long ustime(void) {
     struct timeval tv;
-    long long      ust;
+    long long ust;
 
     gettimeofday(&tv, NULL);
     ust = ((long)tv.tv_sec) * 1000000;
@@ -250,7 +250,7 @@ static long long ustime(void) {
 // 毫秒
 static long long mstime(void) {
     struct timeval tv;
-    long long      mst;
+    long long mst;
 
     gettimeofday(&tv, NULL);             // 获得当前精确时间
     mst = ((long long)tv.tv_sec) * 1000; // 秒
@@ -275,7 +275,7 @@ static int dictSdsKeyCompare(dict *d, const void *key1, const void *key2) {
 
 static redisContext *getRedisContext(const char *ip, int port, const char *hostsocket) {
     redisContext *ctx = NULL;
-    redisReply   *reply = NULL;
+    redisReply *reply = NULL;
     if (hostsocket == NULL)
         ctx = redisConnect(ip, port);
     else
@@ -331,7 +331,7 @@ static redisConfig *getRedisConfig(const char *ip, int port, const char *hostsoc
     if (!cfg)
         return NULL;
     redisContext *c = NULL;
-    redisReply   *reply = NULL, *sub_reply = NULL;
+    redisReply *reply = NULL, *sub_reply = NULL;
     c = getRedisContext(ip, port, hostsocket);
     if (c == NULL) {
         freeRedisConfig(cfg);
@@ -339,7 +339,7 @@ static redisConfig *getRedisConfig(const char *ip, int port, const char *hostsoc
     }
     redisAppendCommand(c, "CONFIG GET %s", "save");
     redisAppendCommand(c, "CONFIG GET %s", "appendonly");
-    int   i = 0;
+    int i = 0;
     void *r = NULL;
     for (; i < 2; i++) {
         int res = redisGetReply(c, &r);
@@ -397,7 +397,7 @@ static void freeRedisConfig(redisConfig *cfg) {
 
 static void freeClient(client c) {
     aeEventLoop *el = CLIENT_GET_EVENTLOOP(c);
-    listNode    *ln;
+    listNode *ln;
     aeDeleteFileEvent(el, c->context->fd, AE_WRITABLE);
     aeDeleteFileEvent(el, c->context->fd, AE_READABLE);
     if (c->thread_id >= 0) {
@@ -445,7 +445,7 @@ static void randomizeClientKey(client c) {
     size_t i;
 
     for (i = 0; i < c->randlen; i++) {
-        char  *p = c->randptr[i] + 11;
+        char *p = c->randptr[i] + 11;
         size_t r = 0;
         if (config.randomkeys_keyspacelen != 0)
             r = random() % config.randomkeys_keyspacelen;
@@ -474,10 +474,10 @@ static void setClusterKeyHashTag(client c) {
      * the updated_slots_count array will be already NULL. */
     if (is_updating_slots)
         updateClusterSlotsConfiguration();
-    int         slot = node->slots[node->current_slot_index];
+    int slot = node->slots[node->current_slot_index];
     const char *tag = crc16_slot_table[slot];
-    int         taglen = strlen(tag);
-    size_t      i;
+    int taglen = strlen(tag);
+    size_t i;
     for (i = 0; i < c->staglen; i++) {
         char *p = c->stagptr[i] + 1;
         p[0] = tag[0];
@@ -512,7 +512,7 @@ static void clientDone(client c) {
 
 static void readHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
     client c = privdata;
-    void  *reply = NULL;
+    void *reply = NULL;
     UNUSED(el);
     UNUSED(fd);
     UNUSED(mask);
@@ -698,12 +698,12 @@ static void writeHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
  *
  * Even when cloning another client, prefix commands are applied if needed.*/
 static client createClient(char *cmd, size_t len, client from, int thread_id) {
-    int    j;
-    int    is_cluster_client = (config.cluster_mode && thread_id >= 0);
+    int j;
+    int is_cluster_client = (config.cluster_mode && thread_id >= 0);
     client c = zmalloc(sizeof(struct _client));
 
     const char *ip = NULL;
-    int         port = 0;
+    int port = 0;
     c->cluster_node = NULL;
     if (config.hostsocket == NULL || is_cluster_client) {
         if (!is_cluster_client) {
@@ -756,7 +756,7 @@ static client createClient(char *cmd, size_t len, client from, int thread_id) {
     c->prefix_pending = 0;
     if (config.conn_info.auth) {
         char *buf = NULL;
-        int   len;
+        int len;
         if (config.conn_info.user == NULL)
             len = redisFormatCommand(&buf, "AUTH %s", config.conn_info.auth);
         else
@@ -768,7 +768,7 @@ static client createClient(char *cmd, size_t len, client from, int thread_id) {
 
     if (config.enable_tracking) {
         char *buf = NULL;
-        int   len = redisFormatCommand(&buf, "CLIENT TRACKING on");
+        int len = redisFormatCommand(&buf, "CLIENT TRACKING on");
         c->obuf = sdscatlen(c->obuf, buf, len);
         free(buf);
         c->prefix_pending++;
@@ -785,7 +785,7 @@ static client createClient(char *cmd, size_t len, client from, int thread_id) {
 
     if (config.resp3) {
         char *buf = NULL;
-        int   len = redisFormatCommand(&buf, "HELLO 3");
+        int len = redisFormatCommand(&buf, "HELLO 3");
         c->obuf = sdscatlen(c->obuf, buf, len);
         free(buf);
         c->prefix_pending++;
@@ -940,13 +940,13 @@ static void showLatencyReport(void) {
         printf("\n");
         printf("Latency by percentile distribution:\n");
         struct hdr_iter iter;
-        long long       previous_cumulative_count = -1;
+        long long previous_cumulative_count = -1;
         const long long total_count = config.latency_histogram->total_count;
         hdr_iter_percentile_init(&iter, config.latency_histogram, 1);
         struct hdr_iter_percentiles *percentiles = &iter.specifics.percentiles;
         while (hdr_iter_next(&iter)) {
-            const double    value = iter.highest_equivalent_value / 1000.0f;
-            const double    percentile = percentiles->percentile;
+            const double value = iter.highest_equivalent_value / 1000.0f;
+            const double percentile = percentiles->percentile;
             const long long cumulative_count = iter.cumulative_count;
             if (previous_cumulative_count != cumulative_count || cumulative_count == total_count) {
                 printf("%3.3f%% <= %.3f milliseconds (cumulative count %lld)\n", percentile, value, cumulative_count);
@@ -958,9 +958,9 @@ static void showLatencyReport(void) {
         previous_cumulative_count = -1;
         hdr_iter_linear_init(&iter, config.latency_histogram, 100);
         while (hdr_iter_next(&iter)) {
-            const double    value = iter.highest_equivalent_value / 1000.0f;
+            const double value = iter.highest_equivalent_value / 1000.0f;
             const long long cumulative_count = iter.cumulative_count;
-            const double    percentile = ((double)cumulative_count / (double)total_count) * 100.0;
+            const double percentile = ((double)cumulative_count / (double)total_count) * 100.0;
             if (previous_cumulative_count != cumulative_count || cumulative_count == total_count) {
                 printf("%3.3f%% <= %.3f milliseconds (cumulative count %lld)\n", percentile, value, cumulative_count);
             }
@@ -1163,9 +1163,9 @@ static clusterNode **addClusterNode(clusterNode *node) {
  * information is anyway not used.
  */
 static int fetchClusterConfiguration() {
-    int           success = 1;
+    int success = 1;
     redisContext *ctx = NULL;
-    redisReply   *reply = NULL;
+    redisReply *reply = NULL;
     ctx = getRedisContext(config.conn_info.hostip, config.conn_info.hostport, config.hostsocket);
     if (ctx == NULL) {
         exit(1);
@@ -1195,7 +1195,7 @@ static int fetchClusterConfiguration() {
         line = lines;
         lines = p + 1;
         char *name = NULL, *addr = NULL, *flags = NULL, *master_id = NULL;
-        int   i = 0;
+        int i = 0;
         while ((p = strchr(line, ' ')) != NULL) {
             *p = '\0';
             char *token = line;
@@ -1232,9 +1232,9 @@ static int fetchClusterConfiguration() {
             goto cleanup;
         }
         clusterNode *node = NULL;
-        char        *ip = NULL;
-        int          port = 0;
-        char        *paddr = strrchr(addr, ':');
+        char *ip = NULL;
+        int port = 0;
+        char *paddr = strrchr(addr, ':');
         if (paddr != NULL) {
             *paddr = '\0';
             ip = addr;
@@ -1348,7 +1348,7 @@ cleanup:
  * and atomically update the slots after a successful reply. */
 static int fetchClusterSlotsConfiguration(client c) {
     UNUSED(c);
-    int    success = 1, is_fetching_slots = 0, last_update = 0;
+    int success = 1, is_fetching_slots = 0, last_update = 0;
     size_t i;
     atomicGet(config.slots_last_update, last_update);
     if (c->slots_last_update < last_update) {
@@ -1361,7 +1361,7 @@ static int fetchClusterSlotsConfiguration(client c) {
         return -1; // TODO: use other codes || errno ?
     atomicSet(config.is_fetching_slots, 1);
     fprintf(stderr, "WARNING: Cluster slots configuration changed, fetching new one...\n");
-    const char     *errmsg = "Failed to update cluster slots configuration";
+    const char *errmsg = "Failed to update cluster slots configuration";
     static dictType dtype = {
         dictSdsHash,       /* hash function */
         NULL,              /* key dup */
@@ -1372,7 +1372,7 @@ static int fetchClusterSlotsConfiguration(client c) {
         NULL               /* allow to expand */
     };
     /* printf("[%d] fetchClusterSlotsConfiguration\n", c->thread_id); */
-    dict         *masters = dictCreate(&dtype);
+    dict *masters = dictCreate(&dtype);
     redisContext *ctx = NULL;
     for (i = 0; i < (size_t)config.cluster_node_count; i++) {
         clusterNode *node = config.cluster_nodes[i];
@@ -1411,7 +1411,7 @@ static int fetchClusterSlotsConfiguration(client c) {
         redisReply *nr = r->element[2];
         assert(nr->type == REDIS_REPLY_ARRAY && nr->elements >= 3);
         assert(nr->element[2]->str != NULL);
-        sds        name = sdsnew(nr->element[2]->str);
+        sds name = sdsnew(nr->element[2]->str);
         dictEntry *entry = dictFind(masters, name);
         if (entry == NULL) {
             success = 0;
@@ -1464,7 +1464,7 @@ static void updateClusterSlotsConfiguration() {
 /* Generate random data for redis benchmark. See #7196. */
 static void genBenchmarkRandomData(char *data, int count) {
     static uint32_t state = 1234;
-    int             i = 0;
+    int i = 0;
 
     while (count--) {
         state = (state * 1103515245 + 12345);
@@ -1671,13 +1671,13 @@ int parseOptions(int argc, char **argv) {
             if (lastarg)
                 goto invalid;
             config.sslconfig.ciphers = strdup(argv[++i]);
-#ifdef TLS1_3_VERSION
+#    ifdef TLS1_3_VERSION
         }
         else if (!strcmp(argv[i], "--tls-ciphersuites")) {
             if (lastarg)
                 goto invalid;
             config.sslconfig.ciphersuites = strdup(argv[++i]);
-#endif
+#    endif
 #endif
         }
         else {
@@ -1752,12 +1752,12 @@ usage:
         " --tls-ciphers <list> Sets the list of preferred ciphers (TLSv1.2 and below)\n"
         "                    in order of preference from highest to lowest separated by colon (\":\").\n"
         "                    See the ciphers(1ssl) manpage for more information about the syntax of this string.\n"
-#ifdef TLS1_3_VERSION
+#    ifdef TLS1_3_VERSION
         " --tls-ciphersuites <list> Sets the list of preferred ciphersuites (TLSv1.3)\n"
         "                    in order of preference from highest to lowest separated by colon (\":\").\n"
         "                    See the ciphers(1ssl) manpage for more information about the syntax of this string,\n"
         "                    and specifically for TLSv1.3 ciphersuites.\n"
-#endif
+#    endif
 #endif
         " --help             Output this help and exit.\n"
         " --version          Output version and exit.\n\n",
@@ -1783,10 +1783,10 @@ int showThroughput(struct aeEventLoop *eventLoop, long long id, void *clientData
     UNUSED(eventLoop);
     UNUSED(id);
     benchmarkThread *thread = (benchmarkThread *)clientData;
-    int              liveclients = 0;
-    int              requests_finished = 0;
-    int              previous_requests_finished = 0;
-    long long        current_tick = mstime();
+    int liveclients = 0;
+    int requests_finished = 0;
+    int previous_requests_finished = 0;
+    long long current_tick = mstime();
     atomicGet(config.liveclients, liveclients);
     atomicGet(config.requests_finished, requests_finished);
     atomicGet(config.previous_requests_finished, previous_requests_finished);
@@ -1828,7 +1828,7 @@ int showThroughput(struct aeEventLoop *eventLoop, long long id, void *clientData
  * switch, or if all the tests are selected (no -t passed by user). */
 int test_is_selected(const char *name) {
     char buf[256];
-    int  l = strlen(name);
+    int l = strlen(name);
 
     if (config.tests == NULL)
         return 1;
@@ -1840,9 +1840,9 @@ int test_is_selected(const char *name) {
 }
 
 int main(int argc, char **argv) {
-    int   i;
+    int i;
     char *data, *cmd, *tag;
-    int   len;
+    int len;
 
     client c;
 

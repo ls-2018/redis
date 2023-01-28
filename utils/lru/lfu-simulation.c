@@ -3,19 +3,19 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-int    decr_every = 1;
-int    keyspace_size = 1000000;
+int decr_every = 1;
+int keyspace_size = 1000000;
 time_t switch_after = 30; /* Switch access pattern after N seconds. */
 
 struct entry {
     /* Field that the LFU Redis implementation will have (we have
      * 24 bits of total space in the object->lru field). */
-    uint8_t  counter;  /* Logarithmic counter. */
+    uint8_t counter;   /* Logarithmic counter. */
     uint16_t decrtime; /* (Reduced precision) time of last decrement. */
 
     /* Fields only useful for visualization. */
-    uint64_t hits;  /* Number of real accesses. */
-    time_t   ctime; /* Key creation time. */
+    uint64_t hits; /* Number of real accesses. */
+    time_t ctime;  /* Key creation time. */
 };
 
 #define to_16bit_minutes(x) ((x / 60) & 65535)
@@ -85,11 +85,11 @@ void show_entry(long pos, struct entry *e) {
 }
 
 int main(void) {
-    time_t        start = time(NULL);
-    time_t        new_entry_time = start;
-    time_t        display_time = start;
+    time_t start = time(NULL);
+    time_t new_entry_time = start;
+    time_t display_time = start;
     struct entry *entries = malloc(sizeof(*entries) * keyspace_size);
-    long          j;
+    long j;
 
     /* Initialize. */
     for (j = 0; j < keyspace_size; j++) {
@@ -101,7 +101,7 @@ int main(void) {
 
     while (1) {
         time_t now = time(NULL);
-        long   idx;
+        long idx;
 
         /* Scan N random entries (simulates the eviction under maxmemory). */
         for (j = 0; j < 3; j++) {

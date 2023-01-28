@@ -57,7 +57,7 @@ uint64_t redisBuildId(void) {
  * output that should be fast. */
 char *redisBuildIdString(void) {
     static char buf[32];
-    static int  cached = 0;
+    static int cached = 0;
     if (!cached) {
         snprintf(buf, sizeof(buf), "%llx", (unsigned long long)redisBuildId());
         cached = 1;

@@ -272,13 +272,13 @@ int HelloRepl2_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int a
     if (RedisModule_KeyType(key) != REDISMODULE_KEYTYPE_LIST)
         return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
 
-    size_t    listlen = RedisModule_ValueLength(key);
+    size_t listlen = RedisModule_ValueLength(key);
     long long sum = 0;
 
     /* Rotate and increment. */
     while (listlen--) {
         RedisModuleString *ele = RedisModule_ListPop(key, REDISMODULE_LIST_TAIL);
-        long long          val;
+        long long val;
         if (RedisModule_StringToLongLong(ele, &val) != REDISMODULE_OK)
             val = 0;
         val++;
@@ -313,7 +313,7 @@ int HelloToggleCase_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, 
 
     if (keytype == REDISMODULE_KEYTYPE_STRING) {
         size_t len, j;
-        char  *s = RedisModule_StringDMA(key, &len, REDISMODULE_WRITE);
+        char *s = RedisModule_StringDMA(key, &len, REDISMODULE_WRITE);
         for (j = 0; j < len; j++) {
             if (isupper(s[j])) {
                 s[j] = tolower(s[j]);
@@ -378,7 +378,7 @@ int HelloZsumRange_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, i
 
     RedisModule_ZsetFirstInScoreRange(key, score_start, score_end, 0, 0);
     while (!RedisModule_ZsetRangeEndReached(key)) {
-        double             score;
+        double score;
         RedisModuleString *ele = RedisModule_ZsetRangeCurrentElement(key, &score);
         RedisModule_FreeString(ctx, ele);
         scoresum_a += score;
@@ -388,7 +388,7 @@ int HelloZsumRange_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, i
 
     RedisModule_ZsetLastInScoreRange(key, score_start, score_end, 0, 0);
     while (!RedisModule_ZsetRangeEndReached(key)) {
-        double             score;
+        double score;
         RedisModuleString *ele = RedisModule_ZsetRangeCurrentElement(key, &score);
         RedisModule_FreeString(ctx, ele);
         scoresum_b += score;
@@ -430,7 +430,7 @@ int HelloLexRange_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, in
     int arraylen = 0;
     RedisModule_ReplyWithArray(ctx, REDISMODULE_POSTPONED_LEN);
     while (!RedisModule_ZsetRangeEndReached(key)) {
-        double             score;
+        double score;
         RedisModuleString *ele = RedisModule_ZsetRangeCurrentElement(key, &score);
         RedisModule_ReplyWithString(ctx, ele);
         RedisModule_FreeString(ctx, ele);
@@ -456,7 +456,7 @@ int HelloHCopy_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int a
     if (argc != 4)
         return RedisModule_WrongArity(ctx);
     RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
-    int             type = RedisModule_KeyType(key);
+    int type = RedisModule_KeyType(key);
     if (type != REDISMODULE_KEYTYPE_HASH && type != REDISMODULE_KEYTYPE_EMPTY) {
         return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
@@ -499,7 +499,7 @@ int HelloLeftPad_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int
     if ((RedisModule_StringToLongLong(argv[2], &padlen) != REDISMODULE_OK) || (padlen < 0)) {
         return RedisModule_ReplyWithError(ctx, "ERR invalid padding length");
     }
-    size_t      strlen, chlen;
+    size_t strlen, chlen;
     const char *str = RedisModule_StringPtrLen(argv[1], &strlen);
     const char *ch = RedisModule_StringPtrLen(argv[3], &chlen);
 

@@ -350,7 +350,7 @@ size_t _addReplyToBuffer(client *c, const char *s, size_t len) {
 /* Adds the reply to the reply linked list.
  * Note: some edits to this function need to be relayed to AddReplyFromClient. */
 void _addReplyProtoToList(client *c, const char *s, size_t len) {
-    listNode         *ln = listLast(c->reply);
+    listNode *ln = listLast(c->reply);
     clientReplyBlock *tail = ln ? listNodeValue(ln) : NULL;
 
     /* Note that 'tail' may be NULL even if we have a tail node, because when
@@ -423,7 +423,7 @@ void addReply(client *c, robj *obj) {
         /* For integer encoded strings we just convert it into a string
          * using our optimized function, and attach the resulting string
          * to the output buffer. */
-        char   buf[32];
+        char buf[32];
         size_t len = ll2string(buf, sizeof(buf), (long)obj->ptr);
         _addReplyToBufferOrList(c, buf, len);
     }
@@ -684,7 +684,7 @@ void addReplyStatusFormat(client *c, const char *fmt, ...) {
 
 // 有时我们被迫创建一个新的回复节点,而我们不能追加到前一个,当这种情况发生时,我们想要修剪最后一个回复节点末尾不再使用的未使用空间.
 void trimReplyUnusedTailSpace(client *c) {
-    listNode         *ln = listLast(c->reply);
+    listNode *ln = listLast(c->reply);
     clientReplyBlock *tail = ln ? listNodeValue(ln) : NULL;
 
     /* Note that 'tail' may be NULL even if we have a tail node, because when
@@ -729,7 +729,7 @@ void *addReplyDeferredLen(client *c) {
 // 查看 next 节点是否有足够的空间来存储 [s, s+len-1], 如果有 将 next 的已有的数据向后移动 len, 复制 [s, s+len-1] 到 next 头部, 移除 dummy 节点
 // 否则新建一个 replyBlock, 来存储 [s, s+len-1] 的数据, 将 replyBlock 关联到 dummy 节点上面[不再是 dummy 节点了]
 void setDeferredReply(client *c, void *node, const char *s, size_t length) {
-    listNode         *ln = (listNode *)node;
+    listNode *ln = (listNode *)node;
     clientReplyBlock *next, *prev;
 
     if (node == NULL)
@@ -788,7 +788,7 @@ void setDeferredAggregateLen(client *c, void *node, long length, char prefix) {
 
     // 像*2\r\n、%3\r\n或~4\r\n这样的东西经常由协议发出,所以如果整数很小,我们就有几个共享对象可以使用,就像大多数时候一样.
     const size_t hdr_len = OBJ_SHARED_HDR_STRLEN(length);
-    const int    opt_hdr = length < OBJ_SHARED_BULKHDR_LEN; // 32
+    const int opt_hdr = length < OBJ_SHARED_BULKHDR_LEN; // 32
     if (prefix == '*' && opt_hdr) {
         setDeferredReply(c, node, shared.mbulkhdr[length]->ptr, hdr_len);
         return;
@@ -802,7 +802,7 @@ void setDeferredAggregateLen(client *c, void *node, long length, char prefix) {
         return;
     }
 
-    char   lenstr[128];
+    char lenstr[128];
     size_t lenstr_len = sprintf(lenstr, "%c%ld\r\n", prefix, length);
     setDeferredReply(c, node, lenstr, lenstr_len);
 }
@@ -848,7 +848,7 @@ void addReplyDouble(client *c, double d) {
     }
     else {
         char dbuf[MAX_LONG_DOUBLE_CHARS + 3], sbuf[MAX_LONG_DOUBLE_CHARS + 32];
-        int  dlen, slen;
+        int dlen, slen;
         if (c->resp == 2) {
             dlen = snprintf(dbuf, sizeof(dbuf), "%.17g", d);
             slen = snprintf(sbuf, sizeof(sbuf), "$%d\r\n%s\r\n", dlen, dbuf);
@@ -883,7 +883,7 @@ void addReplyHumanLongDouble(client *c, long double d) {
     }
     else {
         char buf[MAX_LONG_DOUBLE_CHARS];
-        int  len = ld2string(buf, sizeof(buf), d, LD_STR_HUMAN);
+        int len = ld2string(buf, sizeof(buf), d, LD_STR_HUMAN);
         addReplyProto(c, ",", 1);
         addReplyProto(c, buf, len);
         addReplyProto(c, "\r\n", 2);
@@ -894,11 +894,11 @@ void addReplyHumanLongDouble(client *c, long double d) {
 // 添加一个长整型回复或批量len /multi 多个批量计数. 基本用于输出<prefix><long long><crlf>.
 void addReplyLongLongWithPrefix(client *c, long long ll, char prefix) {
     char buf[128];
-    int  len;
+    int len;
     // dictSize(server.commands) 一般有240个命令
     // 协议经常会回复 $3\r\n或*2\r\n这样的值,所以如果整数很小,我们就有几个共享对象可以使用,就像大多数时候一样.
-    const int    opt_hdr = ll < OBJ_SHARED_BULKHDR_LEN && ll >= 0; // 0~31
-    const size_t hdr_len = OBJ_SHARED_HDR_STRLEN(ll);              // 4290772992 == 11111111110000000000000000000000   小于这个数是4 否则是5
+    const int opt_hdr = ll < OBJ_SHARED_BULKHDR_LEN && ll >= 0; // 0~31
+    const size_t hdr_len = OBJ_SHARED_HDR_STRLEN(ll);           // 4290772992 == 11111111110000000000000000000000   小于这个数是4 否则是5
 
     // opt_hdr 一般为0
     //  resp2  '*' ; resp3  '%' ;
@@ -1055,7 +1055,7 @@ void addReplyBulkCString(client *c, const char *s) {
 // 返回一个 long long 值作为回复
 void addReplyBulkLongLong(client *c, long long ll) {
     char buf[64];
-    int  len;
+    int len;
 
     len = ll2string(buf, 64, ll);
     addReplyBulkCBuffer(c, buf, len);
@@ -1075,9 +1075,9 @@ void addReplyVerbatim(client *c, const char *s, size_t len, const char *ext) {
         addReplyBulkCBuffer(c, s, len);
     }
     else {
-        char   buf[32];
+        char buf[32];
         size_t preflen = snprintf(buf, sizeof(buf), "=%zu\r\nxxx:", len + 4);
-        char  *p = buf + preflen - 4;
+        char *p = buf + preflen - 4;
         for (int i = 0; i < 3; i++) {
             if (*ext == '\0') {
                 p[i] = ' ';
@@ -1097,9 +1097,9 @@ void addReplyVerbatim(client *c, const char *s, size_t len, const char *ext) {
  * subcommands in response to the 'help' subcommand. The help array
  * is terminated by NULL sentinel. */
 void addReplyHelp(client *c, const char **help) {
-    sds   cmd = sdsnew((char *)c->argv[0]->ptr);
+    sds cmd = sdsnew((char *)c->argv[0]->ptr);
     void *blenp = addReplyDeferredLen(c);
-    int   blen = 0;
+    int blen = 0;
 
     sdstoupper(cmd);
     addReplyStatusFormat(c, "%s <subcommand> [<arg> [value] [opt] ...]. Subcommands are:", cmd);
@@ -1174,7 +1174,7 @@ void AddReplyFromClient(client *dst, client *src) {
 /* Append the listed errors to the server error statistics. the input
  * list is not modified and remains the responsibility of the caller. */
 void deferredAfterErrorReply(client *c, list *errors) {
-    listIter  li;
+    listIter li;
     listNode *ln;
     listRewind(errors, &li);
     while ((ln = listNext(&li))) {
@@ -1207,7 +1207,7 @@ int clientHasPendingReplies(client *c) {
 
         /* If the last replication buffer block content is totally sent,
          * we have nothing to send. */
-        listNode     *ln = listLast(server.repl_buffer_blocks);
+        listNode *ln = listLast(server.repl_buffer_blocks);
         replBufBlock *tail = listNodeValue(ln);
         if (ln == c->ref_repl_buf_node && c->ref_block_pos == tail->used)
             return 0;
@@ -1266,7 +1266,7 @@ void clientAcceptHandler(connection *conn) {
 // 接受客户端连接,并创建已连接套接字cfd
 static void acceptCommonHandler(connection *conn, int flags, char *ip) {
     client *c;
-    char    conninfo[100];
+    char conninfo[100];
     UNUSED(ip);
 
     if (connGetState(conn) != CONN_STATE_ACCEPTING) {
@@ -1314,8 +1314,8 @@ static void acceptCommonHandler(connection *conn, int flags, char *ip) {
 // 当有tcp链接到来时,会调用 .用于对连接服务监听套接字的客户端进行应答 与其AE_READABLE事件相关联
 void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
     // 连接
-    int  cport, cfd, max = MAX_ACCEPTS_PER_CALL; // 1000
-    char cip[NET_IP_STR_LEN];                    // ip 地址,最长为46
+    int cport, cfd, max = MAX_ACCEPTS_PER_CALL; // 1000
+    char cip[NET_IP_STR_LEN];                   // ip 地址,最长为46
     UNUSED(el);
     UNUSED(mask);
     UNUSED(privdata);
@@ -1336,7 +1336,7 @@ void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
 }
 
 void acceptTLSHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
-    int  cport, cfd, max = MAX_ACCEPTS_PER_CALL;
+    int cport, cfd, max = MAX_ACCEPTS_PER_CALL;
     char cip[NET_IP_STR_LEN];
     UNUSED(el);
     UNUSED(mask);
@@ -1400,7 +1400,7 @@ void freeClientArgv(client *c) {
  * when we resync with our own master and want to force all our slaves to
  * resync with us as well. */
 void disconnectSlaves(void) {
-    listIter  li;
+    listIter li;
     listNode *ln;
     listRewind(server.slaves, &li);
     while ((ln = listNext(&li))) {
@@ -1412,7 +1412,7 @@ void disconnectSlaves(void) {
  * This function is useful to judge current dumping RDB can be used for full
  * synchronization or not. */
 int anyOtherSlaveWaitRdb(client *except_me) {
-    listIter  li;
+    listIter li;
     listNode *ln;
 
     listRewind(server.slaves, &li);
@@ -1733,8 +1733,8 @@ int beforeNextClient(client *c) {
 /* Free the clients marked as CLOSE_ASAP, return the number of clients
  * freed. */
 int freeClientsInAsyncFreeQueue(void) {
-    int       freed = 0;
-    listIter  li;
+    int freed = 0;
+    listIter li;
     listNode *ln;
 
     listRewind(server.clients_to_close, &li);
@@ -1768,8 +1768,8 @@ client *lookupClientByID(uint64_t id) {
  * to client. */
 static int _writevToClient(client *c, ssize_t *nwritten) {
     struct iovec iov[IOV_MAX];
-    int          iovcnt = 0;
-    size_t       iov_bytes_len = 0;
+    int iovcnt = 0;
+    size_t iov_bytes_len = 0;
     /* If the static reply buffer is not empty,
      * add it to the iov array for writev() as well. */
     if (c->bufpos > 0) {
@@ -1779,9 +1779,9 @@ static int _writevToClient(client *c, ssize_t *nwritten) {
     }
     /* The first node of reply list might be incomplete from the last call,
      * thus it needs to be calibrated to get the actual data address and length. */
-    size_t            offset = c->bufpos > 0 ? 0 : c->sentlen;
-    listIter          iter;
-    listNode         *next;
+    size_t offset = c->bufpos > 0 ? 0 : c->sentlen;
+    listIter iter;
+    listNode *next;
     clientReplyBlock *o;
     listRewind(c->reply, &iter);
     while ((next = listNext(&iter)) && iovcnt < IOV_MAX && iov_bytes_len < NET_MAX_WRITES_PER_EVENT) {
@@ -1982,9 +1982,9 @@ void sendReplyToClient(connection *conn) {
  * need to use a syscall in order to install the writable event handler,
  * get it called, and so forth. */
 int handleClientsWithPendingWrites(void) {
-    listIter  li;
+    listIter li;
     listNode *ln;
-    int       processed = listLength(server.clients_pending_write);
+    int processed = listLength(server.clients_pending_write);
     // 获取待写回的客户端列表
 
     listRewind(server.clients_pending_write, &li);
@@ -2095,9 +2095,9 @@ void unprotectClient(client *c) {
  * a protocol error: in such a case the client structure is setup to reply
  * with the error and close the connection. */
 int processInlineBuffer(client *c) {
-    char  *newline;
-    int    argc, j, linefeed_chars = 1;
-    sds   *argv, aux;
+    char *newline;
+    int argc, j, linefeed_chars = 1;
+    sds *argv, aux;
     size_t querylen;
 
     /* Search for end of line */
@@ -2213,8 +2213,8 @@ static void setProtocolError(const char *errstr, client *c) {
  * argv[2] = HELLO
  */
 int processMultibulkBuffer(client *c) {
-    char     *newline = NULL;
-    int       ok;
+    char *newline = NULL;
+    int ok;
     long long ll; // 参数个数、每个参数的长度
     // 读入命令的参数个数
     // 比如 *3\r\n$3\r\nSET\r\n... 将令 c->multibulklen = 3
@@ -2440,7 +2440,7 @@ void commandProcessed(client *c) {
 //* 这个函数负责执行这个命令,
 //* 或者服务器准备从客户端中进行一次读取.
 int processCommandAndResetClient(client *c) {
-    int     deadclient = 0;
+    int deadclient = 0;
     client *old_client = server.current_client;
     server.current_client = c;
     if (processCommand(c) == C_OK) { // 执行命令
@@ -2596,8 +2596,8 @@ int processInputBuffer(client *c) {
 // 读取客户端的查询缓冲区内容
 void readQueryFromClient(connection *conn) {
     client *c = connGetPrivateData(conn);
-    int     nread, big_arg = 0;
-    size_t  qblen, old_qblen, readlen;
+    int nread, big_arg = 0;
+    size_t qblen, old_qblen, readlen;
 
     //    主线程将 待读客户端 添加到Read任务队列（生产者）
     if (postponeClientRead(c)) { // 延迟读
@@ -2860,9 +2860,9 @@ sds catClientInfoString(sds s, client *client) {
 // * 打印出所有连接到服务器的客户端的信息
 sds getAllClientsInfoString(int type) {
     listNode *ln;
-    listIter  li;
-    client   *client;
-    sds       o = sdsnewlen(SDS_NOINIT, 200 * listLength(server.clients));
+    listIter li;
+    client *client;
+    sds o = sdsnewlen(SDS_NOINIT, 200 * listLength(server.clients));
     sdsclear(o);
     listRewind(server.clients, &li);
     while ((ln = listNext(&li)) != NULL) {
@@ -2885,7 +2885,7 @@ sds getAllClientsInfoString(int type) {
  *
  * This function is also used to implement the HELLO SETNAME option. */
 int clientSetNameOrReply(client *c, robj *name) {
-    int   len = sdslen(name->ptr);
+    int len = sdslen(name->ptr);
     char *p = name->ptr;
 
     /* Setting the client name to an empty string actually removes
@@ -2943,7 +2943,7 @@ void quitCommand(client *c) {
 
 void clientCommand(client *c) {
     listNode *ln;
-    listIter  li;
+    listIter li;
 
     if (c->argc == 2 && !strcasecmp(c->argv[1]->ptr, "help")) {
         const char *help[] = {
@@ -3079,13 +3079,13 @@ void clientCommand(client *c) {
     else if (!strcasecmp(c->argv[1]->ptr, "kill")) {
         /* CLIENT KILL <ip:port>
          * CLIENT KILL <option> [value] ... <option> [value] */
-        char    *addr = NULL;
-        char    *laddr = NULL;
-        user    *user = NULL;
-        int      type = -1;
+        char *addr = NULL;
+        char *laddr = NULL;
+        user *user = NULL;
+        int type = -1;
         uint64_t id = 0;
-        int      skipme = 1;
-        int      killed = 0, close_this_client = 0;
+        int skipme = 1;
+        int killed = 0, close_this_client = 0;
 
         if (c->argc == 3) {
             /* Old style syntax: CLIENT KILL <addr> */
@@ -3196,7 +3196,7 @@ void clientCommand(client *c) {
     else if (!strcasecmp(c->argv[1]->ptr, "unblock") && (c->argc == 3 || c->argc == 4)) {
         /* CLIENT UNBLOCK <id> [timeout|error] */
         long long id;
-        int       unblock_error = 0;
+        int unblock_error = 0;
 
         if (c->argc == 4) {
             if (!strcasecmp(c->argv[3]->ptr, "timeout")) {
@@ -3250,7 +3250,7 @@ void clientCommand(client *c) {
     else if (!strcasecmp(c->argv[1]->ptr, "pause") && (c->argc == 3 || c->argc == 4)) {
         /* CLIENT PAUSE TIMEOUT [WRITE|ALL] */
         mstime_t end;
-        int      type = CLIENT_PAUSE_ALL;
+        int type = CLIENT_PAUSE_ALL;
         if (c->argc == 4) {
             if (!strcasecmp(c->argv[3]->ptr, "write")) {
                 type = CLIENT_PAUSE_WRITE;
@@ -3273,9 +3273,9 @@ void clientCommand(client *c) {
         /* CLIENT TRACKING (on|off) [REDIRECT <id>] [BCAST] [PREFIX first]
          *                          [PREFIX second] [OPTIN] [OPTOUT] [NOLOOP]... */
         long long redir = 0;
-        uint64_t  options = 0;
-        robj    **prefix = NULL;
-        size_t    numprefix = 0;
+        uint64_t options = 0;
+        robj **prefix = NULL;
+        size_t numprefix = 0;
 
         /* Parse the options. */
         for (int j = 3; j < c->argc; j++) {
@@ -3450,7 +3450,7 @@ void clientCommand(client *c) {
         /* Flags */
         addReplyBulkCString(c, "flags");
         void *arraylen_ptr = addReplyDeferredLen(c);
-        int   numflags = 0;
+        int numflags = 0;
         addReplyBulkCString(c, c->flags & CLIENT_TRACKING ? "on" : "off");
         numflags++;
         if (c->flags & CLIENT_TRACKING_BCAST) {
@@ -3516,7 +3516,7 @@ void clientCommand(client *c) {
 /* HELLO [<protocol-version> [AUTH <user> <password>] [SETNAME <name>] ] */
 void helloCommand(client *c) {
     long long ver = 0;
-    int       next_arg = 1;
+    int next_arg = 1;
 
     if (c->argc >= 2) {
         if (getLongLongFromObjectOrReply(c, c->argv[next_arg++], &ver, "Protocol version is not an integer or out of range") != C_OK) {
@@ -3530,7 +3530,7 @@ void helloCommand(client *c) {
     }
 
     for (int j = next_arg; j < c->argc; j++) {
-        int         moreargs = (c->argc - 1) - j;
+        int moreargs = (c->argc - 1) - j;
         const char *opt = c->argv[j]->ptr;
         if (!strcasecmp(opt, "AUTH") && moreargs >= 2) {
             redactClientCommandArgument(c, j + 1);
@@ -3602,7 +3602,7 @@ void helloCommand(client *c) {
 // 作为对这种攻击的一种保护,当看到POST或"Host:"报头时,Redis会终止连接,并会不时地记录事件(以避免由于日志太多而创建DOS).
 void securityWarningCommand(client *c) {
     static time_t logged_time = 0;
-    time_t        now = time(NULL);
+    time_t now = time(NULL);
 
     if (llabs(now - logged_time) > 60) {
         serverLog(LL_WARNING, "检测到可能的安全攻击.它看起来像有人发送POST或主机:命令到Redis.这可能是由于攻击者试图使用跨协议脚本攻击你的Redis实例.连接失败");
@@ -3644,8 +3644,8 @@ void redactClientCommandArgument(client *c, int argc) {
  * ref count is decremented. */
 void rewriteClientCommandVector(client *c, int argc, ...) {
     va_list ap;
-    int     j;
-    robj  **argv; /* The new argument vector */
+    int j;
+    robj **argv; /* The new argument vector */
 
     argv = zmalloc(sizeof(robj *) * argc);
     va_start(ap, argc);
@@ -3830,7 +3830,7 @@ char *getClientTypeName(int class) {
  * Return value: non-zero if the client reached the soft or the hard limit.
  *               Otherwise zero is returned. */
 int checkClientOutputBufferLimits(client *c) {
-    int           soft = 0, hard = 0, class;
+    int soft = 0, hard = 0, class;
     unsigned long used_mem = getClientOutputBufferMemoryUsage(c);
 
     class = getClientType(c);
@@ -3917,13 +3917,13 @@ int closeClientOnOutputBufferLimitReached(client *c, int async) {
  * This is also called by SHUTDOWN for a best-effort attempt to send
  * slaves the latest writes. */
 void flushSlavesOutputBuffers(void) {
-    listIter  li;
+    listIter li;
     listNode *ln;
 
     listRewind(server.slaves, &li);
     while ((ln = listNext(&li))) {
         client *slave = listNodeValue(ln);
-        int     can_receive_writes = connHasWriteHandler(slave->conn) || (slave->flags & CLIENT_PENDING_WRITE);
+        int can_receive_writes = connHasWriteHandler(slave->conn) || (slave->flags & CLIENT_PENDING_WRITE);
 
         /* We don't want to send the pending data to the replica in a few
          * cases:
@@ -3949,7 +3949,7 @@ void flushSlavesOutputBuffers(void) {
 static void updateClientPauseTypeAndEndTime(void) {
     pause_type old_type = server.client_pause_type;
     pause_type type = CLIENT_PAUSE_OFF;
-    mstime_t   end = 0;
+    mstime_t end = 0;
     for (int i = 0; i < NUM_PAUSE_PURPOSES; i++) {
         pause_event *p = server.client_pause_per_purpose[i];
         if (p == NULL) { /* Nothing to do. */
@@ -3986,7 +3986,7 @@ static void updateClientPauseTypeAndEndTime(void) {
  * This means they'll get re-processed in beforeSleep, and may get paused again if needed. */
 void unblockPostponedClients() {
     listNode *ln;
-    listIter  li;
+    listIter li;
     listRewind(server.postponed_clients, &li);
     while ((ln = listNext(&li)) != NULL) {
         client *c = listNodeValue(ln);
@@ -4105,8 +4105,8 @@ void processEventsWhileBlocked(void) {
 
 #define IO_THREADS_MAX_NUM 128
 
-pthread_t                 io_threads[IO_THREADS_MAX_NUM];         // 记录线程描述符的数组
-pthread_mutex_t           io_threads_mutex[IO_THREADS_MAX_NUM];   // 记录线程互斥锁的数组
+pthread_t io_threads[IO_THREADS_MAX_NUM];                         // 记录线程描述符的数组
+pthread_mutex_t io_threads_mutex[IO_THREADS_MAX_NUM];             // 记录线程互斥锁的数组
 redisAtomic unsigned long io_threads_pending[IO_THREADS_MAX_NUM]; // 记录线程待处理的客户端个数     ,主线程向每个IO线程分配客户端
 
 /* IO_THREADS_OP_IDLE, IO_THREADS_OP_READ or IO_THREADS_OP_WRITE. */ // TODO: should access to this be atomic??!
@@ -4155,11 +4155,11 @@ void *IOThreadMain(void *myid) {
 
         /* Process: note that the main thread will never touch our list
          * before we drop the pending count to 0. */
-        listIter  li;
+        listIter li;
         listNode *ln;
         // 获取IO线程要处理的客户端列表
         listRewind(io_threads_list[id], &li);
-         // 遍历线程 id 获取线程对应的待处理连接列表
+        // 遍历线程 id 获取线程对应的待处理连接列表
         while ((ln = listNext(&li))) {
             client *c = listNodeValue(ln); // 从客户端列表中获取一个客户端
             if (io_threads_op == IO_THREADS_OP_WRITE) {
@@ -4295,7 +4295,7 @@ int handleClientsWithPendingWritesUsingThreads(void) {
     }
 
     /* Distribute the clients across N different lists. */
-    listIter  li;
+    listIter li;
     listNode *ln;
     listRewind(server.clients_pending_write, &li);
     int item_id = 0;
@@ -4401,14 +4401,14 @@ int handleClientsWithPendingReadsUsingThreads(void) {
         return 0;
 
     // 将客户端分布在N个不同的列表中.
-    listIter  li;
+    listIter li;
     listNode *ln;
     listRewind(server.clients_pending_read, &li);
     int item_id = 0; // 记录阻塞的客户端数量
-      // 将等待处理队列的连接按照 RR 的方式分配给多个 IO 线程
+                     // 将等待处理队列的连接按照 RR 的方式分配给多个 IO 线程
     while ((ln = listNext(&li))) {
         client *c = listNodeValue(ln);
-        int     target_id = item_id % server.io_threads_num; //
+        int target_id = item_id % server.io_threads_num; //
         listAddNodeTail(io_threads_list[target_id], c);
         item_id++;
     }
@@ -4503,7 +4503,7 @@ size_t getClientEvictionLimit(void) {
 // 驱逐客户端
 void evictClients(void) {
     /* 从最顶层桶(最大的客户端)开始退出 */
-    int      curr_bucket = CLIENT_MEM_USAGE_BUCKETS - 1; // 18
+    int curr_bucket = CLIENT_MEM_USAGE_BUCKETS - 1; // 18
     listIter bucket_iter;
     listRewind(server.client_mem_usage_buckets[curr_bucket].clients, &bucket_iter);
     size_t client_eviction_limit = getClientEvictionLimit();
@@ -4518,7 +4518,7 @@ void evictClients(void) {
         listNode *ln = listNext(&bucket_iter);
         if (ln) {
             client *c = ln->value;
-            sds     ci = catClientInfoString(sdsempty(), c);
+            sds ci = catClientInfoString(sdsempty(), c);
             serverLog(LL_NOTICE, "驱逐客户端ing : %s", ci);
             freeClient(c); // 有可能会将 server.current_client = NULL
             sdsfree(ci);

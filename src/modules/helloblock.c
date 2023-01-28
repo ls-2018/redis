@@ -61,9 +61,9 @@ void HelloBlock_FreeData(RedisModuleCtx *ctx, void *privdata) {
 /* The thread entry point that actually executes the blocking part
  * of the command HELLO.BLOCK. */
 void *HelloBlock_ThreadMain(void *arg) {
-    void                    **targ = arg;
+    void **targ = arg;
     RedisModuleBlockedClient *bc = targ[0];
-    long long                 delay = (unsigned long)targ[1];
+    long long delay = (unsigned long)targ[1];
     RedisModule_Free(targ);
 
     sleep(delay);
@@ -106,7 +106,7 @@ int HelloBlock_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int a
         return RedisModule_ReplyWithError(ctx, "ERR invalid count");
     }
 
-    pthread_t                 tid;
+    pthread_t tid;
     RedisModuleBlockedClient *bc = RedisModule_BlockClient(ctx, HelloBlock_Reply, HelloBlock_Timeout, HelloBlock_FreeData, timeout);
 
     /* Here we set a disconnection handler, however since this module will
@@ -137,9 +137,9 @@ int HelloBlock_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int a
  * in order to filter the duplicated items. */
 void *HelloKeys_ThreadMain(void *arg) {
     RedisModuleBlockedClient *bc = arg;
-    RedisModuleCtx           *ctx = RedisModule_GetThreadSafeContext(bc);
-    long long                 cursor = 0;
-    size_t                    replylen = 0;
+    RedisModuleCtx *ctx = RedisModule_GetThreadSafeContext(bc);
+    long long cursor = 0;
+    size_t replylen = 0;
 
     RedisModule_ReplyWithArray(ctx, REDISMODULE_POSTPONED_LEN);
     do {

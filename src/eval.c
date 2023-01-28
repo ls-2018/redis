@@ -77,8 +77,8 @@ dictType shaScriptObjectDictType = {
 struct luaCtx {
     lua_State *lua; // Lua 环境  The Lua interpreter. We use just one for all clients
     // lua_client伪客户端在服务器运行的整个生命期中会一直存在,只有服务器被关闭时,这个客户端才会被关闭.
-    client            *lua_client;      // 建负责执行Lua脚本中包含的Redis命令的伪 客户端
-    dict              *lua_scripts;     // 一个字典, SHA1 -> Lua scripts
+    client *lua_client;                 // 建负责执行Lua脚本中包含的Redis命令的伪 客户端
+    dict *lua_scripts;                  // 一个字典, SHA1 -> Lua scripts
     unsigned long long lua_scripts_mem; /* Cached scripts' memory + oh */
 } lctx;
 
@@ -86,22 +86,22 @@ struct luaCtx {
 #define LDB_BREAKPOINTS_MAX 64  /* Max number of breakpoints. */
 #define LDB_MAX_LEN_DEFAULT 256 /* Default len limit for replies / var dumps. */
 struct ldbState {
-    connection *conn;                    /* Connection of the debugging client. */
-    int         active;                  /* Are we debugging EVAL right now? */
-    int         forked;                  /* Is this a fork()ed debugging session? */
-    list       *logs;                    /* List of messages to send to the client. */
-    list       *traces;                  /* Messages about Redis commands executed since last stop.*/
-    list       *children;                /* All forked debugging sessions pids. */
-    int         bp[LDB_BREAKPOINTS_MAX]; /* An array of breakpoints line numbers. */
-    int         bpcount;                 /* Number of valid entries inside bp. */
-    int         step;                    /* Stop at next line regardless of breakpoints. */
-    int         luabp;                   /* Stop at next line because redis.breakpoint() was called. */
-    sds        *src;                     /* Lua script source code split by line. */
-    int         lines;                   /* Number of lines in 'src'. */
-    int         currentline;             /* Current line number. */
-    sds         cbuf;                    /* Debugger client command buffer. */
-    size_t      maxlen;                  /* Max var dump / reply length. */
-    int         maxlen_hint_sent;        /* Did we already hint about "set maxlen"? */
+    connection *conn;            /* Connection of the debugging client. */
+    int active;                  /* Are we debugging EVAL right now? */
+    int forked;                  /* Is this a fork()ed debugging session? */
+    list *logs;                  /* List of messages to send to the client. */
+    list *traces;                /* Messages about Redis commands executed since last stop.*/
+    list *children;              /* All forked debugging sessions pids. */
+    int bp[LDB_BREAKPOINTS_MAX]; /* An array of breakpoints line numbers. */
+    int bpcount;                 /* Number of valid entries inside bp. */
+    int step;                    /* Stop at next line regardless of breakpoints. */
+    int luabp;                   /* Stop at next line because redis.breakpoint() was called. */
+    sds *src;                    /* Lua script source code split by line. */
+    int lines;                   /* Number of lines in 'src'. */
+    int currentline;             /* Current line number. */
+    sds cbuf;                    /* Debugger client command buffer. */
+    size_t maxlen;               /* Max var dump / reply length. */
+    int maxlen_hint_sent;        /* Did we already hint about "set maxlen"? */
 } ldb;
 
 /* ---------------------------------------------------------------------------
@@ -115,10 +115,10 @@ struct ldbState {
  * 'digest' should point to a 41 bytes buffer: 40 for SHA1 converted into an
  * hexadecimal number, plus 1 byte for null term. */
 void sha1hex(char *digest, char *script, size_t len) {
-    SHA1_CTX      ctx;
+    SHA1_CTX ctx;
     unsigned char hash[20];
-    char         *cset = "0123456789abcdef";
-    int           j;
+    char *cset = "0123456789abcdef";
+    int j;
 
     SHA1Init(&ctx);
     SHA1Update(&ctx, (unsigned char *)script, len);
@@ -297,9 +297,9 @@ void scriptingReset(int async) {
  * If 'c' is not NULL, on error the client is informed with an appropriate
  * error describing the nature of the problem and the Lua interpreter error. */
 sds luaCreateFunction(client *c, robj *body) {
-    char       funcname[43];
+    char funcname[43];
     dictEntry *de;
-    uint64_t   script_flags = SCRIPT_FLAG_EVAL_COMPAT_MODE;
+    uint64_t script_flags = SCRIPT_FLAG_EVAL_COMPAT_MODE;
 
     funcname[0] = 'f';
     funcname[1] = '_';
@@ -312,14 +312,14 @@ sds luaCreateFunction(client *c, robj *body) {
     /* Handle shebang header in script code */
     ssize_t shebang_len = 0;
     if (!strncmp(body->ptr, "#!", 2)) {
-        int   numparts, j;
+        int numparts, j;
         char *shebang_end = strchr(body->ptr, '\n');
         if (shebang_end == NULL) {
             addReplyError(c, "Invalid script shebang");
             return NULL;
         }
         shebang_len = shebang_end - (char *)body->ptr;
-        sds  shebang = sdsnewlen(body->ptr, shebang_len);
+        sds shebang = sdsnewlen(body->ptr, shebang_len);
         sds *parts = sdssplitargs(shebang, &numparts);
         sdsfree(shebang);
         if (!parts || numparts == 0) {
@@ -337,7 +337,7 @@ sds luaCreateFunction(client *c, robj *body) {
         for (j = 1; j < numparts; j++) {
             if (!strncmp(parts[j], "flags=", 6)) {
                 sdsrange(parts[j], 6, -1);
-                int  numflags, jj;
+                int numflags, jj;
                 sds *flags = sdssplitlen(parts[j], sdslen(parts[j]), ",", 1, &numflags);
                 for (jj = 0; jj < numflags; jj++) {
                     scriptFlag *sf;
@@ -410,8 +410,8 @@ void resetLuaClient(void) {
 
 void evalGenericCommand(client *c, int evalsha) {
     lua_State *lua = lctx.lua;
-    char       funcname[43];
-    long long  numkeys;
+    char funcname[43];
+    long long numkeys;
 
     /* Get the number of arguments that are keys */
     if (getLongLongFromObjectOrReply(c, c->argv[2], &numkeys, NULL) != C_OK)
@@ -435,7 +435,7 @@ void evalGenericCommand(client *c, int evalsha) {
     }
     else {
         /* We already have the SHA if it is an EVALSHA */
-        int   j;
+        int j;
         char *sha = c->argv[1]->ptr;
 
         /* Convert to lowercase. We don't use tolower since the function
@@ -471,10 +471,10 @@ void evalGenericCommand(client *c, int evalsha) {
         serverAssert(!lua_isnil(lua, -1));
     }
 
-    char      *lua_cur_script = funcname + 2;
+    char *lua_cur_script = funcname + 2;
     dictEntry *de = dictFind(lctx.lua_scripts, lua_cur_script);
     luaScript *l = dictGetVal(de);
-    int        ro = c->cmd->proc == evalRoCommand || c->cmd->proc == evalShaRoCommand;
+    int ro = c->cmd->proc == evalRoCommand || c->cmd->proc == evalShaRoCommand;
 
     scriptRunCtx rctx;
     if (scriptPrepareForRun(&rctx, lctx.lua_client, c, lua_cur_script, l->flags, ro) != C_OK) {
@@ -770,7 +770,7 @@ int ldbStartSession(client *c) {
 
     /* First argument of EVAL is the script itself. We split it into different
      * lines since this is the way the debugger accesses the source code. */
-    sds    srcstring = sdsdup(c->argv[1]->ptr);
+    sds srcstring = sdsdup(c->argv[1]->ptr);
     size_t srclen = sdslen(srcstring);
     while (srclen && (srcstring[srclen - 1] == '\n' || srcstring[srclen - 1] == '\r')) {
         srcstring[--srclen] = '\0';
@@ -832,7 +832,7 @@ int ldbPendingChildren(void) {
 
 /* Kill all the forked sessions. */
 void ldbKillForkedSessions(void) {
-    listIter  li;
+    listIter li;
     listNode *ln;
 
     listRewind(ldb.children, &li);
@@ -909,14 +909,14 @@ int ldbDelBreakpoint(int line) {
  * otherwise NULL is returned and there is to read more buffer. */
 sds *ldbReplParseCommand(int *argcp, char **err) {
     static char *protocol_error = "protocol error";
-    sds         *argv = NULL;
-    int          argc = 0;
+    sds *argv = NULL;
+    int argc = 0;
     if (sdslen(ldb.cbuf) == 0)
         return NULL;
 
     /* Working on a copy is simpler in this case. We can modify it freely
      * for the sake of simpler parsing. */
-    sds   copy = sdsdup(ldb.cbuf);
+    sds copy = sdsdup(ldb.cbuf);
     char *p = copy;
 
     /* This Redis protocol parser is a joke... just the simplest thing that
@@ -979,8 +979,8 @@ keep_reading:
 void ldbLogSourceLine(int lnum) {
     char *line = ldbGetSourceLine(lnum);
     char *prefix;
-    int   bp = ldbIsBreakpoint(lnum);
-    int   current = ldb.currentline == lnum;
+    int bp = ldbIsBreakpoint(lnum);
+    int current = ldb.currentline == lnum;
 
     if (current && bp)
         prefix = "->#";
@@ -1027,7 +1027,7 @@ sds ldbCatStackValueRec(sds s, lua_State *lua, int idx, int level) {
     switch (t) {
         case LUA_TSTRING: {
             size_t strl;
-            char  *strp = (char *)lua_tolstring(lua, idx, &strl);
+            char *strp = (char *)lua_tolstring(lua, idx, &strl);
             s = sdscatrepr(s, strp, strl);
         } break;
         case LUA_TBOOLEAN:
@@ -1185,7 +1185,7 @@ char *ldbRedisProtocolToHuman_Int(sds *o, char *reply) {
 }
 
 char *ldbRedisProtocolToHuman_Bulk(sds *o, char *reply) {
-    char     *p = strchr(reply + 1, '\r');
+    char *p = strchr(reply + 1, '\r');
     long long bulklen;
 
     string2ll(reply + 1, p - reply - 1, &bulklen);
@@ -1207,9 +1207,9 @@ char *ldbRedisProtocolToHuman_Status(sds *o, char *reply) {
 }
 
 char *ldbRedisProtocolToHuman_MultiBulk(sds *o, char *reply) {
-    char     *p = strchr(reply + 1, '\r');
+    char *p = strchr(reply + 1, '\r');
     long long mbulklen;
-    int       j = 0;
+    int j = 0;
 
     string2ll(reply + 1, p - reply - 1, &mbulklen);
     p += 2;
@@ -1228,9 +1228,9 @@ char *ldbRedisProtocolToHuman_MultiBulk(sds *o, char *reply) {
 }
 
 char *ldbRedisProtocolToHuman_Set(sds *o, char *reply) {
-    char     *p = strchr(reply + 1, '\r');
+    char *p = strchr(reply + 1, '\r');
     long long mbulklen;
-    int       j = 0;
+    int j = 0;
 
     string2ll(reply + 1, p - reply - 1, &mbulklen);
     p += 2;
@@ -1245,9 +1245,9 @@ char *ldbRedisProtocolToHuman_Set(sds *o, char *reply) {
 }
 
 char *ldbRedisProtocolToHuman_Map(sds *o, char *reply) {
-    char     *p = strchr(reply + 1, '\r');
+    char *p = strchr(reply + 1, '\r');
     long long mbulklen;
-    int       j = 0;
+    int j = 0;
 
     string2ll(reply + 1, p - reply - 1, &mbulklen);
     p += 2;
@@ -1304,7 +1304,7 @@ void ldbPrint(lua_State *lua, char *varname) {
     while (lua_getstack(lua, l, &ar) != 0) {
         l++;
         const char *name;
-        int         i = 1; /* Variable index. */
+        int i = 1; /* Variable index. */
         while ((name = lua_getlocal(lua, &ar, i)) != NULL) {
             i++;
             if (strcmp(varname, name) == 0) {
@@ -1333,11 +1333,11 @@ void ldbPrint(lua_State *lua, char *varname) {
  * Prints all the variables in the current stack frame. */
 void ldbPrintAll(lua_State *lua) {
     lua_Debug ar;
-    int       vars = 0;
+    int vars = 0;
 
     if (lua_getstack(lua, 0, &ar) != 0) {
         const char *name;
-        int         i = 1; /* Variable index. */
+        int i = 1; /* Variable index. */
         while ((name = lua_getlocal(lua, &ar, i)) != NULL) {
             i++;
             if (!strstr(name, "(*temporary)")) {
@@ -1372,7 +1372,7 @@ void ldbBreak(sds *argv, int argc) {
         int j;
         for (j = 1; j < argc; j++) {
             char *arg = argv[j];
-            long  line;
+            long line;
             if (!string2l(arg, sdslen(arg), &line)) {
                 ldbLog(sdscatfmt(sdsempty(), "Invalid argument:'%s'", arg));
             }
@@ -1468,7 +1468,7 @@ void ldbRedis(lua_State *lua, sds *argv, int argc) {
  * querying Lua starting from the current callframe back to the outer one. */
 void ldbTrace(lua_State *lua) {
     lua_Debug ar;
-    int       level = 0;
+    int level = 0;
 
     while (lua_getstack(lua, level, &ar)) {
         lua_getinfo(lua, "Snl", &ar);
@@ -1505,8 +1505,8 @@ void ldbMaxlen(sds *argv, int argc) {
  * Return C_OK if the debugging session is continuing, otherwise
  * C_ERR if the client closed the connection or is timing out. */
 int ldbRepl(lua_State *lua) {
-    sds  *argv;
-    int   argc;
+    sds *argv;
+    int argc;
     char *err = NULL;
 
     /* We continue processing commands until a command that should return

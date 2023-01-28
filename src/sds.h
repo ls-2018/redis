@@ -14,31 +14,31 @@ typedef char *sds; // 类型别名,用于指向 sdshdr 的 buf 属性
 //__packed__ 编译器会采用紧凑型内存分配, 不会有内存对齐
 struct __attribute__((__packed__)) sdshdr5 {
     unsigned char flags; // 结构体的类型标识,只用了低3位,高5位保留
-    char          buf[];
+    char buf[];
 };
 struct __attribute__((__packed__)) sdshdr8 {
-    uint8_t       len;   // buf中已使用字节数                        1byte
-    uint8_t       alloc; // 除去头和终止符的长度即buf的总长度           1byte
+    uint8_t len;         // buf中已使用字节数                        1byte
+    uint8_t alloc;       // 除去头和终止符的长度即buf的总长度           1byte
     unsigned char flags; // 结构体的类型标识,只用了低3位,高5位保留       1byte
-    char          buf[];
+    char buf[];
 };
 struct __attribute__((__packed__)) sdshdr16 {
-    uint16_t      len;   // buf中已使用字节数                           2byte
-    uint16_t      alloc; // 除去头和终止符的长度即buf的总长度
+    uint16_t len;        // buf中已使用字节数                           2byte
+    uint16_t alloc;      // 除去头和终止符的长度即buf的总长度
     unsigned char flags; // 结构体的类型标识,只用了低3位,高5位保留
-    char          buf[];
+    char buf[];
 };
 struct __attribute__((__packed__)) sdshdr32 {
-    uint32_t      len;   // buf中已使用字节数
-    uint32_t      alloc; // 除去头和终止符的长度即buf的总长度
+    uint32_t len;        // buf中已使用字节数
+    uint32_t alloc;      // 除去头和终止符的长度即buf的总长度
     unsigned char flags; // 结构体的类型标识,只用了低3位,高5位保留
-    char          buf[];
+    char buf[];
 };
 struct __attribute__((__packed__)) sdshdr64 {
-    uint64_t      len;   // buf中已使用字节数
-    uint64_t      alloc; // 除去头和终止符的长度即buf的总长度
+    uint64_t len;        // buf中已使用字节数
+    uint64_t alloc;      // 除去头和终止符的长度即buf的总长度
     unsigned char flags; // 结构体的类型标识,只用了低3位,高5位保留
-    char          buf[];
+    char buf[];
 };
 
 #define SDS_TYPE_5 0
@@ -122,7 +122,7 @@ static inline void sdsinclen(sds s, size_t inc) {
     switch (flags & SDS_TYPE_MASK) {
         case SDS_TYPE_5: {
             unsigned char *fp = ((unsigned char *)s) - 1;
-            unsigned char  newlen = SDS_TYPE_5_LEN(flags) + inc;
+            unsigned char newlen = SDS_TYPE_5_LEN(flags) + inc;
             *fp = SDS_TYPE_5 | (newlen << SDS_TYPE_BITS);
         } break;
         case SDS_TYPE_8:

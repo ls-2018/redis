@@ -14,18 +14,18 @@
 
 #if !defined(HAVE_SETPROCTITLE)
 #if (defined __NetBSD__ || defined __FreeBSD__ || defined __OpenBSD__ || defined __DragonFly__)
-#define HAVE_SETPROCTITLE 1
+#    define HAVE_SETPROCTITLE 1
 #else
-#define HAVE_SETPROCTITLE 0
+#    define HAVE_SETPROCTITLE 0
 #endif
 #endif
 
 #if !HAVE_SETPROCTITLE
 #if (defined __linux || defined __APPLE__)
 
-#ifdef __GLIBC__
-#define HAVE_CLEARENV
-#endif
+#    ifdef __GLIBC__
+#        define HAVE_CLEARENV
+#    endif
 
 extern char **environ; // 外部 环境变量
 
@@ -40,12 +40,12 @@ static struct {
     char *nul;
 
     _Bool reset;
-    int   error;
+    int error;
 } SPT;
 
-#ifndef SPT_MIN
-#define SPT_MIN(a, b) (((a) < (b)) ? (a) : (b))
-#endif
+#    ifndef SPT_MIN
+#        define SPT_MIN(a, b) (((a) < (b)) ? (a) : (b))
+#    endif
 
 static inline size_t spt_min(size_t a, size_t b) {
     return SPT_MIN(a, b);
@@ -57,9 +57,9 @@ static inline size_t spt_min(size_t a, size_t b) {
  */
 // 将全局变量environ置空
 int spt_clearenv(void) {
-#ifdef HAVE_CLEARENV
+#    ifdef HAVE_CLEARENV
     return clearenv();
-#else
+#    else
     extern char **environ;
     static char **tmp;
 
@@ -70,16 +70,16 @@ int spt_clearenv(void) {
     environ = tmp;
 
     return 0;
-#endif
+#    endif
 } /* spt_clearenv() */
 
 // 环境变量拷贝
 static int spt_copyenv(int envc, char *oldenv[]) {
     extern char **environ;
-    char        **envcopy = NULL;
-    char         *eq;
-    int           i, error;
-    int           envsize;
+    char **envcopy = NULL;
+    char *eq;
+    int i, error;
+    int envsize;
 
     if (environ != oldenv)
         return 0;
@@ -110,17 +110,17 @@ static int spt_copyenv(int envc, char *oldenv[]) {
 
         /* On error, do our best to restore state */
         if (error) {
-#ifdef HAVE_CLEARENV
+#    ifdef HAVE_CLEARENV
             /* We don't assume it is safe to free environ, so we
              * may leak it. As clearenv() was shallow using envcopy
              * here is safe.
              */
             environ = envcopy;
-#else
+#    else
             free(envcopy);
             free(environ); /* Safe to free, we have just alloc'd it */
             environ = oldenv;
-#endif
+#    endif
             return error;
         }
     }
@@ -132,7 +132,7 @@ static int spt_copyenv(int envc, char *oldenv[]) {
 // 将args里的变量拷贝一份,然后保存到argv
 static int spt_copyargs(int argc, char *argv[]) {
     char *tmp;
-    int   i;
+    int i;
 
     for (i = 1; i < argc || (i >= argc && argv[i]); i++) {
         if (!argv[i])
@@ -154,11 +154,11 @@ static int spt_copyargs(int argc, char *argv[]) {
  */
 void spt_init(int argc, char *argv[]) { // 2  ~/redis-cn/src/redis-server redis.conf
     char **envp = environ;
-    char  *base;
-    char  *end;
-    char  *nul;
-    char  *tmp;
-    int    i, error, envc;
+    char *base;
+    char *end;
+    char *nul;
+    char *tmp;
+    int i, error, envc;
     // "~/Desktop/redis-cn/src/redis-server"
     if (!(base = argv[0]))
         return;
@@ -202,7 +202,7 @@ void spt_init(int argc, char *argv[]) { // 2  ~/redis-cn/src/redis-server redis.
     if (!(SPT.arg0 = strdup(argv[0])))
         goto syerr;
 
-#if __linux__
+#    if __linux__
     if (!(tmp = strdup(program_invocation_name)))
         goto syerr;
 
@@ -212,14 +212,14 @@ void spt_init(int argc, char *argv[]) { // 2  ~/redis-cn/src/redis-server redis.
         goto syerr;
 
     program_invocation_short_name = tmp;
-#elif __APPLE__
+#    elif __APPLE__
     printf("%s\n", strdup(getprogname())); // redis-server
     if (!(tmp = strdup(getprogname())))
         goto syerr;
 
     setprogname(tmp);
 // setprogname和getprogname.两者分别用于设置和获取程序名称.
-#endif
+#    endif
 
     /* 现在对环境和argv[]进行全面深入的复制. */
     if ((error = spt_copyenv(envc, envp))) // (数量、拷贝后的环境变量) ---> 设置 environ
@@ -239,16 +239,16 @@ error:
     SPT.error = error;
 } /* spt_init() */
 
-#ifndef SPT_MAXTITLE
-#define SPT_MAXTITLE 255
-#endif
+#    ifndef SPT_MAXTITLE
+#        define SPT_MAXTITLE 255
+#    endif
 
 // ok 设置进程名称
 void setproctitle(const char *fmt, ...) {
-    char    buf[SPT_MAXTITLE + 1]; // 在argv传递[0]时使用buffer
+    char buf[SPT_MAXTITLE + 1]; // 在argv传递[0]时使用buffer
     va_list ap;
-    char   *nul;
-    int     len, error;
+    char *nul;
+    int len, error;
 
     if (!SPT.base)
         return;

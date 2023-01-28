@@ -1,4 +1,5 @@
 SortIncludes: Never
+IndentPPDirectives: AfterHash
 #基础样式
 BasedOnStyle: Google
 #指针的*的挨着哪边

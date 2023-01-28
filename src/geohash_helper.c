@@ -129,13 +129,13 @@ int geohashBoundingBox(GeoShape *shape, double *bounds) {
  * for the specified position and shape (see geohash.h GeoShape).
  * the bounding box saved in shaple.bounds */
 GeoHashRadius geohashCalculateAreasByShapeWGS84(GeoShape *shape) {
-    GeoHashRange     long_range, lat_range;
-    GeoHashRadius    radius;
-    GeoHashBits      hash;
+    GeoHashRange long_range, lat_range;
+    GeoHashRadius radius;
+    GeoHashBits hash;
     GeoHashNeighbors neighbors;
-    GeoHashArea      area;
-    double           min_lon, max_lon, min_lat, max_lat;
-    int              steps;
+    GeoHashArea area;
+    double min_lon, max_lon, min_lat, max_lat;
+    int steps;
 
     geohashBoundingBox(shape, shape->bounds);
     min_lon = shape->bounds[0];

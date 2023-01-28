@@ -42,8 +42,8 @@
 
 typedef struct deprecatedConfig {
     const char *name;
-    const int   argc_min;
-    const int   argc_max;
+    const int argc_min;
+    const int argc_max;
 } deprecatedConfig;
 
 configEnum maxmemory_policy_enum[] = {
@@ -75,7 +75,7 @@ configEnum cluster_preferred_endpoint_type_enum[] = {{"ip", CLUSTER_ENDPOINT_TYP
 
 configEnum propagation_error_behavior_enum[] = {{"ignore", PROPAGATION_ERR_BEHAVIOR_IGNORE}, {"panic", PROPAGATION_ERR_BEHAVIOR_PANIC}, {"panic-on-replicas", PROPAGATION_ERR_BEHAVIOR_PANIC_ON_REPLICAS}, {NULL, 0}};
 
-//客户端输出缓冲区限制
+// 客户端输出缓冲区限制
 clientBufferLimitsConfig clientBufferLimitsDefaults[CLIENT_TYPE_OBUF_COUNT] = {
     {0, 0, 0},                                 /* normal */
     {1024 * 1024 * 256, 1024 * 1024 * 64, 60}, /* slave */
@@ -95,12 +95,12 @@ int configOOMScoreAdjValuesDefaults[CONFIG_OOM_COUNT] = {0, 200, 800};
  * rewrite. */
 typedef struct boolConfigData {
     int *config;                                   /* The pointer to the server config this value is stored in */
-    int  default_value;                            /* The default value of the config on rewrite */
+    int default_value;                             /* The default value of the config on rewrite */
     int (*is_valid_fn)(int val, const char **err); /* Optional function to check validity of new value (generic doc above) */
 } boolConfigData;
 
 typedef struct stringConfigData {
-    char      **config;                              /* Pointer to the server config this value is stored in. */
+    char **config;                                   /* Pointer to the server config this value is stored in. */
     const char *default_value;                       /* Default value of the config on rewrite. */
     int (*is_valid_fn)(char *val, const char **err); /* Optional function to check validity of new value (generic doc above) */
     int convert_empty_to_null;                       /* Boolean indicating if empty strings should
@@ -108,7 +108,7 @@ typedef struct stringConfigData {
 } stringConfigData;
 
 typedef struct sdsConfigData {
-    sds  *config;                                  /* Pointer to the server config this value is stored in. */
+    sds *config;                                   /* Pointer to the server config this value is stored in. */
     char *default_value;                           /* Default value of the config on rewrite. */
     int (*is_valid_fn)(sds val, const char **err); /* Optional function to check validity of new value (generic doc above) */
     int convert_empty_to_null;                     /* Boolean indicating if empty SDS strings should
@@ -116,9 +116,9 @@ typedef struct sdsConfigData {
 } sdsConfigData;
 
 typedef struct enumConfigData {
-    int        *config;                            /* The pointer to the server config this value is stored in */
+    int *config;                                   /* The pointer to the server config this value is stored in */
     configEnum *enum_value;                        /* The underlying enum type this data represents */
-    int         default_value;                     /* The default value of the config on rewrite */
+    int default_value;                             /* The default value of the config on rewrite */
     int (*is_valid_fn)(int val, const char **err); /* Optional function to check validity of new value (generic doc above) */
 } enumConfigData;
 
@@ -138,31 +138,31 @@ typedef enum numericType {
 typedef struct numericConfigData {
     union
     {
-        int                *i;
-        unsigned int       *ui;
-        long               *l;
-        unsigned long      *ul;
-        long long          *ll;
+        int *i;
+        unsigned int *ui;
+        long *l;
+        unsigned long *ul;
+        long long *ll;
         unsigned long long *ull;
-        size_t             *st;
-        ssize_t            *sst;
-        off_t              *ot;
-        time_t             *tt;
+        size_t *st;
+        ssize_t *sst;
+        off_t *ot;
+        time_t *tt;
     } config; /* The pointer to the numeric config this value is stored in */
     unsigned int flags;
-    numericType  numeric_type;                           /* An enum indicating the type of this value */
-    long long    lower_bound;                            /* The lower bound of this numeric value */
-    long long    upper_bound;                            /* The upper bound of this numeric value */
-    long long    default_value;                          /* The default value of the config on rewrite */
+    numericType numeric_type;                            /* An enum indicating the type of this value */
+    long long lower_bound;                               /* The lower bound of this numeric value */
+    long long upper_bound;                               /* The upper bound of this numeric value */
+    long long default_value;                             /* The default value of the config on rewrite */
     int (*is_valid_fn)(long long val, const char **err); /* Optional function to check validity of new value (generic doc above) */
 } numericConfigData;
 
 typedef union typeData
 {
-    boolConfigData    yesno;
-    stringConfigData  string;
-    sdsConfigData     sds;
-    enumConfigData    enumd;
+    boolConfigData yesno;
+    stringConfigData string;
+    sdsConfigData sds;
+    enumConfigData enumd;
     numericConfigData numeric;
 } typeData;
 
@@ -193,13 +193,13 @@ typedef struct typeInterface {
 
 // 标准配置
 struct standardConfig {
-    const char   *name;      // 配置名
-    const char   *alias;     // 配置别名
-    unsigned int  flags;     // 这个配置的标志
+    const char *name;        // 配置名
+    const char *alias;       // 配置别名
+    unsigned int flags;      // 这个配置的标志
     typeInterface interface; // 定义类型接口的函数指针
-    typeData      data;      // 接口使用的特定类型的数据被暴露出来
-    configType    type;      // 配置的种类
-    void         *privdata;  // 此配置的隐私数据,对于模块配置,这是一个ModuleConfig结构.
+    typeData data;           // 接口使用的特定类型的数据被暴露出来
+    configType type;         // 配置的种类
+    void *privdata;          // 此配置的隐私数据,对于模块配置,这是一个ModuleConfig结构.
 };
 
 dict *configs = NULL; // 运行时 配置
@@ -291,7 +291,7 @@ void resetServerSaveParams(void) {
 }
 
 void queueLoadModule(sds path, sds *argv, int argc) {
-    int                          i;
+    int i;
     struct moduleLoadQueueEntry *loadmod;
 
     loadmod = zmalloc(sizeof(struct moduleLoadQueueEntry));
@@ -310,12 +310,12 @@ void queueLoadModule(sds path, sds *argv, int argc) {
 static int updateClientOutputBufferLimit(sds *args, int arg_len, const char **err) {
     int j;
     int class;
-    unsigned long long       hard, soft;
-    int                      hard_err, soft_err;
-    int                      soft_seconds;
-    char                    *soft_seconds_eptr;
+    unsigned long long hard, soft;
+    int hard_err, soft_err;
+    int soft_seconds;
+    char *soft_seconds_eptr;
     clientBufferLimitsConfig values[CLIENT_TYPE_OBUF_COUNT]; // 客户端输出缓冲区限制
-    int                      classes[CLIENT_TYPE_OBUF_COUNT] = {0};
+    int classes[CLIENT_TYPE_OBUF_COUNT] = {0};
 
     /* We need a multiple of 4: <class> <hard> <soft> <soft_seconds> */
     if (arg_len % 4) {
@@ -377,17 +377,17 @@ void loadServerConfigFromString(char *config) {
         {"lua-replicate-commands", 2, 2},
         {NULL, 0},
     };
-    char        buf[1024];
+    char buf[1024];
     const char *err = NULL;
-    int         linenum = 0, totlines, i;
-    sds        *lines;
+    int linenum = 0, totlines, i;
+    sds *lines;
 
     reading_config_file = 1;
     lines = sdssplitlen(config, strlen(config), "\n", 1, &totlines);
 
     for (i = 0; i < totlines; i++) {
         sds *argv;
-        int  argc;
+        int argc;
 
         linenum = i + 1;
         lines[i] = sdstrim(lines[i], " \t\r\n");
@@ -447,7 +447,7 @@ void loadServerConfigFromString(char *config) {
         }
         else if (!strcasecmp(argv[0], "rename-command") && argc == 3) {
             struct redisCommand *cmd = lookupCommandBySds(argv[1]);
-            int                  retval;
+            int retval;
 
             if (!cmd) {
                 err = "No such command in rename-command";
@@ -563,9 +563,9 @@ loaderr:
 #define CONFIG_READ_LEN 1024
 
 void loadServerConfig(char *filename, char config_from_stdin, char *options) {
-    sds    config = sdsempty();
-    char   buf[CONFIG_READ_LEN + 1];
-    FILE  *fp;
+    sds config = sdsempty();
+    char buf[CONFIG_READ_LEN + 1];
+    FILE *fp;
     glob_t globbuf;
 
     /* Load the file content */
@@ -630,7 +630,7 @@ void loadServerConfig(char *filename, char config_from_stdin, char *options) {
 
 static int performInterfaceSet(standardConfig *config, sds value, const char **errstr) {
     sds *argv;
-    int  argc, res;
+    int argc, res;
 
     if (config->flags & MULTI_ARG_CONFIG) {
         argv = sdssplitlen(value, sdslen(value), " ", 1, &argc);
@@ -681,7 +681,7 @@ int performModuleConfigSetDefaultFromName(sds name, const char **err) {
 }
 
 static void restoreBackupConfig(standardConfig **set_configs, sds *old_values, int count, apply_fn *apply_fns, list *module_configs) {
-    int         i;
+    int i;
     const char *errstr = "unknown error";
     /* Set all backup values */
     for (i = 0; i < count; i++) {
@@ -706,18 +706,18 @@ static void restoreBackupConfig(standardConfig **set_configs, sds *old_values, i
  *----------------------------------------------------------------------------*/
 
 void configSetCommand(client *c) {
-    const char      *errstr = NULL;
-    const char      *invalid_arg_name = NULL;
-    const char      *err_arg_name = NULL;
+    const char *errstr = NULL;
+    const char *invalid_arg_name = NULL;
+    const char *err_arg_name = NULL;
     standardConfig **set_configs; /* TODO: make this a dict for better performance */
-    list            *module_configs_apply;
-    const char     **config_names;
-    sds             *new_values;
-    sds             *old_values = NULL;
-    apply_fn        *apply_fns; /* TODO: make this a set for better performance */
-    int              config_count, i, j;
-    int              invalid_args = 0, deny_loading_error = 0;
-    int             *config_map_fns;
+    list *module_configs_apply;
+    const char **config_names;
+    sds *new_values;
+    sds *old_values = NULL;
+    apply_fn *apply_fns; /* TODO: make this a set for better performance */
+    int config_count, i, j;
+    int invalid_args = 0, deny_loading_error = 0;
+    int *config_map_fns;
 
     /* Make sure we have an even number of arguments: conf-val pairs */
     if (c->argc & 1) {
@@ -875,14 +875,14 @@ end:
  *----------------------------------------------------------------------------*/
 // 配置获取函数
 void configGetCommand(client *c) {
-    int           i;
-    dictEntry    *de;
+    int i;
+    dictEntry *de;
     dictIterator *di;
     /* Create a dictionary to store the matched configs */
     dict *matches = dictCreate(&externalStringType);
     for (i = 0; i < c->argc - 2; i++) {
         robj *o = c->argv[2 + i];
-        sds   name = o->ptr;
+        sds name = o->ptr;
 
         /* If the string doesn't contain glob patterns, just directly
          * look up the key in the dictionary. */
@@ -962,15 +962,15 @@ dictType optionSetDictType = {
 
 /* The config rewrite state. */
 struct rewriteConfigState {
-    dict *option_to_line;  /* Option -> list of config file lines map */
-    dict *rewritten;       /* Dictionary of already processed options */
-    int   numlines;        /* Number of lines in current config */
-    sds  *lines;           /* Current lines as an array of sds strings */
-    int   needs_signature; /* True if we need to append the rewrite
-                              signature. */
-    int force_write;       /* True if we want all keywords to be force
-                              written. Currently only used for testing
-                              and debug information. */
+    dict *option_to_line; /* Option -> list of config file lines map */
+    dict *rewritten;      /* Dictionary of already processed options */
+    int numlines;         /* Number of lines in current config */
+    sds *lines;           /* Current lines as an array of sds strings */
+    int needs_signature;  /* True if we need to append the rewrite
+                             signature. */
+    int force_write;      /* True if we want all keywords to be force
+                             written. Currently only used for testing
+                             and debug information. */
 };
 
 /* Free the configuration rewrite state. */
@@ -1035,7 +1035,7 @@ struct rewriteConfigState *rewriteConfigReadOldFile(char *path) {
     if (fp && redis_fstat(fileno(fp), &sb) == -1)
         return NULL;
 
-    int                        linenum = -1;
+    int linenum = -1;
     struct rewriteConfigState *state = rewriteConfigCreateState();
 
     if (fp == NULL || sb.st_size == 0)
@@ -1050,14 +1050,14 @@ struct rewriteConfigState *rewriteConfigReadOldFile(char *path) {
         return NULL;
     }
 
-    int  i, totlines;
+    int i, totlines;
     sds *lines = sdssplitlen(config, sdslen(config), "\n", 1, &totlines);
 
     /* Read the old content line by line, populate the state. */
     for (i = 0; i < totlines; i++) {
-        int  argc;
+        int argc;
         sds *argv;
-        sds  line = sdstrim(lines[i], "\r\n\t ");
+        sds line = sdstrim(lines[i], "\r\n\t ");
         lines[i] = NULL;
 
         linenum++; /* Zero based, so we init at -1 */
@@ -1139,7 +1139,7 @@ struct rewriteConfigState *rewriteConfigReadOldFile(char *path) {
  * "line" is either used, or freed, so the caller does not need to free it
  * in any way. */
 void rewriteConfigRewriteLine(struct rewriteConfigState *state, const char *option, sds line, int force) {
-    sds   o = sdsnew(option);
+    sds o = sdsnew(option);
     list *l = dictFetchValue(state->option_to_line, o);
 
     rewriteConfigMarkAsProcessed(state, option);
@@ -1153,7 +1153,7 @@ void rewriteConfigRewriteLine(struct rewriteConfigState *state, const char *opti
 
     if (l) {
         listNode *ln = listFirst(l);
-        int       linenum = (long)ln->value;
+        int linenum = (long)ln->value;
 
         /* There are still lines in the old configuration file we can reuse
          * for this option. Replace the line with the new one. */
@@ -1198,8 +1198,8 @@ int rewriteConfigFormatMemory(char *buf, size_t len, long long bytes) {
 /* Rewrite a simple "option-name <bytes>" configuration option. */
 void rewriteConfigBytesOption(struct rewriteConfigState *state, const char *option, long long value, long long defvalue) {
     char buf[64];
-    int  force = value != defvalue;
-    sds  line;
+    int force = value != defvalue;
+    sds line;
 
     rewriteConfigFormatMemory(buf, sizeof(buf), value);
     line = sdscatprintf(sdsempty(), "%s %s", option, buf);
@@ -1344,7 +1344,7 @@ void rewriteConfigUserOption(struct rewriteConfigState *state) {
     raxSeek(&ri, "^", NULL, 0);
     while (raxNext(&ri)) {
         user *u = ri.data;
-        sds   line = sdsnew("user ");
+        sds line = sdsnew("user ");
         line = sdscatsds(line, u->name);
         line = sdscatlen(line, " ", 1);
         sds descr = ACLDescribeUser(u);
@@ -1405,8 +1405,8 @@ void rewriteConfigClientOutputBufferLimitOption(standardConfig *config, const ch
     UNUSED(config);
     int j;
     for (j = 0; j < CLIENT_TYPE_OBUF_COUNT; j++) {
-        int  force = (server.client_obuf_limits[j].hard_limit_bytes != clientBufferLimitsDefaults[j].hard_limit_bytes) || (server.client_obuf_limits[j].soft_limit_bytes != clientBufferLimitsDefaults[j].soft_limit_bytes) || (server.client_obuf_limits[j].soft_limit_seconds != clientBufferLimitsDefaults[j].soft_limit_seconds);
-        sds  line;
+        int force = (server.client_obuf_limits[j].hard_limit_bytes != clientBufferLimitsDefaults[j].hard_limit_bytes) || (server.client_obuf_limits[j].soft_limit_bytes != clientBufferLimitsDefaults[j].soft_limit_bytes) || (server.client_obuf_limits[j].soft_limit_seconds != clientBufferLimitsDefaults[j].soft_limit_seconds);
+        sds line;
         char hard[64], soft[64];
 
         rewriteConfigFormatMemory(hard, sizeof(hard), server.client_obuf_limits[j].hard_limit_bytes);
@@ -1482,7 +1482,7 @@ void rewriteConfigLoadmoduleOption(struct rewriteConfigState *state) {
     sds line;
 
     dictIterator *di = dictGetIterator(modules);
-    dictEntry    *de;
+    dictEntry *de;
     while ((de = dictNext(di)) != NULL) {
         struct RedisModule *module = dictGetVal(de);
         line = sdsnew("loadmodule ");
@@ -1530,11 +1530,11 @@ sds rewriteConfigGetContentFromState(struct rewriteConfigState *state) {
  * blanking all the lines still associated. */
 void rewriteConfigRemoveOrphaned(struct rewriteConfigState *state) {
     dictIterator *di = dictGetIterator(state->option_to_line);
-    dictEntry    *de;
+    dictEntry *de;
 
     while ((de = dictNext(di)) != NULL) {
         list *l = dictGetVal(de);
-        sds   option = dictGetKey(de);
+        sds option = dictGetKey(de);
 
         /* Don't blank lines about options the rewrite process
          * don't understand. */
@@ -1545,7 +1545,7 @@ void rewriteConfigRemoveOrphaned(struct rewriteConfigState *state) {
 
         while (listLength(l)) {
             listNode *ln = listFirst(l);
-            int       linenum = (long)ln->value;
+            int linenum = (long)ln->value;
 
             sdsfree(state->lines[linenum]);
             state->lines[linenum] = sdsempty();
@@ -1565,7 +1565,7 @@ sds getConfigDebugInfo() {
     /* Iterate the configs and "rewrite" the ones that have
      * the debug flag. */
     dictIterator *di = dictGetIterator(configs);
-    dictEntry    *de;
+    dictEntry *de;
     while ((de = dictNext(di)) != NULL) {
         standardConfig *config = dictGetVal(de);
         if (!(config->flags & DEBUG_CONFIG))
@@ -1584,12 +1584,12 @@ sds getConfigDebugInfo() {
  * The function returns 0 on success, otherwise -1 is returned and errno
  * is set accordingly. */
 int rewriteConfigOverwriteFile(char *configfile, sds content) {
-    int         fd = -1;
-    int         retval = -1;
-    char        tmp_conffile[PATH_MAX];
+    int fd = -1;
+    int retval = -1;
+    char tmp_conffile[PATH_MAX];
     const char *tmp_suffix = ".XXXXXX";
-    size_t      offset = 0;
-    ssize_t     written_bytes = 0;
+    size_t offset = 0;
+    ssize_t written_bytes = 0;
 
     int tmp_path_len = snprintf(tmp_conffile, sizeof(tmp_conffile), "%s%s", configfile, tmp_suffix);
     if (tmp_path_len <= 0 || (unsigned int)tmp_path_len >= sizeof(tmp_conffile)) {
@@ -1651,8 +1651,8 @@ cleanup:
  * On error -1 is returned and errno is set accordingly, otherwise 0. */
 int rewriteConfig(char *path, int force_write) {
     struct rewriteConfigState *state;
-    sds                        newcontent;
-    int                        retval;
+    sds newcontent;
+    int retval;
 
     /* Step 1: read the old config into our rewrite state. */
     if ((state = rewriteConfigReadOldFile(path)) == NULL)
@@ -1665,7 +1665,7 @@ int rewriteConfig(char *path, int force_write) {
 
     /* Iterate the configs that are standard */
     dictIterator *di = dictGetIterator(configs);
-    dictEntry    *de;
+    dictEntry *de;
     while ((de = dictNext(di)) != NULL) {
         standardConfig *config = dictGetVal(de);
         /* Only rewrite the primary names */
@@ -1703,11 +1703,11 @@ int rewriteConfig(char *path, int force_write) {
  *----------------------------------------------------------------------------*/
 #define LOADBUF_SIZE 256
 static char loadbuf[LOADBUF_SIZE];
-//嵌入通用配置
+// 嵌入通用配置
 #define embedCommonConfig(config_name, config_alias, config_flags) .name = (config_name), .alias = (config_alias), .flags = (config_flags),
-//嵌入配置接口
+// 嵌入配置接口
 #define embedConfigInterface(initfn, setfn, getfn, rewritefn, applyfn) .interface = {.init = (initfn), .set = (setfn), .get = (getfn), .rewrite = (rewritefn), .apply = (applyfn)},
-//嵌入bool配置
+// 嵌入bool配置
 #define embedBoolConfig(config_addr, default, is_valid)  \
     .type = BOOL_CONFIG, .data.yesno = {                 \
                              .config = &(config_addr),   \
@@ -1866,7 +1866,7 @@ static int enumConfigSet(standardConfig *config, sds *argv, int argc, const char
     enumval = configEnumGetValue(config->data.enumd.enum_value, argv, argc, bitflags);
 
     if (enumval == INT_MIN) {
-        sds         enumerr = sdsnew("argument(s) must be one of the following: ");
+        sds enumerr = sdsnew("argument(s) must be one of the following: ");
         configEnum *enumNode = config->data.enumd.enum_value;
         while (enumNode->name != NULL) {
             enumerr = sdscatlen(enumerr, enumNode->name, strlen(enumNode->name));
@@ -2259,7 +2259,7 @@ static int isValidAnnouncedHostname(char *val, const char **err) {
         return 0;
     }
 
-    int  i = 0;
+    int i = 0;
     char c;
     while ((c = val[i])) {
         /* We just validate the character set to make sure that everything
@@ -2517,7 +2517,7 @@ static int setConfigSaveOption(standardConfig *config, sds *argv, int argc, cons
     }
     for (j = 0; j < argc; j++) {
         char *eptr;
-        long  val;
+        long val;
 
         val = strtoll(argv[j], &eptr, 10);
         if (eptr[0] != '\0' || ((j & 1) == 0 && val < 1) || ((j & 1) == 1 && val < 0)) {
@@ -2542,7 +2542,7 @@ static int setConfigSaveOption(standardConfig *config, sds *argv, int argc, cons
 
     for (j = 0; j < argc; j += 2) {
         time_t seconds;
-        int    changes;
+        int changes;
 
         seconds = strtoll(argv[j], NULL, 10);
         changes = strtoll(argv[j + 1], NULL, 10);
@@ -2598,7 +2598,7 @@ static int setConfigOOMScoreAdjValuesOption(standardConfig *config, sds *argv, i
     }
 
     for (i = 0; i < CONFIG_OOM_COUNT; i++) {
-        char     *eptr;
+        char *eptr;
         long long val = strtoll(argv[i], &eptr, 10);
 
         if (*eptr != '\0' || val < -2000 || val > 2000) {
@@ -2768,7 +2768,7 @@ static sds getConfigLatencyTrackingInfoPercentilesOutputOption(standardConfig *c
     UNUSED(config);
     sds buf = sdsempty();
     for (int j = 0; j < server.latency_tracking_info_percentiles_len; j++) {
-        char   fbuf[128];
+        char fbuf[128];
         size_t len = sprintf(fbuf, "%f", server.latency_tracking_info_percentiles[j]);
         len = trimDoubleString(fbuf, len);
         buf = sdscatlen(buf, fbuf, len);
@@ -2791,7 +2791,7 @@ void rewriteConfigLatencyTrackingInfoPercentilesOutputOption(standardConfig *con
     }
     else {
         for (int j = 0; j < server.latency_tracking_info_percentiles_len; j++) {
-            char   fbuf[128];
+            char fbuf[128];
             size_t len = sprintf(fbuf, " %f", server.latency_tracking_info_percentiles[j]);
             len = trimDoubleString(fbuf, len);
             line = sdscatlen(line, fbuf, len);
@@ -3081,8 +3081,8 @@ void removeConfig(sds name) {
 
 /* Create a bool/string/enum/numeric standardConfig for a module config in the configs dictionary */
 void addModuleBoolConfig(const char *module_name, const char *name, int flags, void *privdata, int default_val) {
-    sds            config_name = sdscatfmt(sdsempty(), "%s.%s", module_name, name);
-    int            config_dummy_address;
+    sds config_name = sdscatfmt(sdsempty(), "%s.%s", module_name, name);
+    int config_dummy_address;
     standardConfig module_config = createBoolConfig(config_name, NULL, flags | MODULE_CONFIG, config_dummy_address, default_val, NULL, NULL);
     module_config.data.yesno.config = NULL;
     module_config.privdata = privdata;
@@ -3090,8 +3090,8 @@ void addModuleBoolConfig(const char *module_name, const char *name, int flags, v
 }
 
 void addModuleStringConfig(const char *module_name, const char *name, int flags, void *privdata, sds default_val) {
-    sds            config_name = sdscatfmt(sdsempty(), "%s.%s", module_name, name);
-    sds            config_dummy_address;
+    sds config_name = sdscatfmt(sdsempty(), "%s.%s", module_name, name);
+    sds config_dummy_address;
     standardConfig module_config = createSDSConfig(config_name, NULL, flags | MODULE_CONFIG, 0, config_dummy_address, default_val, NULL, NULL);
     module_config.data.sds.config = NULL;
     module_config.privdata = privdata;
@@ -3099,8 +3099,8 @@ void addModuleStringConfig(const char *module_name, const char *name, int flags,
 }
 
 void addModuleEnumConfig(const char *module_name, const char *name, int flags, void *privdata, int default_val, configEnum *enum_vals) {
-    sds            config_name = sdscatfmt(sdsempty(), "%s.%s", module_name, name);
-    int            config_dummy_address;
+    sds config_name = sdscatfmt(sdsempty(), "%s.%s", module_name, name);
+    int config_dummy_address;
     standardConfig module_config = createEnumConfig(config_name, NULL, flags | MODULE_CONFIG, enum_vals, config_dummy_address, default_val, NULL, NULL);
     module_config.data.enumd.config = NULL;
     module_config.privdata = privdata;
@@ -3108,8 +3108,8 @@ void addModuleEnumConfig(const char *module_name, const char *name, int flags, v
 }
 
 void addModuleNumericConfig(const char *module_name, const char *name, int flags, void *privdata, long long default_val, int conf_flags, long long lower, long long upper) {
-    sds            config_name = sdscatfmt(sdsempty(), "%s.%s", module_name, name);
-    long long      config_dummy_address;
+    sds config_name = sdscatfmt(sdsempty(), "%s.%s", module_name, name);
+    long long config_dummy_address;
     standardConfig module_config = createLongLongConfig(config_name, NULL, flags | MODULE_CONFIG, lower, upper, config_dummy_address, default_val, conf_flags, NULL, NULL);
     module_config.data.numeric.config.ll = NULL;
     module_config.privdata = privdata;

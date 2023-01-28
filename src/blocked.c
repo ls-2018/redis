@@ -18,8 +18,8 @@ int getListPositionFromObjectOrReply(client *c, robj *arg, int *position);
  * the only use for additional info we have is when clients are blocked
  * on streams, as we have to remember the ID it blocked for. */
 typedef struct bkinfo {
-    listNode *listnode;  /* List node for db->blocking_keys[key] list. */
-    streamID  stream_id; /* Stream ID if we blocked in a stream. */
+    listNode *listnode; /* List node for db->blocking_keys[key] list. */
+    streamID stream_id; /* Stream ID if we blocked in a stream. */
 } bkinfo;
 
 // 对给定的客户端进行阻塞
@@ -62,7 +62,7 @@ void updateStatsOnUnblock(client *c, long blocked_us, long reply_us, int had_err
 // 取消所有在 unblocked_clients 链表中的客户端的阻塞状态
 void processUnblockedClients(void) {
     listNode *ln;
-    client   *c;
+    client *c;
 
     while (listLength(server.unblocked_clients)) {
         ln = listFirst(server.unblocked_clients);
@@ -179,7 +179,7 @@ void replyToClientsBlockedOnShutdown(void) {
     if (server.blocked_clients_by_type[BLOCKED_SHUTDOWN] == 0)
         return;
     listNode *ln;
-    listIter  li;
+    listIter li;
     listRewind(server.clients, &li);
     while ((ln = listNext(&li))) {
         client *c = listNodeValue(ln);
@@ -199,7 +199,7 @@ void replyToClientsBlockedOnShutdown(void) {
  * it at the same time. */
 void disconnectAllBlockedClients(void) {
     listNode *ln;
-    listIter  li;
+    listIter li;
 
     listRewind(server.clients, &li);
     while ((ln = listNext(&li))) {
@@ -236,9 +236,9 @@ void serveClientsBlockedOnListKey(robj *o, readyList *rl) {
      * this key, from the first blocked to the last. */
     dictEntry *de = dictFind(rl->db->blocking_keys, rl->key);
     if (de) {
-        list     *clients = dictGetVal(de);
+        list *clients = dictGetVal(de);
         listNode *ln;
-        listIter  li;
+        listIter li;
         listRewind(clients, &li);
 
         while ((ln = listNext(&li))) {
@@ -246,10 +246,10 @@ void serveClientsBlockedOnListKey(robj *o, readyList *rl) {
             if (receiver->btype != BLOCKED_LIST)
                 continue;
 
-            int   deleted = 0;
+            int deleted = 0;
             robj *dstkey = receiver->bpop.target;
-            int   wherefrom = receiver->bpop.blockpos.wherefrom;
-            int   whereto = receiver->bpop.blockpos.whereto;
+            int wherefrom = receiver->bpop.blockpos.wherefrom;
+            int whereto = receiver->bpop.blockpos.whereto;
 
             /* Protect receiver->bpop.target, that will be
              * freed by the next unblockClient()
@@ -258,7 +258,7 @@ void serveClientsBlockedOnListKey(robj *o, readyList *rl) {
                 incrRefCount(dstkey);
 
             long long prev_error_replies = server.stat_total_error_replies;
-            client   *old_client = server.current_client;
+            client *old_client = server.current_client;
             server.current_client = receiver;
             monotime replyTimer;
             elapsedStart(&replyTimer);
@@ -291,9 +291,9 @@ void serveClientsBlockedOnSortedSetKey(robj *o, readyList *rl) {
      * this key, from the first blocked to the last. */
     dictEntry *de = dictFind(rl->db->blocking_keys, rl->key);
     if (de) {
-        list     *clients = dictGetVal(de);
+        list *clients = dictGetVal(de);
         listNode *ln;
-        listIter  li;
+        listIter li;
         listRewind(clients, &li);
 
         while ((ln = listNext(&li))) {
@@ -301,22 +301,22 @@ void serveClientsBlockedOnSortedSetKey(robj *o, readyList *rl) {
             if (receiver->btype != BLOCKED_ZSET)
                 continue;
 
-            int  deleted = 0;
+            int deleted = 0;
             long llen = zsetLength(o);
             long count = receiver->bpop.count;
-            int  where = receiver->bpop.blockpos.wherefrom;
-            int  use_nested_array = (receiver->lastcmd && receiver->lastcmd->proc == bzmpopCommand) ? 1 : 0;
-            int  reply_nil_when_empty = use_nested_array;
+            int where = receiver->bpop.blockpos.wherefrom;
+            int use_nested_array = (receiver->lastcmd && receiver->lastcmd->proc == bzmpopCommand) ? 1 : 0;
+            int reply_nil_when_empty = use_nested_array;
 
             long long prev_error_replies = server.stat_total_error_replies;
-            client   *old_client = server.current_client;
+            client *old_client = server.current_client;
             server.current_client = receiver;
             monotime replyTimer;
             elapsedStart(&replyTimer);
             genericZpopCommand(receiver, &rl->key, 1, where, 1, count, use_nested_array, reply_nil_when_empty, &deleted);
 
             /* Replicate the command. */
-            int   argc = 2;
+            int argc = 2;
             robj *argv[3];
             argv[0] = where == ZSET_MIN ? shared.zpopmin : shared.zpopmax;
             argv[1] = rl->key;
@@ -354,26 +354,26 @@ void serveClientsBlockedOnStreamKey(robj *o, readyList *rl) {
         return;
 
     dictEntry *de = dictFind(rl->db->blocking_keys, rl->key);
-    stream    *s = o->ptr;
+    stream *s = o->ptr;
 
     /* We need to provide the new data arrived on the stream
      * to all the clients that are waiting for an offset smaller
      * than the current top item. */
     if (de) {
-        list     *clients = dictGetVal(de);
+        list *clients = dictGetVal(de);
         listNode *ln;
-        listIter  li;
+        listIter li;
         listRewind(clients, &li);
 
         while ((ln = listNext(&li))) {
             client *receiver = listNodeValue(ln);
             if (receiver->btype != BLOCKED_STREAM)
                 continue;
-            bkinfo   *bki = dictFetchValue(receiver->bpop.keys, rl->key);
+            bkinfo *bki = dictFetchValue(receiver->bpop.keys, rl->key);
             streamID *gt = &bki->stream_id;
 
             long long prev_error_replies = server.stat_total_error_replies;
-            client   *old_client = server.current_client;
+            client *old_client = server.current_client;
             server.current_client = receiver;
             monotime replyTimer;
             elapsedStart(&replyTimer);
@@ -410,7 +410,7 @@ void serveClientsBlockedOnStreamKey(robj *o, readyList *rl) {
 
                 /* Lookup the consumer for the group, if any. */
                 streamConsumer *consumer = NULL;
-                int             noack = 0;
+                int noack = 0;
 
                 if (group) {
                     noack = receiver->bpop.xread_group_noack;
@@ -470,9 +470,9 @@ void serveClientsBlockedOnKeyByModule(readyList *rl) {
      * this key, from the first blocked to the last. */
     dictEntry *de = dictFind(rl->db->blocking_keys, rl->key);
     if (de) {
-        list     *clients = dictGetVal(de);
+        list *clients = dictGetVal(de);
         listNode *ln;
-        listIter  li;
+        listIter li;
         listRewind(clients, &li);
 
         while ((ln = listNext(&li))) {
@@ -487,7 +487,7 @@ void serveClientsBlockedOnKeyByModule(readyList *rl) {
              * is ready or not. This means we can't exit the loop but need
              * to continue after the first failure. */
             long long prev_error_replies = server.stat_total_error_replies;
-            client   *old_client = server.current_client;
+            client *old_client = server.current_client;
             server.current_client = receiver;
             monotime replyTimer;
             elapsedStart(&replyTimer);
@@ -521,9 +521,9 @@ void unblockDeletedStreamReadgroupClients(readyList *rl) {
      * this key, from the first blocked to the last. */
     dictEntry *de = dictFind(rl->db->blocking_keys, rl->key);
     if (de) {
-        list     *clients = dictGetVal(de);
+        list *clients = dictGetVal(de);
         listNode *ln;
-        listIter  li;
+        listIter li;
         listRewind(clients, &li);
 
         while ((ln = listNext(&li))) {
@@ -532,7 +532,7 @@ void unblockDeletedStreamReadgroupClients(readyList *rl) {
                 continue;
 
             long long prev_error_replies = server.stat_total_error_replies;
-            client   *old_client = server.current_client;
+            client *old_client = server.current_client;
             server.current_client = receiver;
             monotime replyTimer;
             elapsedStart(&replyTimer);
@@ -592,7 +592,7 @@ void handleClientsBlockedOnKeys(void) {
         server.ready_keys = listCreate();
 
         while (listLength(l) != 0) {
-            listNode  *ln = listFirst(l);
+            listNode *ln = listFirst(l);
             readyList *rl = ln->value;
 
             /* First of all remove this key from db->ready_keys so that
@@ -686,8 +686,8 @@ void handleClientsBlockedOnKeys(void) {
  * Otherwise the value is 0. */
 void blockForKeys(client *c, int btype, robj **keys, int numkeys, long count, mstime_t timeout, robj *target, struct blockPos *blockpos, streamID *ids) {
     dictEntry *de;
-    list      *l;
-    int        j;
+    list *l;
+    int j;
 
     c->bpop.count = count;
     c->bpop.timeout = timeout;
@@ -736,15 +736,15 @@ void blockForKeys(client *c, int btype, robj **keys, int numkeys, long count, ms
 /* Unblock a client that's waiting in a blocking operation such as BLPOP.
  * You should never call this function directly, but unblockClient() instead. */
 void unblockClientWaitingData(client *c) {
-    dictEntry    *de;
+    dictEntry *de;
     dictIterator *di;
-    list         *l;
+    list *l;
 
     serverAssertWithInfo(c, NULL, dictSize(c->bpop.keys) != 0);
     di = dictGetIterator(c->bpop.keys);
     /* The client may wait for multiple keys, so unblock it for every key. */
     while ((de = dictNext(di)) != NULL) {
-        robj   *key = dictGetKey(de);
+        robj *key = dictGetKey(de);
         bkinfo *bki = dictGetVal(de);
 
         /* Remove this client from the list of clients waiting for this key. */

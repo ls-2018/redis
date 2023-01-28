@@ -85,7 +85,7 @@ typedef struct ReplyParserCallbacks {
 
 struct ReplyParser {
     /* The current location in the reply buffer, needs to be set to the beginning of the reply */
-    const char          *curr_location;
+    const char *curr_location;
     ReplyParserCallbacks callbacks;
 };
 

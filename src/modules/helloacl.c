@@ -37,7 +37,7 @@
 
 // A simple global user
 static RedisModuleUser *global;
-static uint64_t         global_auth_client_id = 0;
+static uint64_t global_auth_client_id = 0;
 
 /* HELLOACL.REVOKE
  * Synchronously revoke access from a user. */
@@ -101,7 +101,7 @@ int HelloACL_Reply(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     size_t length;
 
     RedisModuleString *user_string = RedisModule_GetBlockedClientPrivateData(ctx);
-    const char        *name = RedisModule_StringPtrLen(user_string, &length);
+    const char *name = RedisModule_StringPtrLen(user_string, &length);
 
     if (RedisModule_AuthenticateClientWithACLUser(ctx, name, length, NULL, NULL, NULL) == REDISMODULE_ERR) {
         return RedisModule_ReplyWithError(ctx, "Invalid Username or password");
@@ -124,9 +124,9 @@ void HelloACL_FreeData(RedisModuleCtx *ctx, void *privdata) {
 
 /* Background authentication can happen here. */
 void *HelloACL_ThreadMain(void *args) {
-    void                    **targs = args;
+    void **targs = args;
     RedisModuleBlockedClient *bc = targs[0];
-    RedisModuleString        *user = targs[1];
+    RedisModuleString *user = targs[1];
     RedisModule_Free(targs);
 
     RedisModule_UnblockClient(bc, user);
@@ -139,7 +139,7 @@ int AuthAsyncCommand_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv,
     if (argc != 2)
         return RedisModule_WrongArity(ctx);
 
-    pthread_t                 tid;
+    pthread_t tid;
     RedisModuleBlockedClient *bc = RedisModule_BlockClient(ctx, HelloACL_Reply, HelloACL_Timeout, HelloACL_FreeData, TIMEOUT_TIME);
 
     void **targs = RedisModule_Alloc(sizeof(void *) * 2);

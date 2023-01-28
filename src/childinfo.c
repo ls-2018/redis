@@ -32,10 +32,10 @@
 #include <fcntl.h>
 
 typedef struct {
-    size_t        keys;
-    size_t        cow;
-    monotime      cow_updated;
-    double        progress;
+    size_t keys;
+    size_t cow;
+    monotime cow_updated;
+    double progress;
     childInfoType information_type; /* Type of information */
 } child_info_data;
 
@@ -70,11 +70,11 @@ void sendChildInfoGeneric(childInfoType info_type, size_t keys, double progress,
     if (server.child_info_pipe[1] == -1)
         return;
 
-    static monotime           cow_updated = 0;
-    static uint64_t           cow_update_cost = 0;
-    static size_t             cow = 0;
-    static size_t             peak_cow = 0;
-    static size_t             update_count = 0;
+    static monotime cow_updated = 0;
+    static uint64_t cow_update_cost = 0;
+    static size_t cow = 0;
+    static size_t peak_cow = 0;
+    static size_t update_count = 0;
     static unsigned long long sum_cow = 0;
 
     child_info_data data = {0}; /* zero everything, including padding to satisfy valgrind */
@@ -142,7 +142,7 @@ void updateChildInfo(childInfoType information_type, size_t cow, monotime cow_up
 int readChildInfo(childInfoType *information_type, size_t *cow, monotime *cow_updated, size_t *keys, double *progress) {
     /* We are using here a static buffer in combination with the server.child_info_nread to handle short reads */
     static child_info_data buffer;
-    ssize_t                wlen = sizeof(buffer);
+    ssize_t wlen = sizeof(buffer);
 
     /* Do not overlap */
     if (server.child_info_nread == wlen)
@@ -172,10 +172,10 @@ void receiveChildInfo(void) {
     if (server.child_info_pipe[0] == -1)
         return;
 
-    size_t        cow;
-    monotime      cow_updated;
-    size_t        keys;
-    double        progress;
+    size_t cow;
+    monotime cow_updated;
+    size_t keys;
+    double progress;
     childInfoType information_type;
 
     /* Drain the pipe and update child info so that we get the final message. */

@@ -88,8 +88,8 @@ int cmd_KEYRANGE(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     RedisModuleDictIter *iter = RedisModule_DictIteratorStart(Keyspace, ">=", argv[1]);
 
     /* Reply with the matching items. */
-    char     *key;
-    size_t    keylen;
+    char *key;
+    size_t keylen;
     long long replylen = 0; /* Keep track of the emitted array len. */
     RedisModule_ReplyWithArray(ctx, REDISMODULE_POSTPONED_LEN);
     while ((key = RedisModule_DictNextC(iter, &keylen, NULL)) != NULL) {

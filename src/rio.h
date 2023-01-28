@@ -75,7 +75,7 @@ struct rio {
     {
         /* In-memory buffer target. */
         struct {
-            sds   ptr; // 缓存指针
+            sds ptr;   // 缓存指针
             off_t pos; // 偏移量
         } buffer;
         /* Stdio file pointer target. */
@@ -86,17 +86,17 @@ struct rio {
         } file;
         /* Connection object (used to read from socket) */
         struct {
-            connection *conn;        /* Connection */
-            off_t       pos;         /* pos in buf that was returned */
-            sds         buf;         /* buffered data */
-            size_t      read_limit;  /* don't allow to buffer/read more than that */
-            size_t      read_so_far; /* amount of data read from the rio (not buffered) */
+            connection *conn;   /* Connection */
+            off_t pos;          /* pos in buf that was returned */
+            sds buf;            /* buffered data */
+            size_t read_limit;  /* don't allow to buffer/read more than that */
+            size_t read_so_far; /* amount of data read from the rio (not buffered) */
         } conn;
         /* FD target (used to write to pipe). */
         struct {
-            int   fd; /* File descriptor. */
+            int fd; /* File descriptor. */
             off_t pos;
-            sds   buf;
+            sds buf;
         } fd;
     } io;
 };

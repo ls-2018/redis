@@ -54,7 +54,7 @@ void lolwutUnstableCommand(client *c) {
 /* LOLWUT [VERSION <version>] [... version specific arguments ...] */
 void lolwutCommand(client *c) {
     char *v = REDIS_VERSION;
-    char  verstr[64];
+    char verstr[64];
 
     if (c->argc >= 3 && !strcasecmp(c->argv[1]->ptr, "version")) {
         long ver;

@@ -51,13 +51,13 @@ static RedisModuleType *HelloType;
  * making things complex. */
 
 struct HelloTypeNode {
-    int64_t               value;
+    int64_t value;
     struct HelloTypeNode *next;
 };
 
 struct HelloTypeObject {
     struct HelloTypeNode *head;
-    size_t                len; /* Number of elements added. */
+    size_t len; /* Number of elements added. */
 };
 
 struct HelloTypeObject *createHelloTypeObject(void) {
@@ -107,7 +107,7 @@ int HelloTypeInsert_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, 
     if (argc != 3)
         return RedisModule_WrongArity(ctx);
     RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
-    int             type = RedisModule_KeyType(key);
+    int type = RedisModule_KeyType(key);
     if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != HelloType) {
         return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
@@ -143,7 +143,7 @@ int HelloTypeRange_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, i
     if (argc != 4)
         return RedisModule_WrongArity(ctx);
     RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
-    int             type = RedisModule_KeyType(key);
+    int type = RedisModule_KeyType(key);
     if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != HelloType) {
         return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
@@ -154,7 +154,7 @@ int HelloTypeRange_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, i
     }
 
     struct HelloTypeObject *hto = RedisModule_ModuleTypeGetValue(key);
-    struct HelloTypeNode   *node = hto ? hto->head : NULL;
+    struct HelloTypeNode *node = hto ? hto->head : NULL;
     RedisModule_ReplyWithArray(ctx, REDISMODULE_POSTPONED_LEN);
     long long arraylen = 0;
     while (node && count--) {
@@ -173,7 +173,7 @@ int HelloTypeLen_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int
     if (argc != 2)
         return RedisModule_WrongArity(ctx);
     RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
-    int             type = RedisModule_KeyType(key);
+    int type = RedisModule_KeyType(key);
     if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != HelloType) {
         return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
@@ -193,8 +193,8 @@ int HelloBlock_Reply(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
     REDISMODULE_NOT_USED(argc);
 
     RedisModuleString *keyname = RedisModule_GetBlockedClientReadyKey(ctx);
-    RedisModuleKey    *key = RedisModule_OpenKey(ctx, keyname, REDISMODULE_READ);
-    int                type = RedisModule_KeyType(key);
+    RedisModuleKey *key = RedisModule_OpenKey(ctx, keyname, REDISMODULE_READ);
+    int type = RedisModule_KeyType(key);
     if (type != REDISMODULE_KEYTYPE_MODULE || RedisModule_ModuleTypeGetType(key) != HelloType) {
         RedisModule_CloseKey(key);
         return REDISMODULE_ERR;
@@ -227,7 +227,7 @@ int HelloTypeBRange_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, 
         return RedisModule_WrongArity(ctx);
     RedisModule_AutoMemory(ctx); /* Use automatic memory management. */
     RedisModuleKey *key = RedisModule_OpenKey(ctx, argv[1], REDISMODULE_READ | REDISMODULE_WRITE);
-    int             type = RedisModule_KeyType(key);
+    int type = RedisModule_KeyType(key);
     if (type != REDISMODULE_KEYTYPE_EMPTY && RedisModule_ModuleTypeGetType(key) != HelloType) {
         return RedisModule_ReplyWithError(ctx, REDISMODULE_ERRORMSG_WRONGTYPE);
     }
@@ -257,7 +257,7 @@ void *HelloTypeRdbLoad(RedisModuleIO *rdb, int encver) {
         /* RedisModule_Log("warning","Can't load data with version %d", encver);*/
         return NULL;
     }
-    uint64_t                elements = RedisModule_LoadUnsigned(rdb);
+    uint64_t elements = RedisModule_LoadUnsigned(rdb);
     struct HelloTypeObject *hto = createHelloTypeObject();
     while (elements--) {
         int64_t ele = RedisModule_LoadSigned(rdb);
@@ -268,7 +268,7 @@ void *HelloTypeRdbLoad(RedisModuleIO *rdb, int encver) {
 
 void HelloTypeRdbSave(RedisModuleIO *rdb, void *value) {
     struct HelloTypeObject *hto = value;
-    struct HelloTypeNode   *node = hto->head;
+    struct HelloTypeNode *node = hto->head;
     RedisModule_SaveUnsigned(rdb, hto->len);
     while (node) {
         RedisModule_SaveSigned(rdb, node->value);
@@ -278,7 +278,7 @@ void HelloTypeRdbSave(RedisModuleIO *rdb, void *value) {
 
 void HelloTypeAofRewrite(RedisModuleIO *aof, RedisModuleString *key, void *value) {
     struct HelloTypeObject *hto = value;
-    struct HelloTypeNode   *node = hto->head;
+    struct HelloTypeNode *node = hto->head;
     while (node) {
         RedisModule_EmitAOF(aof, "HELLOTYPE.INSERT", "sl", key, node->value);
         node = node->next;
@@ -289,7 +289,7 @@ void HelloTypeAofRewrite(RedisModuleIO *aof, RedisModuleString *key, void *value
  * the HelloType value. */
 size_t HelloTypeMemUsage(const void *value) {
     const struct HelloTypeObject *hto = value;
-    struct HelloTypeNode         *node = hto->head;
+    struct HelloTypeNode *node = hto->head;
     return sizeof(*hto) + sizeof(*node) * hto->len;
 }
 
@@ -299,7 +299,7 @@ void HelloTypeFree(void *value) {
 
 void HelloTypeDigest(RedisModuleDigest *md, void *value) {
     struct HelloTypeObject *hto = value;
-    struct HelloTypeNode   *node = hto->head;
+    struct HelloTypeNode *node = hto->head;
     while (node) {
         RedisModule_DigestAddLongLong(md, node->value);
         node = node->next;

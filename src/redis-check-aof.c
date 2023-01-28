@@ -58,10 +58,10 @@ aofManifest *aofLoadManifestFromFile(sds am_filepath);
         snprintf(error, sizeof(error), "0x%16llx: %s", (long long)epos, __buf); \
     }
 
-static char      error[1044];
-static off_t     epos;
+static char error[1044];
+static off_t epos;
 static long long line = 1;
-static time_t    to_timestamp = 0;
+static time_t to_timestamp = 0;
 
 int consumeNewline(char *buf) {
     if (strncmp(buf, "\r\n", 2) != 0) {
@@ -138,7 +138,7 @@ int readArgc(FILE *fp, long *target) {
  * whether the AOF file contains unclosed transactions.
  **/
 int processRESP(FILE *fp, char *filename, int *out_multi) {
-    long  argc;
+    long argc;
     char *str;
 
     if (!readArgc(fp, &argc))
@@ -230,8 +230,8 @@ int processAnnotations(FILE *fp, char *filename, int last_file) {
  * */
 int checkSingleAof(char *aof_filename, char *aof_filepath, int last_file, int fix, int preamble) {
     off_t pos = 0, diff;
-    int   multi = 0;
-    char  buf[2];
+    int multi = 0;
+    char buf[2];
 
     FILE *fp = fopen(aof_filepath, "r+");
     if (fp == NULL) {
@@ -368,7 +368,7 @@ int fileIsRDB(char *filepath) {
 
     if (size >= 8) { /* There must be at least room for the RDB header. */
         char sig[5];
-        int  rdb_file = fread(sig, sizeof(sig), 1, fp) == 1 && memcmp(sig, "REDIS", sizeof(sig)) == 0;
+        int rdb_file = fread(sig, sizeof(sig), 1, fp) == 1 && memcmp(sig, "REDIS", sizeof(sig)) == 0;
         if (rdb_file) {
             fclose(fp);
             return 1;
@@ -383,7 +383,7 @@ int fileIsRDB(char *filepath) {
 #define MANIFEST_MAX_LINE 1024
 
 int fileIsManifest(char *filepath) {
-    int   is_manifest = 0;
+    int is_manifest = 0;
     FILE *fp = fopen(filepath, "r");
     if (fp == NULL) {
         printf("Cannot open file %s: %s\n", filepath, strerror(errno));
@@ -495,14 +495,14 @@ void checkMultiPartAof(char *dirpath, char *manifest_filepath, int fix) {
 
     if (listLength(am->incr_aof_list)) {
         listNode *ln;
-        listIter  li;
+        listIter li;
 
         printf("Start to check INCR files.\n");
         listRewind(am->incr_aof_list, &li);
         while ((ln = listNext(&li)) != NULL) {
             aofInfo *ai = (aofInfo *)ln->value;
-            sds      aof_filename = (char *)ai->file_name;
-            sds      aof_filepath = makePath(dirpath, aof_filename);
+            sds aof_filename = (char *)ai->file_name;
+            sds aof_filepath = makePath(dirpath, aof_filename);
             last_file = ++aof_num == total_num;
             ret = checkSingleAof(aof_filename, aof_filepath, last_file, fix, 0);
             if (ret == AOF_CHECK_OK) {
@@ -547,9 +547,9 @@ void checkOldStyleAof(char *filepath, int fix, int preamble) {
 
 int redis_check_aof_main(int argc, char **argv) {
     char *filepath;
-    char  temp_filepath[PATH_MAX + 1];
+    char temp_filepath[PATH_MAX + 1];
     char *dirpath;
-    int   fix = 0;
+    int fix = 0;
 
     if (argc < 2) {
         goto invalid_args;

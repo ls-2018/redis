@@ -220,8 +220,8 @@ int clientTotalPubSubSubscriptionCount(client *c) {
  * 0 if the client was already subscribed to that channel. */
 int pubsubSubscribeChannel(client *c, robj *channel, pubsubtype type) {
     dictEntry *de;
-    list      *clients = NULL;
-    int        retval = 0;
+    list *clients = NULL;
+    int retval = 0;
 
     /* Add the channel to the client -> channels hash table */
     if (dictAdd(type.clientPubSubChannels(c), channel, NULL) == DICT_OK) {
@@ -248,9 +248,9 @@ int pubsubSubscribeChannel(client *c, robj *channel, pubsubtype type) {
  * 0 if the client was not subscribed to the specified channel. */
 int pubsubUnsubscribeChannel(client *c, robj *channel, int notify, pubsubtype type) {
     dictEntry *de;
-    list      *clients;
-    listNode  *ln;
-    int        retval = 0;
+    list *clients;
+    listNode *ln;
+    int retval = 0;
 
     /* Remove the channel from the client -> channels hash table */
     incrRefCount(channel); /* channel may be just a pointer to the same object
@@ -285,13 +285,13 @@ int pubsubUnsubscribeChannel(client *c, robj *channel, int notify, pubsubtype ty
 }
 
 void pubsubShardUnsubscribeAllClients(robj *channel) {
-    int        retval;
+    int retval;
     dictEntry *de = dictFind(server.pubsubshard_channels, channel);
     serverAssertWithInfo(NULL, channel, de != NULL);
     list *clients = dictGetVal(de);
     if (listLength(clients) > 0) {
         /* For each client subscribed to the channel, unsubscribe it. */
-        listIter  li;
+        listIter li;
         listNode *ln;
         listRewind(clients, &li);
         while ((ln = listNext(&li)) != NULL) {
@@ -317,8 +317,8 @@ void pubsubShardUnsubscribeAllClients(robj *channel) {
 /* Subscribe a client to a pattern. Returns 1 if the operation succeeded, or 0 if the client was already subscribed to that pattern. */
 int pubsubSubscribePattern(client *c, robj *pattern) {
     dictEntry *de;
-    list      *clients;
-    int        retval = 0;
+    list *clients;
+    int retval = 0;
 
     if (listSearchKey(c->pubsub_patterns, pattern) == NULL) {
         retval = 1;
@@ -345,9 +345,9 @@ int pubsubSubscribePattern(client *c, robj *pattern) {
  * 0 if the client was not subscribed to the specified channel. */
 int pubsubUnsubscribePattern(client *c, robj *pattern, int notify) {
     dictEntry *de;
-    list      *clients;
-    listNode  *ln;
-    int        retval = 0;
+    list *clients;
+    listNode *ln;
+    int retval = 0;
 
     incrRefCount(pattern); /* Protect the object. May be the same we remove */
     if ((ln = listSearchKey(c->pubsub_patterns, pattern)) != NULL) {
@@ -379,7 +379,7 @@ int pubsubUnsubscribeAllChannelsInternal(client *c, int notify, pubsubtype type)
     int count = 0;
     if (dictSize(type.clientPubSubChannels(c)) > 0) {
         dictIterator *di = dictGetSafeIterator(type.clientPubSubChannels(c));
-        dictEntry    *de;
+        dictEntry *de;
 
         while ((de = dictNext(di)) != NULL) {
             robj *channel = dictGetKey(de);
@@ -426,8 +426,8 @@ void pubsubUnsubscribeShardChannels(robj **channels, unsigned int count) {
  * client was subscribed from. */
 int pubsubUnsubscribeAllPatterns(client *c, int notify) {
     listNode *ln;
-    listIter  li;
-    int       count = 0;
+    listIter li;
+    int count = 0;
 
     listRewind(c->pubsub_patterns, &li);
     while ((ln = listNext(&li)) != NULL) {
@@ -444,18 +444,18 @@ int pubsubUnsubscribeAllPatterns(client *c, int notify) {
  * Publish a message to all the subscribers.
  */
 int pubsubPublishMessageInternal(robj *channel, robj *message, pubsubtype type) {
-    int           receivers = 0;
-    dictEntry    *de;
+    int receivers = 0;
+    dictEntry *de;
     dictIterator *di;
-    listNode     *ln;
-    listIter      li;
+    listNode *ln;
+    listIter li;
 
     /* Send to clients listening for that channel */
     de = dictFind(*type.serverPubSubChannels, channel);
     if (de) {
-        list     *list = dictGetVal(de);
+        list *list = dictGetVal(de);
         listNode *ln;
-        listIter  li;
+        listIter li;
 
         listRewind(list, &li);
         while ((ln = listNext(&li)) != NULL) {
@@ -654,14 +654,14 @@ void pubsubCommand(client *c) {
 
 void channelList(client *c, sds pat, dict *pubsub_channels) {
     dictIterator *di = dictGetIterator(pubsub_channels);
-    dictEntry    *de;
-    long          mblen = 0;
-    void         *replylen;
+    dictEntry *de;
+    long mblen = 0;
+    void *replylen;
 
     replylen = addReplyDeferredLen(c);
     while ((de = dictNext(di)) != NULL) {
         robj *cobj = dictGetKey(de);
-        sds   channel = cobj->ptr;
+        sds channel = cobj->ptr;
 
         if (!pat || stringmatchlen(pat, sdslen(pat), channel, sdslen(channel), 0)) {
             addReplyBulk(c, cobj);

@@ -109,8 +109,8 @@ void init_by_array64(unsigned long long init_key[], unsigned long long key_lengt
 
 /* generates a random number on [0, 2^64-1]-interval */
 unsigned long long genrand64_int64(void) {
-    int                       i;
-    unsigned long long        x;
+    int i;
+    unsigned long long x;
     static unsigned long long mag01[2] = {0ULL, MATRIX_A};
 
     if (mti >= NN) { /* generate NN words at one time */
@@ -166,7 +166,7 @@ double genrand64_real3(void) {
 
 #ifdef MT19937_64_MAIN
 int main(void) {
-    int                i;
+    int i;
     unsigned long long init[4] = {0x12345ULL, 0x23456ULL, 0x34567ULL, 0x45678ULL}, length = 4;
     init_by_array64(init, length);
     printf("1000 outputs of genrand64_int64()\n");

@@ -31,7 +31,7 @@ void lazyfreeFreeDatabase(void *args[]) {
 
 /* Release the key tracking table. */
 void lazyFreeTrackingTable(void *args[]) {
-    rax   *rt = args[0];
+    rax *rt = args[0];
     size_t len = rt->numele;
     freeTrackingRadixTree(rt);
     atomicDecr(lazyfree_objects, len);
@@ -40,7 +40,7 @@ void lazyFreeTrackingTable(void *args[]) {
 
 /* Release the lua_scripts dict. */
 void lazyFreeLuaScripts(void *args[]) {
-    dict     *lua_scripts = args[0];
+    dict *lua_scripts = args[0];
     long long len = dictSize(lua_scripts);
     dictRelease(lua_scripts);
     atomicDecr(lazyfree_objects, len);
@@ -50,7 +50,7 @@ void lazyFreeLuaScripts(void *args[]) {
 /* Release the functions ctx. */
 void lazyFreeFunctionsCtx(void *args[]) {
     functionsLibCtx *functions_lib_ctx = args[0];
-    size_t           len = functionsLibCtxfunctionsLen(functions_lib_ctx);
+    size_t len = functionsLibCtxfunctionsLen(functions_lib_ctx);
     functionsLibCtxFree(functions_lib_ctx);
     atomicDecr(lazyfree_objects, len);
     atomicIncr(lazyfreed_objects, len);
@@ -58,8 +58,8 @@ void lazyFreeFunctionsCtx(void *args[]) {
 
 /* Release replication backlog referencing memory. */
 void lazyFreeReplicationBacklogRefMem(void *args[]) {
-    list     *blocks = args[0];
-    rax      *index = args[1];
+    list *blocks = args[0];
+    rax *index = args[1];
     long long len = listLength(blocks);
     len += raxSize(index);
     listRelease(blocks);
@@ -102,16 +102,16 @@ void lazyfreeResetStats() {
  * For lists the function returns the number of elements in the quicklist
  * representing the list. */
 // 什么情况才会真正异步释放内存？这和key的类型、编码方式、元素数量都有关系
-//开启 lazy-free 后,Redis 在释放一个 key 内存时,首先会评估「代价」,如果代价很小,那么就直接在「主线程」操作了,「没必要」放到后台线程中执行（不同线程传递数据也会有性能消耗）
+// 开启 lazy-free 后,Redis 在释放一个 key 内存时,首先会评估「代价」,如果代价很小,那么就直接在「主线程」操作了,「没必要」放到后台线程中执行（不同线程传递数据也会有性能消耗）
 // 7、什么情况才会真正异步释放内存？这和 key 的类型、编码方式、元素数量都有关系（详见 lazyfreeGetFreeEffort 函数）：
 //
 // a) 当 Hash/Set 底层采用哈希表存储（非 ziplist/int 编码存储）时,并且元素数量超过 64 个
 // b) 当 ZSet 底层采用跳表存储（非 ziplist 编码存储）时,并且元素数量超过 64 个
 // c) 当 List 链表节点数量超过 64 个（注意,不是元素数量,而是链表节点的数量,List 底层实现是一个链表,链表每个节点是一个 ziplist,一个 ziplist 可能有多个元素数据）
 //
-//只有满足以上条件,在释放 key 内存时,才会真正放到「后台线程」中执行,其它情况一律还是在主线程操作.
+// 只有满足以上条件,在释放 key 内存时,才会真正放到「后台线程」中执行,其它情况一律还是在主线程操作.
 //
-//也就是说 String（不管内存占用多大）、List（少量元素）、Set（int 编码存储）、Hash/ZSet（ziplist 编码存储）这些情况下的 key,在释放内存时,依旧在「主线程」中操作.
+// 也就是说 String（不管内存占用多大）、List（少量元素）、Set（int 编码存储）、Hash/ZSet（ziplist 编码存储）这些情况下的 key,在释放内存时,依旧在「主线程」中操作.
 //
 // 8、可见,即使打开了 lazy-free,String 类型的 bigkey,在删除时依旧有「阻塞」主线程的风险.所以,即便 Redis 提供了 lazy-free,还是不建议在 Redis 存储 bigkey
 //
@@ -119,13 +119,13 @@ void lazyfreeResetStats() {
 //
 // 计算 List 和 Set 类型键值对的删除开销
 size_t lazyfreeGetFreeEffort(robj *key, robj *obj, int dbid) {
-    if (obj->type == OBJ_LIST) { //如果是List类型键值对,就返回List的长度,也就其中元素个数
+    if (obj->type == OBJ_LIST) { // 如果是List类型键值对,就返回List的长度,也就其中元素个数
         quicklist *ql = obj->ptr;
         return ql->len;
     }
     else if (obj->type == OBJ_SET && obj->encoding == OBJ_ENCODING_HT) {
         dict *ht = obj->ptr;
-        return dictSize(ht); //如果是Set类型键值对,就返回Set中的元素个数
+        return dictSize(ht); // 如果是Set类型键值对,就返回Set中的元素个数
     }
     else if (obj->type == OBJ_ZSET && obj->encoding == OBJ_ENCODING_SKIPLIST) {
         zset *zs = obj->ptr;
@@ -136,7 +136,7 @@ size_t lazyfreeGetFreeEffort(robj *key, robj *obj, int dbid) {
         return dictSize(ht);
     }
     else if (obj->type == OBJ_STREAM) {
-        size_t  effort = 0;
+        size_t effort = 0;
         stream *s = obj->ptr;
 
         /* Make a best effort estimate to maintain constant runtime. Every macro
@@ -148,7 +148,7 @@ size_t lazyfreeGetFreeEffort(robj *key, robj *obj, int dbid) {
          * others. */
         if (s->cgroups && raxSize(s->cgroups)) {
             raxIterator ri;
-            streamCG   *cg;
+            streamCG *cg;
             raxStart(&ri, s->cgroups);
             raxSeek(&ri, "^", NULL, 0);
             /* There must be at least one group so the following should always
@@ -185,11 +185,11 @@ void freeObjAsync(robj *key, robj *obj, int dbid) {
      * possible. This rarely happens, however sometimes the implementation
      * of parts of the Redis core may call incrRefCount() to protect
      * objects, and then call dbDelete(). */
-    //如果要淘汰的键值对包含超过64个元素
+    // 如果要淘汰的键值对包含超过64个元素
 
     if (free_effort > LAZYFREE_THRESHOLD && obj->refcount == 1) {
         atomicIncr(lazyfree_objects, 1);
-        //创建惰性删除的后台任务,交给后台线程执行
+        // 创建惰性删除的后台任务,交给后台线程执行
         bioCreateLazyFreeJob(lazyfreeFreeObject, 1, obj);
     }
     else {

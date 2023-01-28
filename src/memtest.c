@@ -37,40 +37,40 @@
 #include <sys/ioctl.h>
 
 #if defined(__sun)
-#include <stropts.h>
+#    include <stropts.h>
 #endif
 
 #include "config.h"
 
 #if (ULONG_MAX == 4294967295UL)
-#define MEMTEST_32BIT
+#    define MEMTEST_32BIT
 #elif (ULONG_MAX == 18446744073709551615ULL)
-#define MEMTEST_64BIT
+#    define MEMTEST_64BIT
 #else
-#error "ULONG_MAX value not supported."
+#    error "ULONG_MAX value not supported."
 #endif
 
 #ifdef MEMTEST_32BIT
-#define ULONG_ONEZERO 0xaaaaaaaaUL
-#define ULONG_ZEROONE 0x55555555UL
+#    define ULONG_ONEZERO 0xaaaaaaaaUL
+#    define ULONG_ZEROONE 0x55555555UL
 #else
-#define ULONG_ONEZERO 0xaaaaaaaaaaaaaaaaUL
-#define ULONG_ZEROONE 0x5555555555555555UL
+#    define ULONG_ONEZERO 0xaaaaaaaaaaaaaaaaUL
+#    define ULONG_ZEROONE 0x5555555555555555UL
 #endif
 
 #if defined(__has_attribute)
-#if __has_attribute(no_sanitize)
-#define NO_SANITIZE(sanitizer) __attribute__((no_sanitize(sanitizer)))
-#endif
+#    if __has_attribute(no_sanitize)
+#        define NO_SANITIZE(sanitizer) __attribute__((no_sanitize(sanitizer)))
+#    endif
 #endif
 
 #if !defined(NO_SANITIZE)
-#define NO_SANITIZE(sanitizer)
+#    define NO_SANITIZE(sanitizer)
 #endif
 
 static struct winsize ws;
-size_t                progress_printed; /* Printed chars in screen-wide progress bar. */
-size_t                progress_full;    /* How many chars to write to fill the progress bar. */
+size_t progress_printed; /* Printed chars in screen-wide progress bar. */
+size_t progress_full;    /* How many chars to write to fill the progress bar. */
 
 void memtest_progress_start(char *title, int pass) {
     int j;
@@ -152,8 +152,8 @@ void memtest_fill_random(unsigned long *l, size_t bytes, int interactive) {
     unsigned long words = bytes / sizeof(unsigned long) / 2;
     unsigned long iwords = words / step; /* words per iteration */
     unsigned long off, w, *l1, *l2;
-    uint64_t      rseed = UINT64_C(0xd13133de9afdb566); /* Just a random seed. */
-    uint64_t      rout = 0;
+    uint64_t rseed = UINT64_C(0xd13133de9afdb566); /* Just a random seed. */
+    uint64_t rout = 0;
 
     assert((bytes & 4095) == 0);
     for (off = 0; off < step; off++) {
@@ -294,11 +294,11 @@ int memtest_test(unsigned long *m, size_t bytes, int passes, int interactive) {
 NO_SANITIZE("undefined")
 
 int memtest_preserving_test(unsigned long *m, size_t bytes, int passes) {
-    unsigned long  backup[MEMTEST_BACKUP_WORDS];
+    unsigned long backup[MEMTEST_BACKUP_WORDS];
     unsigned long *p = m;
     unsigned long *end = (unsigned long *)(((unsigned char *)m) + (bytes - MEMTEST_DECACHE_SIZE));
-    size_t         left = bytes;
-    int            errors = 0;
+    size_t left = bytes;
+    int errors = 0;
 
     if (bytes & 4095)
         return 0; /* Can't test across 4k page boundaries. */
@@ -314,7 +314,7 @@ int memtest_preserving_test(unsigned long *m, size_t bytes, int passes) {
             p -= 4096 / sizeof(unsigned long);
         }
 
-        int    pass = 0;
+        int pass = 0;
         size_t len = (left > sizeof(backup)) ? sizeof(backup) : left;
 
         /* Always test an even number of pages. */
@@ -353,7 +353,7 @@ int memtest_preserving_test(unsigned long *m, size_t bytes, int passes) {
 
 /* Perform an interactive test allocating the specified number of megabytes. */
 void memtest_alloc_and_test(size_t megabytes, int passes) {
-    size_t         bytes = megabytes * 1024 * 1024;
+    size_t bytes = megabytes * 1024 * 1024;
     unsigned long *m = malloc(bytes);
 
     if (m == NULL) {

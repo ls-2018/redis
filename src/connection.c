@@ -58,9 +58,9 @@ connection *connCreateSocket() {
     return conn;
 }
 
-//创建一个新的套接字类型连接,该连接已经与已接受的连接相关联.
-//直到调用了connAccept()并调用了连接级接受处理程序,套接字才为I/O做好准备.
-//调用者应该使用connGetState()并验证创建的连接是否处于错误状态(这对于套接字连接是不可能的,但对于其他协议是可能的).
+// 创建一个新的套接字类型连接,该连接已经与已接受的连接相关联.
+// 直到调用了connAccept()并调用了连接级接受处理程序,套接字才为I/O做好准备.
+// 调用者应该使用connGetState()并验证创建的连接是否处于错误状态(这对于套接字连接是不可能的,但对于其他协议是可能的).
 connection *connCreateAcceptedSocket(int fd) {
     connection *conn = connCreateSocket();
     conn->fd = fd;
@@ -212,7 +212,7 @@ static int connSocketSetWriteHandler(connection *conn, ConnectionCallbackFunc fu
         conn->flags &= ~CONN_FLAG_WRITE_BARRIER;
     if (!conn->write_handler)
         aeDeleteFileEvent(server.el, conn->fd, AE_WRITABLE);
-    else if (aeCreateFileEvent(server.el, conn->fd, AE_WRITABLE, conn->type->ae_handler, conn) == AE_ERR) //创建可写事件的监听,以及设置回调函数
+    else if (aeCreateFileEvent(server.el, conn->fd, AE_WRITABLE, conn->type->ae_handler, conn) == AE_ERR) // 创建可写事件的监听,以及设置回调函数
         return C_ERR;
     return C_OK;
 }
@@ -351,7 +351,7 @@ ConnectionType CT_Socket = {
     .get_type = connSocketGetType};
 
 int connGetSocketError(connection *conn) {
-    int       sockerr = 0;
+    int sockerr = 0;
     socklen_t errlen = sizeof(sockerr);
 
     if (getsockopt(conn->fd, SOL_SOCKET, SO_ERROR, &sockerr, &errlen) == -1)

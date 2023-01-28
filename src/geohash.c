@@ -50,7 +50,7 @@
  * From:  https://graphics.stanford.edu/~seander/bithacks.html#InterleaveBMN
  */
 static inline uint64_t interleave64(uint32_t xlo, uint32_t ylo) {
-    static const uint64_t     B[] = {0x5555555555555555ULL, 0x3333333333333333ULL, 0x0F0F0F0F0F0F0F0FULL, 0x00FF00FF00FF00FFULL, 0x0000FFFF0000FFFFULL};
+    static const uint64_t B[] = {0x5555555555555555ULL, 0x3333333333333333ULL, 0x0F0F0F0F0F0F0F0FULL, 0x00FF00FF00FF00FFULL, 0x0000FFFF0000FFFFULL};
     static const unsigned int S[] = {1, 2, 4, 8, 16};
 
     uint64_t x = xlo;
@@ -78,7 +78,7 @@ static inline uint64_t interleave64(uint32_t xlo, uint32_t ylo) {
  * derived from http://stackoverflow.com/questions/4909263
  */
 static inline uint64_t deinterleave64(uint64_t interleaved) {
-    static const uint64_t     B[] = {0x5555555555555555ULL, 0x3333333333333333ULL, 0x0F0F0F0F0F0F0F0FULL, 0x00FF00FF00FF00FFULL, 0x0000FFFF0000FFFFULL, 0x00000000FFFFFFFFULL};
+    static const uint64_t B[] = {0x5555555555555555ULL, 0x3333333333333333ULL, 0x0F0F0F0F0F0F0F0FULL, 0x00FF00FF00FF00FFULL, 0x0000FFFF0000FFFFULL, 0x00000000FFFFFFFFULL};
     static const unsigned int S[] = {0, 1, 2, 4, 8, 16};
 
     uint64_t x = interleaved;
@@ -157,7 +157,7 @@ int geohashDecode(const GeoHashRange long_range, const GeoHashRange lat_range, c
     }
 
     area->hash = hash;
-    uint8_t  step = hash.step;
+    uint8_t step = hash.step;
     uint64_t hash_sep = deinterleave64(hash.bits); /* hash = [LAT][LONG] */
 
     double lat_scale = lat_range.max - lat_range.min;

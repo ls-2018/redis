@@ -33,11 +33,11 @@ A million repetitions of "a"
 /* blk0() and blk() perform the initial expand. */
 /* I got the idea of expanding during the round function from SSLeay */
 #if BYTE_ORDER == LITTLE_ENDIAN
-#define blk0(i) (block->l[i] = (rol(block->l[i], 24) & 0xFF00FF00) | (rol(block->l[i], 8) & 0x00FF00FF))
+#    define blk0(i) (block->l[i] = (rol(block->l[i], 24) & 0xFF00FF00) | (rol(block->l[i], 8) & 0x00FF00FF))
 #elif BYTE_ORDER == BIG_ENDIAN
-#define blk0(i) block->l[i]
+#    define blk0(i) block->l[i]
 #else
-#error "Endianness not defined!"
+#    error "Endianness not defined!"
 #endif
 #define blk(i) (block->l[i & 15] = rol(block->l[(i + 13) & 15] ^ block->l[(i + 8) & 15] ^ block->l[(i + 2) & 15] ^ block->l[i & 15], 1))
 
@@ -65,7 +65,7 @@ void SHA1Transform(uint32_t state[5], const unsigned char buffer[64]) {
     typedef union
     {
         unsigned char c[64];
-        uint32_t      l[16];
+        uint32_t l[16];
     } CHAR64LONG16;
 #ifdef SHA1HANDSOFF
     CHAR64LONG16 block[1]; /* use array to appear as a pointer */
@@ -216,7 +216,7 @@ void SHA1Update(SHA1_CTX *context, const unsigned char *data, uint32_t len) {
 /* Add padding and return the message digest. */
 
 void SHA1Final(unsigned char digest[20], SHA1_CTX *context) {
-    unsigned      i;
+    unsigned i;
     unsigned char finalcount[8];
     unsigned char c;
 
@@ -258,13 +258,13 @@ void SHA1Final(unsigned char digest[20], SHA1_CTX *context) {
 /* ================ end of sha1.c ================ */
 
 #ifdef REDIS_TEST
-#define BUFSIZE 4096
+#    define BUFSIZE 4096
 
-#define UNUSED(x) (void)(x)
+#    define UNUSED(x) (void)(x)
 int sha1Test(int argc, char **argv, int flags) {
-    SHA1_CTX      ctx;
+    SHA1_CTX ctx;
     unsigned char hash[20], buf[BUFSIZE];
-    int           i;
+    int i;
 
     UNUSED(argc);
     UNUSED(argv);

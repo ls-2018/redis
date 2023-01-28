@@ -25,7 +25,7 @@ dictType latencyTimeSeriesDictType = {
 /* ------------------------- Utility functions ------------------------------ */
 
 #ifdef __linux__
-#include <sys/prctl.h>
+#    include <sys/prctl.h>
 /* Returns 1 if Transparent Huge Pages support is enabled in the kernel.
  * Otherwise (or if we are unable to check) 0 is returned. */
 int THPIsEnabled(void) {
@@ -50,9 +50,9 @@ int THPDisable(void) {
     if (!server.disable_thp)
         return ret;
 
-#ifdef PR_SET_THP_DISABLE
+#    ifdef PR_SET_THP_DISABLE
     ret = prctl(PR_SET_THP_DISABLE, 1, 0, 0, 0);
-#endif
+#    endif
 
     return ret;
 }
@@ -83,8 +83,8 @@ void latencyAddSample(const char *event, mstime_t latency) {
     //  过期key事件     expire-cycle
     //  缓存替换事件     eviction-del,eviction-cycle
     struct latencyTimeSeries *ts = dictFetchValue(server.latency_events, event); // 查找事件对应的哈希项
-    time_t                    now = time(NULL);
-    int                       prev;
+    time_t now = time(NULL);
+    int prev;
 
     if (ts == NULL) {
         ts = zmalloc(sizeof(*ts));
@@ -123,8 +123,8 @@ void latencyAddSample(const char *event, mstime_t latency) {
  * the code simpler and we have a small fixed max number of events. */
 int latencyResetEvent(char *event_to_reset) {
     dictIterator *di;
-    dictEntry    *de;
-    int           resets = 0;
+    dictEntry *de;
+    int resets = 0;
 
     di = dictGetSafeIterator(server.latency_events);
     while ((de = dictNext(di)) != NULL) {
@@ -148,8 +148,8 @@ int latencyResetEvent(char *event_to_reset) {
  * zero values. */
 void analyzeLatencyForEvent(char *event, struct latencyStats *ls) {
     struct latencyTimeSeries *ts = dictFetchValue(server.latency_events, event);
-    int                       j;
-    uint64_t                  sum;
+    int j;
+    uint64_t sum;
 
     ls->all_time_high = ts ? ts->max : 0;
     ls->avg = 0;
@@ -240,14 +240,14 @@ sds createLatencyReport(void) {
     /* Show all the events stats and add for each event some event-related
      * comment depending on the values. */
     dictIterator *di;
-    dictEntry    *de;
-    int           eventnum = 0;
+    dictEntry *de;
+    int eventnum = 0;
 
     di = dictGetSafeIterator(server.latency_events);
     while ((de = dictNext(di)) != NULL) {
-        char                     *event = dictGetKey(de);
+        char *event = dictGetKey(de);
         struct latencyTimeSeries *ts = dictGetVal(de);
-        struct latencyStats       ls;
+        struct latencyStats ls;
 
         if (ts == NULL)
             continue;
@@ -485,8 +485,8 @@ void fillCommandCDF(client *c, struct hdr_histogram *histogram) {
     addReplyBulkCString(c, "calls");
     addReplyLongLong(c, (long long)histogram->total_count);
     addReplyBulkCString(c, "histogram_usec");
-    void           *replylen = addReplyDeferredLen(c);
-    int             samples = 0;
+    void *replylen = addReplyDeferredLen(c);
+    int samples = 0;
     struct hdr_iter iter;
     hdr_iter_log_init(&iter, histogram, 1024, 2);
     int64_t previous_count = 0;
@@ -506,8 +506,8 @@ void fillCommandCDF(client *c, struct hdr_histogram *histogram) {
 /* latencyCommand() helper to produce for all commands,
  * a per command cumulative distribution of latencies. */
 void latencyAllCommandsFillCDF(client *c, dict *commands, int *command_with_data) {
-    dictIterator        *di = dictGetSafeIterator(commands);
-    dictEntry           *de;
+    dictIterator *di = dictGetSafeIterator(commands);
+    dictEntry *de;
     struct redisCommand *cmd;
 
     while ((de = dictNext(di)) != NULL) {
@@ -529,7 +529,7 @@ void latencyAllCommandsFillCDF(client *c, dict *commands, int *command_with_data
  * a per command cumulative distribution of latencies. */
 void latencySpecificCommandsFillCDF(client *c) {
     void *replylen = addReplyDeferredLen(c);
-    int   command_with_data = 0;
+    int command_with_data = 0;
     for (int j = 2; j < c->argc; j++) {
         struct redisCommand *cmd = lookupCommandBySds(c->argv[j]->ptr);
         /* If the command does not exist we skip the reply */
@@ -544,7 +544,7 @@ void latencySpecificCommandsFillCDF(client *c) {
         }
 
         if (cmd->subcommands_dict) {
-            dictEntry    *de;
+            dictEntry *de;
             dictIterator *di = dictGetSafeIterator(cmd->subcommands_dict);
 
             while ((de = dictNext(di)) != NULL) {
@@ -565,7 +565,7 @@ void latencySpecificCommandsFillCDF(client *c) {
  * in memory for the specified time series. */
 void latencyCommandReplyWithSamples(client *c, struct latencyTimeSeries *ts) {
     void *replylen = addReplyDeferredLen(c);
-    int   samples = 0, j;
+    int samples = 0, j;
 
     for (j = 0; j < LATENCY_TS_LEN; j++) {
         int i = (ts->idx + j) % LATENCY_TS_LEN;
@@ -584,14 +584,14 @@ void latencyCommandReplyWithSamples(client *c, struct latencyTimeSeries *ts) {
  * listing the last latency sample for every event type registered so far. */
 void latencyCommandReplyWithLatestEvents(client *c) {
     dictIterator *di;
-    dictEntry    *de;
+    dictEntry *de;
 
     addReplyArrayLen(c, dictSize(server.latency_events));
     di = dictGetIterator(server.latency_events);
     while ((de = dictNext(di)) != NULL) {
-        char                     *event = dictGetKey(de);
+        char *event = dictGetKey(de);
         struct latencyTimeSeries *ts = dictGetVal(de);
-        int                       last = (ts->idx + LATENCY_TS_LEN - 1) % LATENCY_TS_LEN;
+        int last = (ts->idx + LATENCY_TS_LEN - 1) % LATENCY_TS_LEN;
 
         addReplyArrayLen(c, 4);
         addReplyBulkCString(c, event);
@@ -605,14 +605,14 @@ void latencyCommandReplyWithLatestEvents(client *c) {
 #define LATENCY_GRAPH_COLS 80
 
 sds latencyCommandGenSparkeline(char *event, struct latencyTimeSeries *ts) {
-    int              j;
+    int j;
     struct sequence *seq = createSparklineSequence();
-    sds              graph = sdsempty();
-    uint32_t         min = 0, max = 0;
+    sds graph = sdsempty();
+    uint32_t min = 0, max = 0;
 
     for (j = 0; j < LATENCY_TS_LEN; j++) {
-        int  i = (ts->idx + j) % LATENCY_TS_LEN;
-        int  elapsed;
+        int i = (ts->idx + j) % LATENCY_TS_LEN;
+        int elapsed;
         char buf[64];
 
         if (ts->samples[i].time == 0)
@@ -673,9 +673,9 @@ void latencyCommand(client *c) {
     }
     else if (!strcasecmp(c->argv[1]->ptr, "graph") && c->argc == 3) {
         /* LATENCY GRAPH <event> */
-        sds        graph;
+        sds graph;
         dictEntry *de;
-        char      *event;
+        char *event;
 
         de = dictFind(server.latency_events, c->argv[2]->ptr);
         if (de == NULL)
@@ -713,7 +713,7 @@ void latencyCommand(client *c) {
     else if (!strcasecmp(c->argv[1]->ptr, "histogram") && c->argc >= 2) {
         /* LATENCY HISTOGRAM*/
         if (c->argc == 2) {
-            int   command_with_data = 0;
+            int command_with_data = 0;
             void *replylen = addReplyDeferredLen(c);
             latencyAllCommandsFillCDF(c, server.commands, &command_with_data);
             setDeferredMapLen(c, replylen, command_with_data);

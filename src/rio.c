@@ -74,7 +74,7 @@ static const rio rioBufferIO = {
     {{NULL, 0}} /* union for io-specific vars */
 };
 
-//初始化内存流
+// 初始化内存流
 void rioInitWithBuffer(rio *r, sds s) {
     *r = rioBufferIO;
     r->io.buffer.ptr = s;
@@ -138,7 +138,7 @@ static size_t rioFileRead(rio *r, void *buf, size_t len) {
     return fread(buf, len, 1, r->io.file.fp);
 }
 
-//返回文件当前的偏移量
+// 返回文件当前的偏移量
 static off_t rioFileTell(rio *r) {
     return ftello(r->io.file.fp);
 }
@@ -299,9 +299,9 @@ void rioFreeConn(rio *r, sds *remaining) {
  * if there is some pending buffer, so this function is also used in order
  * to implement rioFdFlush(). */
 static size_t rioFdWrite(rio *r, const void *buf, size_t len) {
-    ssize_t        retval;
+    ssize_t retval;
     unsigned char *p = (unsigned char *)buf;
-    int            doflush = (buf == NULL && len == 0);
+    int doflush = (buf == NULL && len == 0);
 
     /* For small writes, we rather keep the data in user-space buffer, and flush
      * it only when it grows. however for larger writes, we prefer to flush
@@ -419,7 +419,7 @@ void rioSetAutoSync(rio *r, off_t bytes) {
 // * 成功返回写入的数量,失败返回 0 .
 size_t rioWriteBulkCount(rio *r, char prefix, long count) {
     char cbuf[128];
-    int  clen;
+    int clen;
 
     // cbuf = prefix ++ count ++ '\r\n'
     // 例如： *123\r\n
@@ -455,7 +455,7 @@ size_t rioWriteBulkString(rio *r, const char *buf, size_t len) {
 
 //* 以 "$<count>\r\n<payload>\r\n" 的格式写入 long long 值
 size_t rioWriteBulkLongLong(rio *r, long long l) {
-    char         lbuf[32];
+    char lbuf[32];
     unsigned int llen;
     // 取出 long long 值的字符串形式
     // 并计算该字符串的长度
@@ -466,7 +466,7 @@ size_t rioWriteBulkLongLong(rio *r, long long l) {
 
 // * 以 "$<count>\r\n<payload>\r\n" 的格式写入 double 值
 size_t rioWriteBulkDouble(rio *r, double d) {
-    char         dbuf[128];
+    char dbuf[128];
     unsigned int dlen;
     // 取出 double 值的字符串表示（小数点后只保留 17 位）
     // 并计算字符串的长度
