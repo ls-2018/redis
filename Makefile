@@ -8,7 +8,7 @@ endif
 
 .DEFAULT:
 	git config --global core.autocrlf input
-	$(PYTHON) ./utils/file_unix.py && cd src && sh './mkreleasehdr.sh' && cd ..
+	"$(PYTHON)" ./utils/file_unix.py && cd src && sh './mkreleasehdr.sh' && cd ..
 	rm ./dump.rdb || rm ./src/dump.rdb || rm ./src/release.h || echo start
 	cd src && $(MAKE) $@
 
