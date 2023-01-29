@@ -4,7 +4,7 @@
 // 4、loadServerConfigFromString     对配置项字符串中的每一个配置项进行匹配
 
 #include "server.h"
-#include "monotonic.h"
+#include "over-monotonic.h"
 #include "cluster.h"
 #include "slowlog.h"
 #include "bio.h"
@@ -1106,8 +1106,9 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     }
 
     /* for debug purposes: skip actual cron work if pause_cron is on */
-    if (server.pause_cron)
+    if (server.pause_cron){
         return 1000 / server.hz;
+    }
     // 记录服务器执行命令的次数
     run_with_period(100) {
         long long stat_net_input_bytes, stat_net_output_bytes;
@@ -2033,7 +2034,7 @@ void adjustOpenFilesLimit(void) {
     }
 }
 
-// 检查tcp_backlog和系统的somaxconn参数值
+// 检查 tcp_backlog 和系统的somaxconn参数值
 void checkTcpBacklogSettings(void) {
 #if defined(HAVE_PROC_SOMAXCONN)
     FILE *fp = fopen("/proc/sys/net/core/somaxconn", "r");
@@ -2057,7 +2058,7 @@ void checkTcpBacklogSettings(void) {
 
     if (sysctl(mib, 3, &somaxconn, &len, NULL, 0) == 0) {
         if (somaxconn > 0 && somaxconn < server.tcp_backlog) {
-            serverLog(LL_WARNING, "WARNING: The TCP backlog setting of %d cannot be enforced because kern.ipc.somaxconn is set to the lower value of %d.", server.tcp_backlog, somaxconn);
+            serverLog(LL_WARNING, "警告：由于 kern.ipc.somaxconn 被设置为较低的值%d，所以无法执行设置TCP backlog: %d [全连接队列数量=min(backlog,somaxconn)]。", server.tcp_backlog, somaxconn);
         }
     }
 #elif defined(HAVE_SYSCTL_KERN_SOMAXCONN)
@@ -2069,7 +2070,7 @@ void checkTcpBacklogSettings(void) {
 
     if (sysctl(mib, 2, &somaxconn, &len, NULL, 0) == 0) {
         if (somaxconn > 0 && somaxconn < server.tcp_backlog) {
-            serverLog(LL_WARNING, "WARNING: The TCP backlog setting of %d cannot be enforced because kern.somaxconn is set to the lower value of %d.", server.tcp_backlog, somaxconn);
+            serverLog(LL_WARNING, "警告：由于 kern.ipc.somaxconn 被设置为较低的值%d，所以无法执行设置TCP backlog: %d [全连接队列数量=min(backlog,somaxconn)]。", server.tcp_backlog, somaxconn);
         }
     }
 #elif defined(SOMAXCONN)
@@ -2416,7 +2417,7 @@ void initServer(void) {
     server.repl_good_slaves_count = 0;
     server.last_sig_received = 0;
 
-    // 为server后台任务创建定时事件,1秒一次,定时事件为 serverCron() 创建时间事件
+    // 为server后台任务创建定时事件,1毫秒*1000一次,定时事件为 serverCron() 创建时间事件
     if (aeCreateTimeEvent(server.el, 1, serverCron, NULL, NULL) == AE_ERR) {
         serverPanic("创建事件循环定时器失败.");
         exit(1);
@@ -6812,7 +6813,7 @@ int main(int argc, char **argv) {
 
     // 检查不正常的 maxmemory 配置
     if (server.maxmemory > 0 && server.maxmemory < 1024 * 1024) {
-        serverLog(LL_WARNING, "警报:您指定了小于1MB的maxmemory值(当前值是%llu字节).你确定这是你想要的吗?", server.maxmemory);
+        serverLog(LL_WARNING, "警报:您指定了小于1MB的 maxmemory 值(当前值是%llu字节).你确定这是你想要的吗?", server.maxmemory);
     }
     // 设置CPU亲和
     redisSetCpuAffinity(server.server_cpulist);

@@ -12,7 +12,7 @@
 #ifndef __AE_H__
 #define __AE_H__
 
-#include "monotonic.h"
+#include "over-monotonic.h"
 
 // * 事件执行状态
 #define AE_OK 0     // 成功
@@ -26,17 +26,15 @@
 // 比如在默认情况下,Redis 会先给客户端返回结果,但是如果面临需要把数据尽快写入磁盘的情况,
 // Redis 就会用到屏障事件,把写数据和回复客户端的顺序做下调整,先把数据落盘,再给客户端回复.
 
-// * 时间处理器的执行 flags
-#define AE_FILE_EVENTS (1 << 0)                         // 文件事件                      00001
-#define AE_TIME_EVENTS (1 << 1)                         // 时间事件                      00010
-#define AE_ALL_EVENTS (AE_FILE_EVENTS | AE_TIME_EVENTS) // 所有事件                      00011
-#define AE_DONT_WAIT (1 << 2)                           // 不阻塞,也不进行等待             00100
-
-#define AE_CALL_BEFORE_SLEEP (1 << 3) //                                                01000
-#define AE_CALL_AFTER_SLEEP (1 << 4)  //                                                10000
-
-#define AE_NOMORE (-1)           //  * 决定时间事件是否要持续执行的 flag
-#define AE_DELETED_EVENT_ID (-1) // 要删除的事件   ID 被置为-1
+// 时间处理器的执行 flags
+#define AE_FILE_EVENTS (1 << 0)                         // 文件事件                                         00001
+#define AE_TIME_EVENTS (1 << 1)                         // 时间事件                                         00010
+#define AE_ALL_EVENTS (AE_FILE_EVENTS | AE_TIME_EVENTS) // 所有事件                                         00011
+#define AE_DONT_WAIT (1 << 2)                           // 不阻塞,也不进行等待                                00100
+#define AE_CALL_BEFORE_SLEEP (1 << 3)                   //                                                 01000
+#define AE_CALL_AFTER_SLEEP (1 << 4)                    //                                                 10000
+#define AE_NOMORE (-1)                                  // 决定时间事件是否要持续执行的 flag
+#define AE_DELETED_EVENT_ID (-1)                        // 要删除的事件   ID 被置为-1
 
 /* Macros */
 #define AE_NOTUSED(V) ((void)(V))
@@ -67,7 +65,7 @@ typedef struct aeFileEvent {
 
 // 时间事件结构
 typedef struct aeTimeEvent {
-    long long id;  // 事件全局唯一ID
+    long long id;  // 事件全局唯一ID,也可以是某几个特殊值
     monotime when; // 毫秒精度的UNIX时间戳,记录了时间事件的到达时间  微秒
 
     // evictionTimeProc
@@ -78,11 +76,10 @@ typedef struct aeTimeEvent {
     // 返回不是AE_NOMORE 是周期性事件,当一个事件到达后,服务器会根据事件处理器返回的值,对when属性进行更新,让这个事件在一段时间后再次到达.
     aeTimeProc *timeProc;                // 时间事件触发后的处理函数
     aeEventFinalizerProc *finalizerProc; // 事件结束后的处理函数
-
-    void *clientData;         // 多路复用库的私有数据
-    struct aeTimeEvent *prev; // 指向上个时间事件结构,形成链表
-    struct aeTimeEvent *next; // 指向下个时间事件结构,形成链表
-    int refcount;             // refcount,以防止定时器事件在递归的时间事件调用中被释放.
+    void *clientData;                    // 多路复用库的私有数据
+    struct aeTimeEvent *prev;            // 指向上个时间事件结构,形成链表
+    struct aeTimeEvent *next;            // 指向下个时间事件结构,形成链表
+    int refcount;                        // refcount,以防止定时器事件在递归的时间事件调用中被释放.
 } aeTimeEvent;
 
 //  * 已就绪事件
@@ -101,8 +98,8 @@ typedef struct aeEventLoop {
     aeTimeEvent *timeEventHead;     // 记录时间事件的链表头
     int stop;                       // 事件处理器的开关 0 没有停止
     void *apidata;                  // 底层监听实现的抽象 [epoll、select、]
-    aeBeforeSleepProc *beforesleep; // 在处理事件前要执行的函数
-    aeBeforeSleepProc *aftersleep;  // 在处理事件后要执行的函数
+    aeBeforeSleepProc *beforesleep; // 在调用事件循环 获取事件 前要执行的函数
+    aeBeforeSleepProc *aftersleep;  // 在调用事件循环 获取事件 后要执行的函数
     int flags;
 } aeEventLoop;
 

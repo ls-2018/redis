@@ -1,4 +1,5 @@
-#include "monotonic.h"
+// over
+#include "over-monotonic.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,16 +14,8 @@ monotime (*getMonotonicUs)(void) = NULL;
 
 static char monotonic_info_string[32];
 
-/* Using the processor clock (aka TSC on x86) can provide improved performance
- * throughout Redis wherever the monotonic clock is used.  The processor clock
- * is significantly faster than calling 'clock_getting' (POSIX).  While this is
- * generally safe on modern systems, this link provides additional information
- * about use of the x86 TSC: http://oliveryang.net/2015/09/pitfalls-of-TSC-usage
- *
- * To use the processor clock, either uncomment this line, or build with
- *   CFLAGS="-DUSE_PROCESSOR_CLOCK"
-#define USE_PROCESSOR_CLOCK
- */
+// 使用处理器时钟(又名x86上的TSC)可以提高整个Redis的性能，无论在哪里使用onotonic时钟。
+// 处理器时钟明显快于调用'clock_getting' (POSIX)。
 
 #if defined(USE_PROCESSOR_CLOCK) && defined(__x86_64__) && defined(__linux__)
 #    include <regex.h>
@@ -127,7 +120,7 @@ static void monotonicInit_aarch64() {
 // 获取纳秒数,不会因为系统时间跳跃而有影响
 static monotime getMonotonicUs_posix() {
     struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
+    clock_gettime(CLOCK_MONOTONIC, &ts); // 就是开机到现在的时间
     return ((uint64_t)ts.tv_sec) * 1000000 + ts.tv_nsec / 1000;
 }
 

@@ -184,13 +184,12 @@ void spt_init(int argc, char *argv[]) { // 2  ~/redis-cn/src/redis-server redis.
 
     // 如果envp数组不是argv的直接扩展,就明确地扫描它.
     // 遍历环境变量
+    printf("环境变量:\n");
     for (i = 0; envp[i]; i++) {
         if (envp[i] < end)
             continue;
-
         if (end >= envp[i] && end <= envp[i] + strlen(envp[i])) {
             end = envp[i] + strlen(envp[i]) + 1;
-            printf("end--->: %s\n", end);
         }
     }
     envc = i; // 统计环境变量个数？
@@ -213,7 +212,7 @@ void spt_init(int argc, char *argv[]) { // 2  ~/redis-cn/src/redis-server redis.
 
     program_invocation_short_name = tmp;
 #    elif __APPLE__
-    printf("%s\n", strdup(getprogname())); // redis-server
+    printf("程序名:%s\n", strdup(getprogname())); // redis-server
     if (!(tmp = strdup(getprogname())))
         goto syerr;
 

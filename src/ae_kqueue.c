@@ -27,8 +27,9 @@ static inline void resetEventMask(char *eventsMask, int fd) {
 static int aeApiCreate(aeEventLoop *eventLoop) {
     aeApiState *state = zmalloc(sizeof(aeApiState));
 
-    if (!state)
+    if (!state){
         return -1;
+    }
     state->events = zmalloc(sizeof(struct kevent) * eventLoop->setsize);
     if (!state->events) {
         zfree(state);

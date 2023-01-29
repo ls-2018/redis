@@ -116,7 +116,7 @@ set(SRC_SERVER_TMP
         src/commands.c
         src/expire.c
         src/pubsub.c
-        src/monotonic.c
+        src/over-monotonic.c
         src/quicklist.c
         )
 set(SRC_SERVER src/server.c ${SRC_SERVER_TMP} ${OPTION})
