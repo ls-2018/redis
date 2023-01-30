@@ -62,7 +62,7 @@
 #include "linenoise.h"
 #include "help.h" /* Used for backwards-compatibility with pre-7.0 servers that don't support COMMAND DOCS. */
 #include "anet.h"
-#include "ae.h"
+#include "over-ae.h"
 #include "cli_common.h"
 #include "mt19937-64.h"
 

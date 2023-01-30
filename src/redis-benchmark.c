@@ -45,7 +45,7 @@
 
 #include <sdscompat.h> /* Use hiredis' sds compat header that maps sds calls to their hi_ variants */
 #include <sds.h>       /* Use hiredis sds. */
-#include "ae.h"
+#include "over-ae.h"
 #include <hiredis.h>
 
 #ifdef USE_OPENSSL

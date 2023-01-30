@@ -82,7 +82,7 @@ set(SRC_SERVER_TMP
         src/connection.c
         src/function_lua.c
         src/bio.c
-        src/ae.c
+        src/over-ae.c
         src/blocked.c
         src/t_string.c
         src/config.c
@@ -127,7 +127,7 @@ set(SRC_CLI
         src/redis-cli.c
         src/zmalloc.c
         src/release.c
-        src/ae.c
+        src/over-ae.c
         src/crc64.c
         src/crc16.c
         src/dict.c
