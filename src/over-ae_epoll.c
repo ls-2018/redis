@@ -2,7 +2,7 @@
 // 事件状态
 typedef struct aeApiState {
     int epfd;                   // epoll实例的描述符
-    struct epoll_event *events; // epoll_event结构体数组,记录监听事件
+    struct epoll_event *events; // epoll_event结构体数组,记录监听事件 , 与事件循环的events不一样,响应的事件会放在数组前边
 } aeApiState;
 
 // 创建一个新的 epoll 实例,并将它赋值给 eventLoop
@@ -56,7 +56,7 @@ static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
     int op = eventLoop->events[fd].mask == AE_NONE ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
     // 注册事件到 epoll
     ee.events = 0;
-    mask |= eventLoop->events[fd].mask; /* Merge old events */
+    mask |= eventLoop->events[fd].mask; // 合并旧的事件
     // 将可读或可写IO事件类型转换为epoll监听的类型EPOLLIN或EPOLLOUT
     if (mask & AE_READABLE) {
         ee.events |= EPOLLIN;
@@ -99,6 +99,7 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
     aeApiState *state = eventLoop->apidata;
     int retval, numevents = 0;
     // 调用epoll_wait获取监听到的事件,检测并返回内核中发生的网络IO事件
+    // 使用state->events
     retval = epoll_wait(state->epfd, state->events, eventLoop->setsize, tvp ? (tvp->tv_sec * 1000 + (tvp->tv_usec + 999) / 1000) : -1);
     // 有至少一个事件就绪？
     if (retval > 0) {

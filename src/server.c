@@ -1105,7 +1105,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     }
 
     /* for debug purposes: skip actual cron work if pause_cron is on */
-    if (server.pause_cron){
+    if (server.pause_cron) {
         return 1000 / server.hz;
     }
     // 记录服务器执行命令的次数
