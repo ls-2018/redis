@@ -39,7 +39,7 @@
 #define RIO_FLAG_READ_ERROR (1 << 0)
 #define RIO_FLAG_WRITE_ERROR (1 << 1)
 
-// * RIO API 接口和状态
+// RIO API 接口和状态
 struct rio {
     /* Backend functions.
      * Since this functions do not tolerate short writes or reads the return
@@ -106,8 +106,8 @@ typedef struct rio rio;
 /* The following functions are our interface with the stream. They'll call the
  * actual implementation of read / write / tell, and will update the checksum
  * if needed. */
-// * 将 buf 中的 len 字节写入到 r 中.
-// * 写入成功返回实际写入的字节数,写入失败返回 -1 .
+// 将 buf 中的 len 字节写入到 r 中.
+// 写入成功返回实际写入的字节数,写入失败返回 -1 .
 static inline size_t rioWrite(rio *r, const void *buf, size_t len) {
     if (r->flags & RIO_FLAG_WRITE_ERROR)
         return 0;
@@ -126,8 +126,8 @@ static inline size_t rioWrite(rio *r, const void *buf, size_t len) {
     return 1;
 }
 
-// * 从 r 中读取 len 字节,并将内容保存到 buf 中.
-// * 读取成功返回 1 ,失败返回 0 .
+// 从 r 中读取 len 字节,并将内容保存到 buf 中.
+// 读取成功返回 1 ,失败返回 0 .
 static inline size_t rioRead(rio *r, void *buf, size_t len) {
     if (r->flags & RIO_FLAG_READ_ERROR)
         return 0;
@@ -146,7 +146,7 @@ static inline size_t rioRead(rio *r, void *buf, size_t len) {
     return 1;
 }
 
-// * 返回 r 的当前偏移量.
+// 返回 r 的当前偏移量.
 static inline off_t rioTell(rio *r) {
     return r->tell(r);
 }

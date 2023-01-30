@@ -45,8 +45,7 @@
 
 #endif
 
-/* Our shared "common" objects */
-
+// 共享对象
 struct sharedObjectsStruct shared;
 
 /* Global vars that are actually used as constants. The following double
@@ -497,10 +496,10 @@ void tryResizeHashTables(int dbid) {
     }
 }
 
-// * 虽然服务器在对数据库执行读取/写入命令时会对数据库进行渐进式 rehash ,
-// * 但如果服务器长期没有执行命令的话,数据库字典的 rehash 就可能一直没办法完成,
-// * 为了防止出现这种情况,我们需要对数据库执行主动 rehash .
-// * 函数在执行了主动 rehash 时返回 1 ,否则返回 0 .
+// 虽然服务器在对数据库执行读取/写入命令时会对数据库进行渐进式 rehash ,
+// 但如果服务器长期没有执行命令的话,数据库字典的 rehash 就可能一直没办法完成,
+// 为了防止出现这种情况,我们需要对数据库执行主动 rehash .
+// 函数在执行了主动 rehash 时返回 1 ,否则返回 0 .
 int incrementallyRehash(int dbid) {
     /* Keys dictionary */
     if (dictIsRehashing(server.db[dbid].dict)) {
@@ -2681,7 +2680,7 @@ void populateCommandTable(void) {
     }
 }
 
-// * 重置命令表中的统计信息
+// 重置命令表中的统计信息
 void resetCommandTableStats(dict *commands) {
     struct redisCommand *c;
     dictEntry *de;
@@ -2839,10 +2838,10 @@ struct redisCommand *lookupCommandByCString(const char *s) {
  * This is used by functions rewriting the argument vector such as
  * rewriteClientCommandVector() in order to set client->cmd pointer
  * correctly even if the command was renamed. */
-// * 从当前命令表 server.commands 中查找给定名字,
-// * 如果没找到的话,就尝试从 server.orig_commands 中查找未被改名的原始名字
-// * 原始表中的命令名不受 redis.conf 中命令改名的影响
-// * 这个函数可以在命令被更名之后,仍然在重写命令时得出正确的名字.
+// 从当前命令表 server.commands 中查找给定名字,
+// 如果没找到的话,就尝试从 server.orig_commands 中查找未被改名的原始名字
+// 原始表中的命令名不受 redis.conf 中命令改名的影响
+// 这个函数可以在命令被更名之后,仍然在重写命令时得出正确的名字.
 
 struct redisCommand *lookupCommandOrOriginal(robj **argv, int argc) {
     // 查找当前表
@@ -3415,12 +3414,12 @@ int commandCheckArity(client *c, sds *err) {
     return 1;
 }
 
-// * 这个函数执行时,我们已经读入了一个完整的命令到客户端,
-// * 这个函数负责执行这个命令,
-// * 或者服务器准备从客户端中进行一次读取.
-// * 如果这个函数返回 1 ,那么表示客户端在执行命令之后仍然存在,
-// * 调用者可以继续执行其他操作.
-// * 否则,如果这个函数返回 0 ,那么表示客户端已经被销毁.
+// 这个函数执行时,我们已经读入了一个完整的命令到客户端,
+// 这个函数负责执行这个命令,
+// 或者服务器准备从客户端中进行一次读取.
+// 如果这个函数返回 1 ,那么表示客户端在执行命令之后仍然存在,
+// 调用者可以继续执行其他操作.
+// 否则,如果这个函数返回 0 ,那么表示客户端已经被销毁.
 int processCommand(client *c) {
     if (!scriptIsTimedout()) { // 脚本已经超时
         /*

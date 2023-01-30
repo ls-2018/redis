@@ -124,7 +124,7 @@
 #define ZIPMAP_LEN_BYTES(_l) (((_l) < ZIPMAP_BIGLEN) ? 1 : sizeof(unsigned int) + 1)
 
 /* Create a new empty zipmap. */
-//* 创建一个新的 zipmap
+// 创建一个新的 zipmap
 unsigned char *zipmapNew(void) {
     unsigned char *zm = zmalloc(2);
 

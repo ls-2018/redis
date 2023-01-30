@@ -1,11 +1,11 @@
 #include <sys/epoll.h>
-// * 事件状态
+// 事件状态
 typedef struct aeApiState {
     int epfd;                   // epoll实例的描述符
     struct epoll_event *events; // epoll_event结构体数组,记录监听事件
 } aeApiState;
 
-// * 创建一个新的 epoll 实例,并将它赋值给 eventLoop
+// 创建一个新的 epoll 实例,并将它赋值给 eventLoop
 static int aeApiCreate(aeEventLoop *eventLoop) {
     aeApiState *state = zmalloc(sizeof(aeApiState));
 
@@ -30,7 +30,7 @@ static int aeApiCreate(aeEventLoop *eventLoop) {
     return 0;
 }
 
-// * 调整事件槽大小
+// 调整事件槽大小
 static int aeApiResize(aeEventLoop *eventLoop, int setsize) {
     aeApiState *state = eventLoop->apidata;
 
@@ -38,7 +38,7 @@ static int aeApiResize(aeEventLoop *eventLoop, int setsize) {
     return 0;
 }
 
-// * 释放 epoll 实例和事件槽
+// 释放 epoll 实例和事件槽
 static void aeApiFree(aeEventLoop *eventLoop) {
     aeApiState *state = eventLoop->apidata;
 
@@ -47,7 +47,7 @@ static void aeApiFree(aeEventLoop *eventLoop) {
     zfree(state);
 }
 
-// * 关联给定事件到 fd
+// 关联给定事件到 fd
 static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
     aeApiState *state = eventLoop->apidata;
     struct epoll_event ee = {0}; // 创建epoll_event类型变量
@@ -72,7 +72,7 @@ static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
     return 0;
 }
 
-// * 从 fd 中删除给定事件
+// 从 fd 中删除给定事件
 static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int delmask) {
     aeApiState *state = eventLoop->apidata;
     struct epoll_event ee = {0}; /* avoid valgrind warning */
@@ -94,7 +94,7 @@ static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int delmask) {
     }
 }
 
-// * 获取可执行事件
+// 获取可执行事件
 static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
     aeApiState *state = eventLoop->apidata;
     int retval, numevents = 0;
@@ -129,7 +129,7 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
     // 返回已就绪事件个数
     return numevents;
 }
-//* 返回当前正在使用的 poll 库的名字
+// 返回当前正在使用的 poll 库的名字
 static char *aeApiName(void) {
     return "epoll";
 }

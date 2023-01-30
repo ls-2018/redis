@@ -348,8 +348,8 @@ dictEntry *dictAddOrFind(dict *d, void *key) {
 }
 
 // 根据传入参数 nofree 的值,决定是否实际释放 key 和 value 的内存空间
-// * 参数 nofree 决定是否调用键和值的释放函数 0 表示调用,1 表示不调用
-// * 找到并成功删除返回 DICT_OK ,没找到则返回 DICT_ERR
+// 参数 nofree 决定是否调用键和值的释放函数 0 表示调用,1 表示不调用
+// 找到并成功删除返回 DICT_OK ,没找到则返回 DICT_ERR
 static dictEntry *dictGenericDelete(dict *d, const void *key, int nofree) {
     uint64_t h, idx;
     dictEntry *he, *prevHe;

@@ -14,11 +14,11 @@
 
 #include "over-monotonic.h"
 
-// * 事件执行状态
+// 事件执行状态
 #define AE_OK 0     // 成功
 #define AE_ERR (-1) // 出错
 
-// * 文件事件状态
+// 网络通信的事件类型
 #define AE_NONE 0     // 000未设置                                                      00000
 #define AE_READABLE 1 // 001描述符可读信号                                                00001
 #define AE_WRITABLE 2 // 010描述符可写信号                                                00010
@@ -36,13 +36,13 @@
 #define AE_NOMORE (-1)                                  // 决定时间事件是否要持续执行的 flag
 #define AE_DELETED_EVENT_ID (-1)                        // 要删除的事件   ID 被置为-1
 
-/* Macros */
+// 宏指令
 #define AE_NOTUSED(V) ((void)(V))
 
-//* 事件处理器状态
+// 事件处理器状态
 struct aeEventLoop;
 
-// * 事件接口
+// 事件接口
 typedef void aeFileProc(struct aeEventLoop *eventLoop, int fd, void *clientData, int mask);
 // 返回值,决定是定时事件、还是周期性事件
 typedef int aeTimeProc(struct aeEventLoop *eventLoop, long long id, void *clientData);
@@ -51,19 +51,17 @@ typedef void aeEventFinalizerProc(struct aeEventLoop *eventLoop, void *clientDat
 
 typedef void aeBeforeSleepProc(struct aeEventLoop *eventLoop);
 
-// 文件事件结构,
 // 定义了IO事件      对应了客户端发送的网络请求
-// 定义了时间事件     Redis自身的周期性操作
 typedef struct aeFileEvent {
     //    用来表示事件类型的掩码.对于网络通信的事件来说,主要有 AE_READABLE、AE_WRITABLE 和 AE_BARRIER 三种类型事件.
     //    框架在分发事件时,依赖的就是结构体中的事件类型;
-    int mask;
+    int mask;              // 期待发生的事件类型
     aeFileProc *rfileProc; // AE_READABLE事件处理器
     aeFileProc *wfileProc; // AE_WRITABLE事件处理器
     void *clientData;      // 用来指向客户端私有数据的指针
 } aeFileEvent;
 
-// 时间事件结构
+// 时间事件结构：Redis自身的周期性操作
 typedef struct aeTimeEvent {
     long long id;  // 事件全局唯一ID,也可以是某几个特殊值
     monotime when; // 毫秒精度的UNIX时间戳,记录了时间事件的到达时间  微秒
@@ -82,19 +80,19 @@ typedef struct aeTimeEvent {
     int refcount;                        // refcount,以防止定时器事件在递归的时间事件调用中被释放.
 } aeTimeEvent;
 
-//  * 已就绪事件
+// 已就绪事件,每次 epoll wait 返回的事件
 typedef struct aeFiredEvent {
     int fd;   // 已就绪文件描述符
-    int mask; // 事件类型掩码, 值可以是 AE_READABLE 1 或 AE_WRITABLE 2 或者是两者的或
+    int mask; // 事件类型掩码, 值可以是 AE_READABLE 01 或 AE_WRITABLE 10 或者是两者
 } aeFiredEvent;
 
-//* 事件处理器 封装了select、queue、epoll
+// 事件处理器 封装了select、queue、epoll
 typedef struct aeEventLoop {
-    int maxfd;                      // 目前已注册的最大描述符
-    int setsize;                    // 目前已追踪的最大描述符
-    long long timeEventNextId;      // 用于生成时间事件 id ,自增
-    aeFileEvent *events;            // IO事件数组,每个文件描述组都按照对应索引存储在里边
-    aeFiredEvent *fired;            // 已触发事件数组 , 存储了每次 epoll wait 返回的事件      比上边数据量小
+    int maxfd;                      // 已经接受的最大的文件描述符
+    int setsize;                    // 当前循环中所能容纳的文件描述符的数量
+    long long timeEventNextId;      // 下一个时间事件的ID
+    aeFileEvent *events;            // 指针，指向保存所有注册的事件的数组首地址。
+    aeFiredEvent *fired;            // 已触发事件数组 , 存储了每次 epoll wait 返回的事件
     aeTimeEvent *timeEventHead;     // 记录时间事件的链表头
     int stop;                       // 事件处理器的开关 0 没有停止
     void *apidata;                  // 底层监听实现的抽象 [epoll、select、]

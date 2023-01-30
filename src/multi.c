@@ -94,7 +94,7 @@ void discardTransaction(client *c) {
 }
 
 // 执行事务时, 将事务状态设为 DIRTY_EXEC ,让之后的 EXEC 命令失败.
-// * 每次在入队命令出错时调用
+// 每次在入队命令出错时调用
 void flagTransaction(client *c) {
     if (c->flags & CLIENT_MULTI) {
         c->flags |= CLIENT_DIRTY_EXEC;

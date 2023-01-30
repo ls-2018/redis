@@ -25,8 +25,8 @@
 /* ------------------------- Buffer I/O implementation ----------------------- */
 
 /* Returns 1 or 0 for success/failure. */
-// * 将给定内容 buf 追加到缓存中,长度为 len .
-// * 成功返回 1 ,失败返回 0 .
+// 将给定内容 buf 追加到缓存中,长度为 len .
+// 成功返回 1 ,失败返回 0 .
 static size_t rioBufferWrite(rio *r, const void *buf, size_t len) {
     // 追加
     r->io.buffer.ptr = sdscatlen(r->io.buffer.ptr, (char *)buf, len);
@@ -36,8 +36,8 @@ static size_t rioBufferWrite(rio *r, const void *buf, size_t len) {
 }
 
 /* Returns 1 or 0 for success/failure. */
-// * 从 r 中读取长度为 len 的内容到 buf 中.
-// * 读取成功返回 1 ,否则返回 0 .
+// 从 r 中读取长度为 len 的内容到 buf 中.
+// 读取成功返回 1 ,否则返回 0 .
 static size_t rioBufferRead(rio *r, void *buf, size_t len) {
     // r 中的内容的长度不足 len
     if (sdslen(r->io.buffer.ptr) - r->io.buffer.pos < len)
@@ -49,7 +49,7 @@ static size_t rioBufferRead(rio *r, void *buf, size_t len) {
 }
 
 /* Returns read/write position in buffer. */
-// * 返回缓存的当前偏移量
+// 返回缓存的当前偏移量
 static off_t rioBufferTell(rio *r) {
     return r->io.buffer.pos;
 }
@@ -83,8 +83,8 @@ void rioInitWithBuffer(rio *r, sds s) {
 
 /* --------------------- Stdio file pointer implementation ------------------- */
 
-// * 将长度为 len 的内容 buf 写入到文件 r 中.
-// * 成功返回 1 ,失败返回 0 .
+// 将长度为 len 的内容 buf 写入到文件 r 中.
+// 成功返回 1 ,失败返回 0 .
 static size_t rioFileWrite(rio *r, const void *buf, size_t len) {
     if (!r->io.file.autosync)
         return fwrite(buf, len, 1, r->io.file.fp);
@@ -132,8 +132,8 @@ static size_t rioFileWrite(rio *r, const void *buf, size_t len) {
     return 1;
 }
 
-// * 从文件 r 中读取 len 字节到 buf 中.
-// * 返回值为读取的字节数.
+// 从文件 r 中读取 len 字节到 buf 中.
+// 返回值为读取的字节数.
 static size_t rioFileRead(rio *r, void *buf, size_t len) {
     return fread(buf, len, 1, r->io.file.fp);
 }
@@ -400,23 +400,23 @@ void rioGenericUpdateChecksum(rio *r, const void *buf, size_t len) {
     r->cksum = crc64(r->cksum, buf, len);
 }
 
-// * 每次通过 rio 写入 bytes 指定的字节数量时,执行一次自动的 fsync .
-// * 默认情况下, bytes 被设为 0 ,表示不执行自动 fsync .
-// * 这个函数是为了防止一次写入过多内容而设置的.
-// * 通过显示地、间隔性地调用 fsync ,
-// * 可以将写入的 I/O 压力分担到多次 fsync 调用中.
+// 每次通过 rio 写入 bytes 指定的字节数量时,执行一次自动的 fsync .
+// 默认情况下, bytes 被设为 0 ,表示不执行自动 fsync .
+// 这个函数是为了防止一次写入过多内容而设置的.
+// 通过显示地、间隔性地调用 fsync ,
+// 可以将写入的 I/O 压力分担到多次 fsync 调用中.
 void rioSetAutoSync(rio *r, off_t bytes) {
     if (r->write != rioFileIO.write)
         return;
     r->io.file.autosync = bytes;
 }
 
-///* --------------------------- Higher level interface --------------------------
+/// --------------------------- Higher level interface --------------------------
 
-// * 以下高层函数通过调用前面的底层函数来生成 AOF 文件所需的协议
+// 以下高层函数通过调用前面的底层函数来生成 AOF 文件所需的协议
 
-// * 以带 '\r\n' 后缀的形式写入字符串表示的 count 到 RIO
-// * 成功返回写入的数量,失败返回 0 .
+// 以带 '\r\n' 后缀的形式写入字符串表示的 count 到 RIO
+// 成功返回写入的数量,失败返回 0 .
 size_t rioWriteBulkCount(rio *r, char prefix, long count) {
     char cbuf[128];
     int clen;
@@ -434,8 +434,8 @@ size_t rioWriteBulkCount(rio *r, char prefix, long count) {
 }
 
 /* Write binary-safe string in the format: "$<count>\r\n<payload>\r\n". */
-// * 以 "$<count>\r\n<payload>\r\n" 的形式写入二进制安全字符
-// * 例如 $3\r\nSET\r\n
+// 以 "$<count>\r\n<payload>\r\n" 的形式写入二进制安全字符
+// 例如 $3\r\nSET\r\n
 size_t rioWriteBulkString(rio *r, const char *buf, size_t len) {
     size_t nwritten;
     // 写入 $<count>\r\n
@@ -453,7 +453,7 @@ size_t rioWriteBulkString(rio *r, const char *buf, size_t len) {
     return nwritten + len + 2; // 返回写入总量
 }
 
-//* 以 "$<count>\r\n<payload>\r\n" 的格式写入 long long 值
+// 以 "$<count>\r\n<payload>\r\n" 的格式写入 long long 值
 size_t rioWriteBulkLongLong(rio *r, long long l) {
     char lbuf[32];
     unsigned int llen;
@@ -464,7 +464,7 @@ size_t rioWriteBulkLongLong(rio *r, long long l) {
     return rioWriteBulkString(r, lbuf, llen);
 }
 
-// * 以 "$<count>\r\n<payload>\r\n" 的格式写入 double 值
+// 以 "$<count>\r\n<payload>\r\n" 的格式写入 double 值
 size_t rioWriteBulkDouble(rio *r, double d) {
     char dbuf[128];
     unsigned int dlen;

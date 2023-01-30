@@ -1,3 +1,4 @@
+// over
 #include "ae.h"
 #include "anet.h"
 #include "redisassert.h"
@@ -69,7 +70,7 @@ aeEventLoop *aeCreateEventLoop(int setsize) {
     return eventLoop;
     // 初始化失败后的处理逻辑,
 err:
-    if (eventLoop) {// 主动释放内存
+    if (eventLoop) { // 主动释放内存
         zfree(eventLoop->events);
         zfree(eventLoop->fired);
         zfree(eventLoop);
@@ -91,12 +92,12 @@ void aeSetDontWait(aeEventLoop *eventLoop, int noWait) {
         eventLoop->flags &= ~AE_DONT_WAIT; // 去掉AE_DONT_WAIT
 }
 
-// * 调整事件槽的大小
+// 调整事件槽的大小
 // *
-// * 如果尝试调整大小为 setsize ,但是有 >= setsize 的文件描述符存在
-// * 那么返回 AE_ERR ,不进行任何动作.
+// 如果尝试调整大小为 setsize ,但是有 >= setsize 的文件描述符存在
+// 那么返回 AE_ERR ,不进行任何动作.
 // *
-// * 否则,执行大小调整操作,并返回 AE_OK .
+// 否则,执行大小调整操作,并返回 AE_OK .
 int aeResizeSetSize(aeEventLoop *eventLoop, int setsize) {
     int i;
 
@@ -123,7 +124,7 @@ void aeDeleteEventLoop(aeEventLoop *eventLoop) {
     zfree(eventLoop->events);
     zfree(eventLoop->fired);
 
-    /* Free the time events list. */
+    // 释放时间事件列表
     aeTimeEvent *next_te, *te = eventLoop->timeEventHead;
     while (te) {
         next_te = te->next;
@@ -137,6 +138,7 @@ void aeDeleteEventLoop(aeEventLoop *eventLoop) {
 void aeStop(aeEventLoop *eventLoop) {
     eventLoop->stop = 1;
 }
+
 // 实现事件和处理函数的注册
 //    循环流程结构体 *eventLoop
 //    IO 事件对应的文件描述符  fd
@@ -175,7 +177,7 @@ int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask, aeFileProc *proc
     return AE_OK;
 }
 
-// * 将 fd 从 mask 指定的监听队列中删除
+// 将 fd 从 mask 指定的监听队列中删除
 void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask) {
     if (fd >= eventLoop->setsize)
         return;
@@ -185,21 +187,19 @@ void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask) {
     if (fe->mask == AE_NONE)
         return;
 
-    /* We want to always remove AE_BARRIER if set when AE_WRITABLE
-     * is removed. */
-    if (mask & AE_WRITABLE)
+    if (mask & AE_WRITABLE) { // 设置了写,就要设置翻转,即先写了在读
         mask |= AE_BARRIER;
+    }
     // 取消对给定 fd 的给定事件的监视
     aeApiDelEvent(eventLoop, fd, mask);
     // 计算新掩码
     fe->mask = fe->mask & (~mask);
     if (fd == eventLoop->maxfd && fe->mask == AE_NONE) {
-        /* Update the max fd */
         int j;
-
-        for (j = eventLoop->maxfd - 1; j >= 0; j--)
+        for (j = eventLoop->maxfd - 1; j >= 0; j--) {
             if (eventLoop->events[j].mask != AE_NONE)
                 break;
+        }
         eventLoop->maxfd = j;
     }
 }
@@ -213,7 +213,7 @@ void *aeGetFileClientData(aeEventLoop *eventLoop, int fd) {
 
     return fe->clientData;
 }
-// * 获取给定 fd 正在监听的事件类型
+// 获取给定 fd 正在监听的事件类型
 int aeGetFileEvents(aeEventLoop *eventLoop, int fd) {
     if (fd >= eventLoop->setsize)
         return 0;
@@ -478,15 +478,30 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
 // 在给定的时间内阻塞并等待套接字的给定类型事件产生,当事件成功产生,或者等待超时后,函数返回
 int aeWait(int fd, int mask, long long milliseconds) {
     struct pollfd pfd;
-    int retmask = 0, retval;
+    // struct pollfd{
+    //     int fd; /*文件描述符，如建立socket后获取的fd, 此处表示想查询的文件描述符*/
+    //     short events;	/*等待的事件，就是要监测的感兴趣的事情*/
+    //     short revents;	/*实际发生了的事情*/
+    // };
+
+    int retmask = 0;
+    int retval = 0;
 
     memset(&pfd, 0, sizeof(pfd));
     pfd.fd = fd;
+    // POLLIN/POLLRDNORM(可读)，POLLOUT/PILLWRNORM(可写)，POLLEER(出错)。
     if (mask & AE_READABLE)
         pfd.events |= POLLIN;
     if (mask & AE_WRITABLE)
         pfd.events |= POLLOUT;
-
+    // poll()函数的作用是把当前的文件指针挂到等待队列中。
+    //
+    // pollfd *fds : 指向pollfd结构体数组，用于存放需要检测器状态的Socket 描述符或其它文件描述符。
+    // unsigned int nfds: 指定pollfd 结构体数组的个数，即监控几个pollfd.
+    // timeout:指poll() 函数调用阻塞的时间，单位是ms.如果timeout=0则不阻塞，如timeout=INFTIM 表 示一直阻塞直到感兴趣的事情发生。
+    // 返回值：>0 表示数组fds 中准备好读，写或出错状态的那些socket描述符的总数量
+    //   ==0 表示数组fds 中都没有准备好读写或出错，当poll 阻塞超时timeout 就会返回。
+    //   -1 表示poll() 函数调用失败，同时回自动设置全局变量errno.
     if ((retval = poll(&pfd, 1, milliseconds)) == 1) {
         if (pfd.revents & POLLIN)
             retmask |= AE_READABLE;
@@ -494,7 +509,7 @@ int aeWait(int fd, int mask, long long milliseconds) {
             retmask |= AE_WRITABLE;
         if (pfd.revents & POLLERR)
             retmask |= AE_WRITABLE;
-        if (pfd.revents & POLLHUP)
+        if (pfd.revents & POLLHUP) // shutdown 或 close
             retmask |= AE_WRITABLE;
         return retmask;
     }

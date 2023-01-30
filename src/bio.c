@@ -48,7 +48,7 @@ void *bioProcessBackgroundJobs(void *arg);
 
 /* Make sure we have enough stack to perform all the things we do in the
  * main thread. */
-// * 子线程栈大小
+// 子线程栈大小
 #define REDIS_THREAD_STACK_SIZE (1024 * 1024 * 4)
 
 // 初始化后台任务系统,生成线程
@@ -107,7 +107,7 @@ void bioSubmitJob(int type, struct bio_job *job) {
     pthread_mutex_unlock(&bio_mutex[type]);      // 解锁
 }
 
-// * 创建后台任务
+// 创建后台任务
 void bioCreateLazyFreeJob(lazy_free_fn free_fn, int arg_count, ...) {
     va_list valist;
     /* Allocate memory for the job structure and all required
@@ -237,7 +237,7 @@ void *bioProcessBackgroundJobs(void *arg) {
 }
 
 /* Return the number of pending jobs of the specified type. */
-//* 返回等待中的 type 类型的工作的数量
+// 返回等待中的 type 类型的工作的数量
 unsigned long long bioPendingJobsOfType(int type) {
     unsigned long long val;
     pthread_mutex_lock(&bio_mutex[type]);
@@ -272,7 +272,7 @@ unsigned long long bioWaitStepOfType(int type) {
  * used only when it's critical to stop the threads for some reason.
  * Currently Redis does this only on crash (for instance on SIGSEGV) in order
  * to perform a fast memory check without other threads messing with memory. */
-//* 不进行清理,直接杀死进程,只在出现严重错误时使用
+// 不进行清理,直接杀死进程,只在出现严重错误时使用
 void bioKillThreads(void) {
     int err, j;
 

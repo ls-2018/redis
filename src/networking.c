@@ -79,7 +79,7 @@ size_t getStringObjectLen(robj *o) {
     }
 }
 
-//* 回复内容复制函数
+// 回复内容复制函数
 void *dupClientReplyValue(void *o) {
     clientReplyBlock *old = o;
     clientReplyBlock *buf = zmalloc(sizeof(clientReplyBlock) + old->size);
@@ -2436,9 +2436,9 @@ void commandProcessed(client *c) {
     }
 }
 
-//* 这个函数执行时,我们已经读入了一个完整的命令到客户端,
-//* 这个函数负责执行这个命令,
-//* 或者服务器准备从客户端中进行一次读取.
+// 这个函数执行时,我们已经读入了一个完整的命令到客户端,
+// 这个函数负责执行这个命令,
+// 或者服务器准备从客户端中进行一次读取.
 int processCommandAndResetClient(client *c) {
     int deadclient = 0;
     client *old_client = server.current_client;
@@ -2857,7 +2857,7 @@ sds catClientInfoString(sds s, client *client) {
 
     return ret;
 }
-// * 打印出所有连接到服务器的客户端的信息
+// 打印出所有连接到服务器的客户端的信息
 sds getAllClientsInfoString(int type) {
     listNode *ln;
     listIter li;

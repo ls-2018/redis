@@ -10,7 +10,7 @@
  * if no access is performed on them.
  *----------------------------------------------------------------------------*/
 
-// * 如果键已经过期,那么移除它,并返回 1 ,否则不做动作,并返回 0 .
+// 如果键已经过期,那么移除它,并返回 1 ,否则不做动作,并返回 0 .
 // activeExpireCycle的helper函数               参数 now 是毫秒格式的当前时间
 int activeExpireCycleTryExpire(redisDb *db, dictEntry *de, long long now) {
     long long t = dictGetSignedIntegerVal(de); // 获取键的过期时间

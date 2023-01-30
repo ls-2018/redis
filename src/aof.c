@@ -897,7 +897,7 @@ int aofFsyncInProgress(void) {
 
 /* Starts a background task that performs fsync() against the specified
  * file descriptor (the one of the AOF file) in another thread. */
-// * 在另一个线程中,对给定的描述符 fd （指向 AOF 文件）执行一个后台 fsync() 操作.
+// 在另一个线程中,对给定的描述符 fd （指向 AOF 文件）执行一个后台 fsync() 操作.
 void aof_background_fsync(int fd) {
     bioCreateFsyncJob(fd);
 }
@@ -925,7 +925,7 @@ void killAppendOnlyChild(void) {
 
 /* Called when the user switches from "appendonly yes" to "appendonly no"
  * at runtime using the CONFIG command. */
-// * 在用户通过 CONFIG 命令在运行时关闭 AOF 持久化时调用
+// 在用户通过 CONFIG 命令在运行时关闭 AOF 持久化时调用
 void stopAppendOnly(void) {
     // AOF 必须正在启用,才能调用这个函数
     serverAssert(server.aof_state != AOF_OFF);
@@ -1297,7 +1297,7 @@ try_fsync:
         server.aof_last_fsync = server.unixtime;
     }
 }
-// * 根据传入的命令和命令参数,将它们还原成协议格式.
+// 根据传入的命令和命令参数,将它们还原成协议格式.
 sds catAppendOnlyGenericCommand(sds dst, int argc, robj **argv) {
     char buf[32];
     int len, j;
@@ -1624,7 +1624,7 @@ int loadSingleAppendOnlyFile(char *filename) {
 
         /* Clean up. Command code may have changed argv/argc so we use the
          * argv/argc of the client instead of the local variables. */
-        // * 清理命令和命令参数对象
+        // 清理命令和命令参数对象
         freeClientArgv(fakeClient);
         if (server.aof_load_truncated)
             valid_up_to = ftello(fp);
@@ -1709,7 +1709,7 @@ cleanup:
     return ret;
 }
 
-// * 执行 AOF 文件中的命令.
+// 执行 AOF 文件中的命令.
 int loadAppendOnlyFiles(aofManifest *am) {
     serverAssert(am != NULL);
     int status, ret = C_OK;
@@ -1838,7 +1838,7 @@ cleanup:
 
 /* Delegate writing an object to writing a bulk string or bulk long long.
  * This is not placed in rio.c since that adds the server.h dependency. */
-// * 将 obj 所指向的整数对象或字符串对象的值写入到 r 当中.
+// 将 obj 所指向的整数对象或字符串对象的值写入到 r 当中.
 int rioWriteBulkObject(rio *r, robj *obj) {
     /* Avoid using getDecodedObject to help copy-on-write (we are often
      * in a child process when this function is called). */
@@ -1855,9 +1855,9 @@ int rioWriteBulkObject(rio *r, robj *obj) {
 
 /* Emit the commands needed to rebuild a list object.
  * The function returns 0 on error, 1 on success. */
-// * 将重建列表对象所需的命令写入到 r .
-// * 出错返回 0 ,成功返回 1 .
-// * 命令的形式如下：  RPUSH item1 item2 ... itemN
+// 将重建列表对象所需的命令写入到 r .
+// 出错返回 0 ,成功返回 1 .
+// 命令的形式如下：  RPUSH item1 item2 ... itemN
 int rewriteListObject(rio *r, robj *key, robj *o) {
     long long count = 0, items = listTypeLength(o);
 
@@ -2364,14 +2364,14 @@ int rewriteAppendOnlyFileRio(rio *aof) {
         di = dictGetSafeIterator(d); // 创建键空间迭代器
 
         /* SELECT the new DB */
-        /// * 首先写入 SELECT 命令,确保之后的数据会被插入到正确的数据库上
+        /// 首先写入 SELECT 命令,确保之后的数据会被插入到正确的数据库上
         if (rioWrite(aof, selectcmd, sizeof(selectcmd) - 1) == 0)
             goto werr;
         if (rioWriteBulkLongLong(aof, j) == 0)
             goto werr;
 
         /* Iterate this DB writing every entry */
-        /// * 遍历数据库所有键,并通过命令将它们的当前状态（值）记录到新 AOF 文件中
+        /// 遍历数据库所有键,并通过命令将它们的当前状态（值）记录到新 AOF 文件中
         while ((de = dictNext(di)) != NULL) {
             sds keystr;
             robj key, *o;
@@ -2385,7 +2385,7 @@ int rewriteAppendOnlyFileRio(rio *aof) {
             expiretime = getExpire(db, &key); // 取出过期时间
 
             /* Save the key and associated value */
-            /// * 根据值的类型,选择适当的命令来保存值
+            /// 根据值的类型,选择适当的命令来保存值
             if (o->type == OBJ_STRING) {
                 /* Emit a SET command */
                 char cmd[] = "*3\r\n$3\r\nSET\r\n";
@@ -2645,7 +2645,7 @@ void bgrewriteaofCommand(client *c) {
     }
 }
 
-// * 删除 AOF 重写所产生的临时文件
+// 删除 AOF 重写所产生的临时文件
 void aofRemoveTempFile(pid_t childpid) {
     char tmpfile[256];
 
@@ -2825,7 +2825,7 @@ void backgroundRewriteDoneHandler(int exitcode, int bysignal) {
 
         serverLog(LL_NOTICE, "Background AOF rewrite finished successfully");
         /* Change state from WAIT_REWRITE to ON if needed */
-        /// * 如果是第一次创建 AOF 文件,那么更新 AOF 状态
+        /// 如果是第一次创建 AOF 文件,那么更新 AOF 状态
         if (server.aof_state == AOF_WAIT_REWRITE)
             server.aof_state = AOF_ON;
 

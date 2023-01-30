@@ -558,10 +558,10 @@ typedef enum {
 #define NOTIFY_NEW (1 << 14)                                                                                                                                                 /* n, new key notification */
 #define NOTIFY_ALL (NOTIFY_GENERIC | NOTIFY_STRING | NOTIFY_LIST | NOTIFY_SET | NOTIFY_HASH | NOTIFY_ZSET | NOTIFY_EXPIRED | NOTIFY_EVICTED | NOTIFY_STREAM | NOTIFY_MODULE) /* A flag */
 
-// * 因为 serverCron 函数中的所有代码都会每秒调用 server.hz 次,
-// * 为了对部分代码的调用次数进行限制,
-// * 使用了一个宏 run_with_period(milliseconds) { ... } ,
-// * 这个宏可以将被包含代码的执行次数降低为每 milliseconds 执行一次.
+// 因为 serverCron 函数中的所有代码都会每秒调用 server.hz 次,
+// 为了对部分代码的调用次数进行限制,
+// 使用了一个宏 run_with_period(milliseconds) { ... } ,
+// 这个宏可以将被包含代码的执行次数降低为每 milliseconds 执行一次.
 #define run_with_period(_ms_) if (((_ms_) <= 1000 / server.hz) || !(server.cronloops % ((_ms_) / (1000 / server.hz))))
 
 // 我们可以打印堆栈跟踪,所以我们的断言是这样定义的.
@@ -1283,8 +1283,8 @@ typedef struct clientBufferLimitsConfig {
 // 限制可以有多个
 extern clientBufferLimitsConfig clientBufferLimitsDefaults[CLIENT_TYPE_OBUF_COUNT]; // 客户端输出缓冲区限制
 
-// * redisOp 结构定义了一个 Redis 操作,
-// * 目前只用于在传播被执行命令之后,传播附加的其他命令到 AOF 或 Replication 中.
+// redisOp 结构定义了一个 Redis 操作,
+// 目前只用于在传播被执行命令之后,传播附加的其他命令到 AOF 或 Replication 中.
 typedef struct redisOp {
     robj **argv; // 参数
     int argc;    // 命令的参数
@@ -2117,7 +2117,7 @@ typedef void redisCommandProc(client *c);
 
 typedef int redisGetKeysProc(struct redisCommand *cmd, robj **argv, int argc, getKeysResult *result);
 
-// * Redis 命令
+// Redis 命令
 struct redisCommand {
     const char *declared_name;                      // 代表命令声明的名称的字符串 比如set
     const char *summary;                            // 命令总结
@@ -2193,8 +2193,8 @@ typedef struct {
     quicklistIter *iter;
 } listTypeIterator;
 
-// * 迭代列表时使用的记录结构,
-// * 用于保存迭代器,以及迭代器返回的列表节点.
+// 迭代列表时使用的记录结构,
+// 用于保存迭代器,以及迭代器返回的列表节点.
 typedef struct {
     listTypeIterator *li; // 列表迭代器
     quicklistEntry entry; /* Entry in quicklist */
