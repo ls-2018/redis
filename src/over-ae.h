@@ -92,7 +92,7 @@ typedef struct aeEventLoop {
     int setsize;                    // 当前循环中所能容纳的文件描述符的数量
     long long timeEventNextId;      // 下一个时间事件的ID
     aeFileEvent *events;            // 指针，指向保存所有注册的事件的数组首地址。
-    aeFiredEvent *fired;            // 已触发事件数组 , 存储了每次 epoll wait 返回的事件
+    aeFiredEvent *fired;            // 已触发事件数组 , 存储了每次 epoll wait 返回的事件，从0开始存储响应事件,  event是每个描述符有对应的槽
     aeTimeEvent *timeEventHead;     // 记录时间事件的链表头
     int stop;                       // 事件处理器的开关 0 没有停止
     void *apidata;                  // 底层监听实现的抽象 [epoll、select、]
