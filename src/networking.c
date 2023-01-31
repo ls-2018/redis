@@ -99,9 +99,11 @@ int listMatchObjects(void *a, void *b) {
 /* 这个函数将客户端链接到客户端的全局链接列表.unlinkClient()的作用恰恰相反. */
 void linkClient(client *c) {
     listAddNodeTail(server.clients, c); // 将自己添加到末尾
-    /* 请注意,我们记住了存储客户机的链表节点,这种方法在unlinkClient()中删除客户机将不需要线性扫描,而只需要一个固定时间的操作.*/
+    // 请注意,我们记住了存储客户机的链表节点,这种方法在unlinkClient()中删除客户机将不需要线性扫描,而只需要一个固定时间的操作.
     c->client_list_node = listLast(server.clients); // client记录自身所在list的listNode地址
-    uint64_t id = htonu64(c->id);
+    uint64_t id = htonu64(c->id);                   // 大端传输
+
+    // 将客户端ID插入前缀树
     raxInsert(server.clients_index, (unsigned char *)&id, sizeof(id), c, NULL);
 }
 
@@ -215,7 +217,7 @@ client *createClient(connection *conn) {
     // 首先会有一个 lua的客户端走这里
 
     if (conn) {
-        linkClient(c);
+        linkClient(c); // 维护了一棵客户端前缀树
     }
     initClientMultiState(c);
     return c;
@@ -925,6 +927,7 @@ void addReplyLongLongWithPrefix(client *c, long long ll, char prefix) {
     buf[len + 2] = '\n'; // *480\r\n
     addReplyProto(c, buf, len + 3);
 }
+
 /*
  * 返回一个整数回复
  *
@@ -941,11 +944,13 @@ void addReplyLongLong(client *c, long long ll) {
         addReplyLongLongWithPrefix(c, ll, ':');
     }
 }
+
 // 返回聚合元素的 个数   ,prefix 在resp为2时,返回*  3返回%
 void addReplyAggregateLen(client *c, long length, int prefix) {
     serverAssert(length >= 0);
     addReplyLongLongWithPrefix(c, length, prefix);
 }
+
 // 返回参数个数
 void addReplyArrayLen(client *c, long length) {
     addReplyAggregateLen(c, length, '*');
@@ -1219,21 +1224,22 @@ int clientHasPendingReplies(client *c) {
     }
 }
 
-// 返回客户端链接是不是本地
+// 返回 客户端 是不是使用使用的127.0.0.1  ::1
 int islocalClient(client *c) {
     /* unix-socket */
     if (c->flags & CLIENT_UNIX_SOCKET)
         return 1;
 
     /* tcp */
-    char cip[NET_IP_STR_LEN + 1] = {0};
+    char cip[NET_IP_STR_LEN + 1] = {0}; // 客户端IP
     connPeerToString(c->conn, cip, sizeof(cip) - 1, NULL);
 
-    return !strcmp(cip, "127.0.0.1") || !strcmp(cip, "::1");
+    return !strcmp(cip, "127.0.0.1") || !strcmp(cip, "::1"); // 是127.0.0.1 是 ::1  返回true  其余都返回false
 }
 
+// 建立客户端链接要干的一部分活
 void clientAcceptHandler(connection *conn) {
-    client *c = connGetPrivateData(conn);
+    client *c = connGetPrivateData(conn); // 拿到client结构体
 
     if (connGetState(conn) != CONN_STATE_CONNECTED) {
         serverLog(LL_WARNING, "接受客户端连接错误: %s", connGetLastError(conn));
@@ -1241,8 +1247,11 @@ void clientAcceptHandler(connection *conn) {
         return;
     }
 
-    // 如果服务器运行在保护模式(默认),并且没有设置密码,也没有绑定特定的接口,我们不会接受来自非环回接口的请求.相反,如果需要的话,我们会向用户解释如何修复它.
+    // 如果服务器运行在保护模式(默认),并且没有设置密码,
     if (server.protected_mode && DefaultUser->flags & USER_FLAG_NOPASS) { // protected_mode默认为1;
+
+        // 也没有绑定特定的接口,我们不会接受来自非环回接口的请求.
+        // 相反,如果需要的话,我们会向用户解释如何修复它.
         if (!islocalClient(c)) {
             char *err =
                 "-DENIED Redis运行在保护模式,因为保护模式已经开启,默认用户没有设置密码.在这种模式下,只接受来自loopback接口的连接.如果您想从外部计算机连接到Redis,您可以采用以下解决方案之一:\n"
@@ -1259,6 +1268,7 @@ void clientAcceptHandler(connection *conn) {
         }
     }
     server.stat_numconnections++;
+    // client 发生变化事件
     moduleFireServerEvent(REDISMODULE_EVENT_CLIENT_CHANGE, REDISMODULE_SUBEVENT_CLIENT_CHANGE_CONNECTED, c); // 事件通知
 }
 
@@ -1294,7 +1304,7 @@ static void acceptCommonHandler(connection *conn, int flags, char *ip) {
         return;
     }
 
-    // 创建链接、客户端
+    // 创建链接、客户端,以及将client加入前缀树
     if ((c = createClient(conn)) == NULL) { // ✅
         serverLog(LL_WARNING, "为新客户端注册fd事件时出错: %s (conn: %s)", connGetLastError(conn), connGetInfo(conn, conninfo, sizeof(conninfo)));
         connClose(conn); /*可能已经关闭,只是忽略错误*/
@@ -1302,12 +1312,12 @@ static void acceptCommonHandler(connection *conn, int flags, char *ip) {
     }
 
     // 保留最新的标志
-    c->flags |= flags;
+    c->flags |= flags; // 套接字类型
 
     if (connAccept(conn, clientAcceptHandler) == C_ERR) { // 只要是执行clientAcceptHandler
         char conninfo[100];
         if (connGetState(conn) == CONN_STATE_ERROR)
-            serverLog(LL_WARNING, "Error accepting a client connection: %s (conn: %s)", connGetLastError(conn), connGetInfo(conn, conninfo, sizeof(conninfo)));
+            serverLog(LL_WARNING, "接受客户端连接时出错: %s (conn: %s)", connGetLastError(conn), connGetInfo(conn, conninfo, sizeof(conninfo)));
         freeClient(connGetPrivateData(conn));
         return;
     }
@@ -1335,9 +1345,9 @@ void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
             }
             return;
         }
-        serverLog(LL_VERBOSE, "接收客户端连接 %s:%d", cip, cport);
-        connection *c = connCreateAcceptedSocket(cfd); // 组装成内部的connection结构体
-        acceptCommonHandler(c, 0, cip);                //   接受客户端连接,并创建已连接套接字cfd
+        serverLog(LL_VERBOSE, "接收客户端连接 %s:%d,fd编号%d", cip, cport, cfd); //
+        connection *c = connCreateAcceptedSocket(cfd);                           // 组装成内部的connection结构体
+        acceptCommonHandler(c, 0, cip);                                          //   接受客户端连接,并创建已连接套接字cfd
     }
 }
 
@@ -1377,6 +1387,7 @@ void acceptUnixHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
         acceptCommonHandler(connCreateAcceptedSocket(cfd), CLIENT_UNIX_SOCKET, NULL);
     }
 }
+
 // 释放original_argv变量占用的内存
 void freeClientOriginalArgv(client *c) {
     if (!c->original_argv) {
@@ -2863,6 +2874,7 @@ sds catClientInfoString(sds s, client *client) {
 
     return ret;
 }
+
 // 打印出所有连接到服务器的客户端的信息
 sds getAllClientsInfoString(int type) {
     listNode *ln;
@@ -4248,6 +4260,7 @@ void startThreadedIO(void) {
     }
     server.io_threads_active = 1;
 }
+
 // OK
 void stopThreadedIO(void) {
     /* 当调用此函数时,可能仍然有客户端挂起读取:在停止线程之前处理它们.*/
@@ -4381,10 +4394,12 @@ int handleClientsWithPendingWritesUsingThreads(void) {
 // 这由事件循环的可读处理程序调用.作为调用这个函数的一个副作用,客户端会被放入挂起的读客户端中并被标记.
 int postponeClientRead(client *c) {
     // 延迟读,不能是master,不能是slave,不能是阻塞的客户端
-    if (server.io_threads_active &&                                                                       // 多线程 IO 是否在开启状态，在待处理请求较少时会停止 IO多线程
-        server.io_threads_do_reads &&                                                                     // 读是否开启多线程 IO
-        !ProcessingEventsWhileBlocked && !(c->flags & (CLIENT_MASTER | CLIENT_SLAVE | CLIENT_BLOCKED)) && // 主从库复制请求不使用多线程 IO
-        io_threads_op == IO_THREADS_OP_IDLE                                                               // 尚没有启动多线程
+    if (server.io_threads_active &&
+        // 多线程 IO 是否在开启状态，在待处理请求较少时会停止 IO多线程
+        server.io_threads_do_reads && // 读是否开启多线程 IO
+        !ProcessingEventsWhileBlocked && !(c->flags & (CLIENT_MASTER | CLIENT_SLAVE | CLIENT_BLOCKED)) &&
+        // 主从库复制请求不使用多线程 IO
+        io_threads_op == IO_THREADS_OP_IDLE // 尚没有启动多线程
     ) {
         listAddNodeHead(server.clients_pending_read, c); // 连接加入到等待读处理队列
         c->pending_read_list_node = listFirst(server.clients_pending_read);
@@ -4411,7 +4426,7 @@ int handleClientsWithPendingReadsUsingThreads(void) {
     listNode *ln;
     listRewind(server.clients_pending_read, &li);
     int item_id = 0; // 记录阻塞的客户端数量
-                     // 将等待处理队列的连接按照 RR 的方式分配给多个 IO 线程
+    // 将等待处理队列的连接按照 RR 的方式分配给多个 IO 线程
     while ((ln = listNext(&li))) {
         client *c = listNodeValue(ln);
         int target_id = item_id % server.io_threads_num; //
@@ -4506,6 +4521,7 @@ size_t getClientEvictionLimit(void) {
 
     return maxmemory_clients_actual;
 }
+
 // 驱逐客户端
 void evictClients(void) {
     /* 从最顶层桶(最大的客户端)开始退出 */

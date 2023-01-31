@@ -17,11 +17,12 @@ connection *connCreateSocket() {
 connection *connCreateAcceptedSocket(int fd) {
     connection *conn = connCreateSocket();
     conn->fd = fd;
-    conn->state = CONN_STATE_ACCEPTING;
+    conn->state = CONN_STATE_ACCEPTING; // 接收数据中
     return conn;
 }
 
-static int connSocketConnect(connection *conn, const char *addr, int port, const char *src_addr, ConnectionCallbackFunc connect_handler) {
+static int connSocketConnect(connection *conn, const char *addr, int port, const char *src_addr,
+                             ConnectionCallbackFunc connect_handler) {
     // 从库和主库建立链接
     int fd = anetTcpNonBlockBestEffortBindConnect(NULL, addr, port, src_addr);
     if (fd == -1) {
@@ -54,6 +55,7 @@ int connHasReadHandler(connection *conn) {
 void connSetPrivateData(connection *conn, void *data) {
     conn->private_data = data;
 }
+
 void *connGetPrivateData(connection *conn) {
     return conn->private_data;
 }
@@ -117,8 +119,7 @@ static int connSocketRead(connection *conn, void *buf, size_t buf_len) {
     int ret = read(conn->fd, buf, buf_len);
     if (!ret) {
         conn->state = CONN_STATE_CLOSED;
-    }
-    else if (ret < 0 && errno != EAGAIN) {
+    } else if (ret < 0 && errno != EAGAIN) {
         conn->last_errno = errno;
 
         /* Don't overwrite the state of a connection that is not already
@@ -130,6 +131,7 @@ static int connSocketRead(connection *conn, void *buf, size_t buf_len) {
 
     return ret;
 }
+
 // OK
 static int connSocketAccept(connection *conn, ConnectionCallbackFunc accept_handler) {
     int ret = C_OK;
@@ -139,21 +141,15 @@ static int connSocketAccept(connection *conn, ConnectionCallbackFunc accept_hand
     conn->state = CONN_STATE_CONNECTED;
 
     connIncrRefs(conn);
-    if (!callHandler(conn, accept_handler))
+    if (!callHandler(conn, accept_handler)) {
         ret = C_ERR;
+    }
     connDecrRefs(conn);
 
     return ret;
 }
 
-/* Register a write handler, to be called when the connection is writable.
- * If NULL, the existing handler is removed.
- *
- * The barrier flag indicates a write barrier is requested, resulting with
- * CONN_FLAG_WRITE_BARRIER set. This will ensure that the write handler is
- * always called before and not after the read handler in a single event
- * loop.
- */
+// 注册一个写处理程序，在连接可读时调用。如果为NULL，则删除现有的处理程序。
 static int connSocketSetWriteHandler(connection *conn, ConnectionCallbackFunc func, int barrier) {
     if (func == conn->write_handler)
         return C_OK;
@@ -165,14 +161,13 @@ static int connSocketSetWriteHandler(connection *conn, ConnectionCallbackFunc fu
         conn->flags &= ~CONN_FLAG_WRITE_BARRIER;
     if (!conn->write_handler)
         aeDeleteFileEvent(server.el, conn->fd, AE_WRITABLE);
-    else if (aeCreateFileEvent(server.el, conn->fd, AE_WRITABLE, conn->type->ae_handler, conn) == AE_ERR) // 创建可写事件的监听,以及设置回调函数
+    else if (aeCreateFileEvent(server.el, conn->fd, AE_WRITABLE, conn->type->ae_handler, conn) ==
+             AE_ERR) // 创建可写事件的监听,以及设置回调函数
         return C_ERR;
     return C_OK;
 }
 
-/* Register a read handler, to be called when the connection is readable.
- * If NULL, the existing handler is removed.
- */
+// 注册一个读处理程序，在连接可读时调用。如果为NULL，则删除现有的处理程序。
 static int connSocketSetReadHandler(connection *conn, ConnectionCallbackFunc func) {
     if (func == conn->read_handler)
         return C_OK;
@@ -189,6 +184,7 @@ static const char *connSocketGetLastError(connection *conn) {
     return strerror(conn->last_errno);
 }
 
+// 客户端链接的可读事件回调
 static void connSocketEventHandler(struct aeEventLoop *el, int fd, void *clientData, int mask) {
     UNUSED(el);
     UNUSED(fd);
@@ -199,47 +195,40 @@ static void connSocketEventHandler(struct aeEventLoop *el, int fd, void *clientD
         if (conn_error) {
             conn->last_errno = conn_error;
             conn->state = CONN_STATE_ERROR;
-        }
-        else {
+        } else {
             conn->state = CONN_STATE_CONNECTED;
         }
 
-        if (!conn->write_handler)
+        if (!conn->write_handler) {
             aeDeleteFileEvent(server.el, conn->fd, AE_WRITABLE);
+        }
 
-        if (!callHandler(conn, conn->conn_handler))
+        if (!callHandler(conn, conn->conn_handler)) {
             return;
+        }
         conn->conn_handler = NULL;
     }
 
-    /* Normally we execute the readable event first, and the writable
-     * event later. This is useful as sometimes we may be able
-     * to serve the reply of a query immediately after processing the
-     * query.
-     *
-     * However if WRITE_BARRIER is set in the mask, our application is
-     * asking us to do the reverse: never fire the writable event
-     * after the readable. In such a case, we invert the calls.
-     * This is useful when, for instance, we want to do things
-     * in the beforeSleep() hook, like fsync'ing a file to disk,
-     * before replying to a client. */
+    // 通常我们先执行可读事件，然后执行可写事件。这很有用，因为有时我们可以在处理完查询后立即回复查询。
+    // 然而，如果在掩码中设置了WRITE_BARRIER，我们的应用程序会要求我们做相反的事情:
+    // 永远不要在可读事件之后触发可写事件。在这种情况下，我们反转调用。
+    // 这是有用的，例如，我们想要在beforeSleep()钩子中做一些事情，比如在回复客户端之前将文件同步到磁盘。
     int invert = conn->flags & CONN_FLAG_WRITE_BARRIER;
 
     int call_write = (mask & AE_WRITABLE) && conn->write_handler;
     int call_read = (mask & AE_READABLE) && conn->read_handler;
 
-    /* Handle normal I/O flows */
+    // 处理正常的I/O流
     if (!invert && call_read) {
         if (!callHandler(conn, conn->read_handler))
             return;
     }
-    /* Fire the writable event. */
+    // 触发可写事件
     if (call_write) {
         if (!callHandler(conn, conn->write_handler))
             return;
     }
-    /* If we have to invert the call, fire the readable event now
-     * after the writable one. */
+    // 如果必须反转调用，则在可写事件之后触发可读事件。
     if (invert && call_read) {
         if (!callHandler(conn, conn->read_handler))
             return;
@@ -281,27 +270,27 @@ static ssize_t connSocketSyncReadLine(connection *conn, char *ptr, ssize_t size,
 }
 
 static int connSocketGetType(connection *conn) {
-    (void)conn;
+    (void) conn;
 
     return CONN_TYPE_SOCKET;
 }
 
 ConnectionType CT_Socket = {
-    .ae_handler = connSocketEventHandler,
-    .close = connSocketClose,
-    .write = connSocketWrite,
-    .writev = connSocketWritev,
-    .read = connSocketRead,
-    .accept = connSocketAccept,
-    .connect = connSocketConnect,
-    .set_write_handler = connSocketSetWriteHandler,
-    .set_read_handler = connSocketSetReadHandler,
-    .get_last_error = connSocketGetLastError,
-    .blocking_connect = connSocketBlockingConnect,
-    .sync_write = connSocketSyncWrite,
-    .sync_read = connSocketSyncRead,
-    .sync_readline = connSocketSyncReadLine,
-    .get_type = connSocketGetType};
+        .ae_handler = connSocketEventHandler,// client可读时触发,会调用 .connect  .read
+        .close = connSocketClose,
+        .write = connSocketWrite,
+        .writev = connSocketWritev,
+        .read = connSocketRead,
+        .accept = connSocketAccept,
+        .connect = connSocketConnect,
+        .set_write_handler = connSocketSetWriteHandler, // 会调用 .write
+        .set_read_handler = connSocketSetReadHandler,// conn->read_handler=readQueryFromClient
+        .get_last_error = connSocketGetLastError,
+        .blocking_connect = connSocketBlockingConnect,
+        .sync_write = connSocketSyncWrite,
+        .sync_read = connSocketSyncRead,
+        .sync_readline = connSocketSyncReadLine,
+        .get_type = connSocketGetType};
 
 int connGetSocketError(connection *conn) {
     int sockerr = 0;
@@ -312,6 +301,7 @@ int connGetSocketError(connection *conn) {
     return sockerr;
 }
 
+// 返回对端IP
 int connPeerToString(connection *conn, char *ip, size_t ip_len, int *port) {
     return anetFdToString(conn ? conn->fd : -1, ip, ip_len, port, FD_TO_PEER_NAME);
 }
@@ -329,6 +319,7 @@ int connBlock(connection *conn) {
         return C_ERR;
     return anetBlock(NULL, conn->fd);
 }
+
 // 将连接设为非阻塞模式
 int connNonBlock(connection *conn) {
     if (conn->fd == -1)

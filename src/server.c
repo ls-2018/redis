@@ -1155,7 +1155,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
 
                 // 用 LOG 打印数量
                 if (used || vkeys) {
-                    serverLog(LL_VERBOSE, "DB %d: %lld keys (%lld volatile) in %lld slots HT.", j, used, vkeys, size);
+                    serverLog(LL_VERBOSE, "数据库 %d: %lld keys (%lld volatile) in %lld slots HT.", j, used, vkeys, size);
                 }
             }
         }
@@ -1165,7 +1165,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     // 如果服务器没有运行在 SENTINEL 模式下,那么打印客户端的连接信息
     if (!server.sentinel_mode) {
         run_with_period(5000) {
-            serverLog(LL_DEBUG, "%lu clients connected (%lu replicas), %zu bytes in use", listLength(server.clients) - listLength(server.slaves), listLength(server.slaves), zmalloc_used_memory());
+            serverLog(LL_DEBUG, "serverCron:    %lu 个客户端已连接 (%lu 从链接), %zu 字节在使用", listLength(server.clients) - listLength(server.slaves), listLength(server.slaves), zmalloc_used_memory());
         }
     }
 

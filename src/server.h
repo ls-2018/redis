@@ -1523,7 +1523,7 @@ struct redisServer {
     rax *clients_timeout_table;                                              // 存放 超时的 阻塞客户端 的 前缀树.
     long fixed_time_expire;                                                  // 如果>0,则根据server.mstime对密钥进行过期.
     int in_nested_call;                                                      // If > 0, 嵌套调用中
-    rax *clients_index;                                                      // 活跃的客户按客户ID进行字典排列.
+    rax *clients_index;                                                      // 按客户端ID存储的前缀树
     pause_type client_pause_type;                                            // 如果客户端当前处于暂停状态,则为True
     list *postponed_clients;                                                 /* List of postponed clients */
     mstime_t client_pause_end_time;                                          // 撤销暂停的时间

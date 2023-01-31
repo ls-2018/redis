@@ -1,56 +1,3 @@
-/*
- * Copyright (c) 2016, Salvatore Sanfilippo <antirez at gmail dot com>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *   * Redistributions of source code must retain the above copyright notice,
- *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
- *     to endorse or promote products derived from this software without
- *     specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/* --------------------------------------------------------------------------
- * Modules API documentation information
- *
- * The comments in this file are used to generate the API documentation on the
- * Redis website.
- *
- * Each function starting with RM_ and preceded by a block comment is included
- * in the API documentation. To hide an RM_ function, put a blank line between
- * the comment and the function definition or put the comment inside the
- * function body.
- *
- * The functions are divided into sections. Each section is preceded by a
- * documentation block, which is comment block starting with a markdown level 2
- * heading, i.e. a line starting with ##, on the first line of the comment block
- * (with the exception of a ----- line which can appear first). Other comment
- * blocks, which are not intended for the modules API user, such as this comment
- * block, do NOT start with a markdown level 2 heading, so they are included in
- * the generated a API documentation.
- *
- * The documentation comments may contain markdown formatting. Some automatic
- * replacements are done, such as the replacement of RM with RedisModule in
- * function names. For details, see the script src/modules/gendoc.rb.
- * -------------------------------------------------------------------------- */
-
 #include "server.h"
 #include "cluster.h"
 #include "slowlog.h"
@@ -369,12 +316,12 @@ typedef struct RedisModuleServerInfoData {
  * and similar other events. */
 
 typedef struct RedisModuleEventListener {
-    RedisModule *module;
-    RedisModuleEvent event;
-    RedisModuleEventCallback callback;
+    RedisModule *module;               //
+    RedisModuleEvent event;            //
+    RedisModuleEventCallback callback; // 回调函数
 } RedisModuleEventListener;
 
-list *RedisModule_EventListeners; /* Global list of all the active events. */
+list *RedisModule_EventListeners; // 所有活动事件的全局列表
 
 /* Data structures related to the redis module users */
 
@@ -8035,6 +7982,7 @@ void moduleAcquireGIL(void) {
 int moduleTryAcquireGIL(void) {
     return pthread_mutex_trylock(&moduleGIL);
 }
+
 // 释放modules 锁
 void moduleReleaseGIL(void) {
     pthread_mutex_unlock(&moduleGIL);
@@ -10968,28 +10916,26 @@ int RM_IsSubEventSupported(RedisModuleEvent event, int64_t subevent) {
     return 0;
 }
 
-/*这是由Redis内部调用,每次我们想要触发一个事件,可以被一些模块拦截.指针'data'在需要时填充特定于事件的结构是很有用的,以便将包含更多信息的结构返回给回调函数.
-'eid'和'subid'只是主事件ID和与事件相关的子事件,具体取决于发生了什么.*/
+// 这是由Redis内部调用,每次我们想要触发一个事件,可以被一些模块拦截.指针'data'在需要时填充特定于事件的结构是很有用的,以便将包含更多信息的结构返回给回调函数.
 void moduleFireServerEvent(uint64_t eid, int subid, void *data) {
-    /* Fast path to return ASAP if there is nothing to do, avoiding to
-     * setup the iterator and so forth: we want this call to be extremely
-     * cheap if there are no registered modules. */
-    if (listLength(RedisModule_EventListeners) == 0)
+    // eid 事件类型ID
+    // subid与事件相关的子事件
+
+    if (listLength(RedisModule_EventListeners) == 0) { // 如果无事可做，则尽快返回
         return;
+    }
 
     listIter li;
     listNode *ln;
-    listRewind(RedisModule_EventListeners, &li);
+    listRewind(RedisModule_EventListeners, &li); // 在列表私有迭代器结构中创建一个迭代器
     while ((ln = listNext(&li))) {
         RedisModuleEventListener *el = ln->value;
-        if (el->event.id == eid) {
+        if (el->event.id == eid) { // 触发事件时，会便利所有的事件
             RedisModuleCtx ctx;
-            if (eid == REDISMODULE_EVENT_CLIENT_CHANGE) {
-                /* In the case of client changes, we're pushing the real client
-                 * so the event handler can mutate it if needed. For example,
-                 * to change its authentication state in a way that does not
-                 * depend on specific commands executed later.
-                 */
+            if (eid == REDISMODULE_EVENT_CLIENT_CHANGE) { // client发生变换
+
+                // 在客户端更改的情况下，我们将推送真实的客户端，以便事件处理程序可以在需要时对其进行更改。
+                // 例如，以一种不依赖于稍后执行的特定命令的方式更改其身份验证状态。
                 moduleCreateContext(&ctx, el->module, REDISMODULE_CTX_NONE);
                 ctx.client = (client *)data;
             }
@@ -11007,7 +10953,7 @@ void moduleFireServerEvent(uint64_t eid, int subid, void *data) {
              * DB automatically. */
             selectDb(ctx.client, 0);
 
-            /* Event specific context and data pointer setup. */
+            // 事件特定的上下文和数据指针设置。
             if (eid == REDISMODULE_EVENT_CLIENT_CHANGE) {
                 serverAssert(modulePopulateClientInfoStructure(&civ1, data, el->event.dataver) == REDISMODULE_OK);
                 moduledata = &civ1;

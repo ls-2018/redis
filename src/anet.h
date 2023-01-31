@@ -49,7 +49,7 @@
 #    undef ip_len
 #endif
 
-/* FD to address string conversion types */
+// 文件描述符，转换成字符串信息
 #define FD_TO_PEER_NAME 0
 #define FD_TO_SOCK_NAME 1
 
