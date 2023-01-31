@@ -86,7 +86,7 @@ set(SRC_SERVER_TMP
         src/blocked.c
         src/t_string.c
         src/config.c
-        src/endianconv.c
+        src/over-endianconv.c
         src/crc16.c
         src/setcpuaffinity.c
         src/script.c

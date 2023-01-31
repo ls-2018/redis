@@ -98,9 +98,9 @@ int listMatchObjects(void *a, void *b) {
 
 /* 这个函数将客户端链接到客户端的全局链接列表.unlinkClient()的作用恰恰相反. */
 void linkClient(client *c) {
-    listAddNodeTail(server.clients, c);
+    listAddNodeTail(server.clients, c); // 将自己添加到末尾
     /* 请注意,我们记住了存储客户机的链表节点,这种方法在unlinkClient()中删除客户机将不需要线性扫描,而只需要一个固定时间的操作.*/
-    c->client_list_node = listLast(server.clients); // 记住对应那个节点       conn <----> node
+    c->client_list_node = listLast(server.clients); // client记录自身所在list的listNode地址
     uint64_t id = htonu64(c->id);
     raxInsert(server.clients_index, (unsigned char *)&id, sizeof(id), c, NULL);
 }
@@ -118,7 +118,7 @@ int authRequired(client *c) {
     return auth_required;
 }
 
-// 创建客户端链接的数据结构
+// 创建客户端链接的数据结构,初始化client对应的数据结构
 client *createClient(connection *conn) {
     client *c = zmalloc(sizeof(client));
 
@@ -133,8 +133,8 @@ client *createClient(connection *conn) {
         connSetPrivateData(conn, c);                   // 让 conn->private_data 指向 client 对象
     }
     c->buf = zmalloc(PROTO_REPLY_CHUNK_BYTES); // 输出缓冲区 16k
-    selectDb(c, 0);
-    uint64_t client_id;
+    selectDb(c, 0);                            // 客户端默认使用0号数据库
+    uint64_t client_id;                        // 当前的ID号
     atomicGetIncr(server.next_client_id, client_id, 1);
     c->id = client_id;
     c->resp = 2; // resp版本2
@@ -142,7 +142,7 @@ client *createClient(connection *conn) {
     c->name = NULL;
     c->bufpos = 0;
     c->buf_usable_size = zmalloc_usable_size(c->buf); // 获取malloc实际分配的内存大小
-    c->buf_peak = c->buf_usable_size;                 /* 在最近5秒间隔内使用的缓冲器的峰值大小.*/
+    c->buf_peak = c->buf_usable_size;                 // 在最近5秒间隔内使用的缓冲器的峰值大小.
     c->buf_peak_last_reset_time = server.unixtime;    // 保留上次重置缓冲区峰值的时间
     c->ref_repl_buf_node = NULL;
     c->ref_block_pos = 0;
@@ -1263,8 +1263,10 @@ void clientAcceptHandler(connection *conn) {
 }
 
 #define MAX_ACCEPTS_PER_CALL 1000 // 一次调用epoll wait,最多创建1000个链接       TODO 超过1000的事件怎么处理
+
 // 接受客户端连接,并创建已连接套接字cfd
 static void acceptCommonHandler(connection *conn, int flags, char *ip) {
+    //    flags 套接字类型,目前包含tcp:0,unix_socket:1 << 11
     client *c;
     char conninfo[100];
     UNUSED(ip);
@@ -1285,7 +1287,7 @@ static void acceptCommonHandler(connection *conn, int flags, char *ip) {
             err = "-ERR 已到达最大的客户端链接数[client]\r\n";
 
         //        这是最好的错误消息,不要检查写错误.注意,对于TLS连接,还没有完成握手,所以没有写入任何内容,连接将被删除.
-        if (connWrite(conn, err, strlen(err)) == -1) { /* 没什么可做的,只是为了避开警告 */
+        if (connWrite(conn, err, strlen(err)) == -1) { // 往客户端写入错误信息
         }
         server.stat_rejected_conn++;
         connClose(conn);
@@ -1311,16 +1313,20 @@ static void acceptCommonHandler(connection *conn, int flags, char *ip) {
     }
 }
 
-// 当有tcp链接到来时,会调用 .用于对连接服务监听套接字的客户端进行应答 与其AE_READABLE事件相关联
+// 当有tcp链接到来时,会调用 .用于对连接服务监听套接字的客户端进行应答 与其AE_READABLE事件相关联,epoll 事件 回调
 void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
     // 连接
-    int cport, cfd, max = MAX_ACCEPTS_PER_CALL; // 一次调用epoll wait,最多创建1000个链接
-    char cip[NET_IP_STR_LEN];                   // ip 地址,最长为46
+    int cport = MAX_ACCEPTS_PER_CALL;
+    int cfd = MAX_ACCEPTS_PER_CALL;
+    int max = MAX_ACCEPTS_PER_CALL; // 一次调用epoll wait,最多创建1000个链接
+    char cip[NET_IP_STR_LEN];       // ip 地址,最长为46
     UNUSED(el);
     UNUSED(mask);
     UNUSED(privdata);
 
     while (max--) {
+        // neterr 传进入指针，存储错误,
+        // fd 一般是listen监听的描述符
         cfd = anetTcpAccept(server.neterr, fd, cip, sizeof(cip), &cport); // 还没加入到epoll里
         // 获取不到链接 会返回错误
         if (cfd == ANET_ERR) {
@@ -1330,8 +1336,8 @@ void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
             return;
         }
         serverLog(LL_VERBOSE, "接收客户端连接 %s:%d", cip, cport);
-        connection *c = connCreateAcceptedSocket(cfd);
-        acceptCommonHandler(c, 0, cip); //   接受客户端连接,并创建已连接套接字cfd
+        connection *c = connCreateAcceptedSocket(cfd); // 组装成内部的connection结构体
+        acceptCommonHandler(c, 0, cip);                //   接受客户端连接,并创建已连接套接字cfd
     }
 }
 

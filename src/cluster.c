@@ -1,6 +1,6 @@
 #include "server.h"
 #include "cluster.h"
-#include "endianconv.h"
+#include "over-endianconv.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -911,7 +911,7 @@ void clusterAcceptHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
 
 /*返回我们正在使用的套接字的大致数量,以获得集群使用的连接数.*/
 unsigned long getClusterConnectionsCount(void) {
-    /*我们将节点数量减少1,因为在列表中也有一个"myself"节点.每个节点使用两个文件描述符,一个传入,一个传出,因此乘以2.*/
+    // 会与集群中的每个节点建立2个链接
     return server.cluster_enabled ? ((dictSize(server.cluster->nodes) - 1) * 2) : 0;
 }
 

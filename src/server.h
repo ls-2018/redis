@@ -58,7 +58,7 @@ typedef long long ustime_t; /* microsecond time type. */
 /* Following includes allow test functions to be called from Redis main() */
 #include "zipmap.h"
 #include "sha1.h"
-#include "endianconv.h"
+#include "over-endianconv.h"
 #include "crc64.h"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))

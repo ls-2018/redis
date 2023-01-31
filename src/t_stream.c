@@ -28,7 +28,7 @@
  */
 
 #include "server.h"
-#include "endianconv.h"
+#include "over-endianconv.h"
 #include "stream.h"
 
 /* Every stream item inside the listpack, has a flags field that is used to

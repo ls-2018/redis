@@ -30,7 +30,7 @@
 #include "server.h"
 #include "lzf.h" /* LZF compression library */
 #include "zipmap.h"
-#include "endianconv.h"
+#include "over-endianconv.h"
 #include "stream.h"
 #include "functions.h"
 

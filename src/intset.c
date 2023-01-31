@@ -33,7 +33,7 @@
 #include <string.h>
 #include "intset.h"
 #include "zmalloc.h"
-#include "endianconv.h"
+#include "over-endianconv.h"
 #include "redisassert.h"
 
 #define INTSET_ENC_INT16 (sizeof(int16_t))

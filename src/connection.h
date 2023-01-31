@@ -51,7 +51,7 @@ struct connection {
     short int flags;                      // 标志位
     short int refs;                       // 引用数
     int last_errno;                       // 最新的错误号
-    void *private_data;                   // 私有数据
+    void *private_data;                   // 私有数据,就是client对象
     ConnectionCallbackFunc conn_handler;  // 链接创建时的触发的函数
     ConnectionCallbackFunc write_handler; // 写完数据时的触发的函数
     ConnectionCallbackFunc read_handler;  // 读完数据时的触发的函数

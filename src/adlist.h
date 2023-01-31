@@ -29,7 +29,7 @@ typedef struct list {
 
 #define listLength(l) ((l)->len)
 #define listFirst(l) ((l)->head)
-#define listLast(l) ((l)->tail)
+#define listLast(l) ((l)->tail) // 获取最末尾的元素指针
 #define listPrevNode(n) ((n)->prev)
 #define listNextNode(n) ((n)->next)
 // 返回当前节点正在保存的值
