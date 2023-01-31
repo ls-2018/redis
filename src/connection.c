@@ -1,56 +1,9 @@
-/*
- * Copyright (c) 2019, Redis Labs
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *   * Redistributions of source code must retain the above copyright notice,
- *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
- *     to endorse or promote products derived from this software without
- *     specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
 #include "server.h"
 #include "connhelpers.h"
 
-/* The connections module provides a lean abstraction of network connections
- * to avoid direct socket and async event management across the Redis code base.
- *
- * It does NOT provide advanced connection features commonly found in similar
- * libraries such as complete in/out buffer management, throttling, etc. These
- * functions remain in networking.c.
- *
- * The primary goal is to allow transparent handling of TCP and TLS based
- * connections. To do so, connections have the following properties:
- *
- * 1. A connection may live before its corresponding socket exists.  This
- *    allows various context and configuration setting to be handled before
- *    establishing the actual connection.
- * 2. The caller may register/unregister logical read/write handlers to be
- *    called when the connection has data to read from/can accept writes.
- *    These logical handlers may or may not correspond to actual AE events,
- *    depending on the implementation (for TCP they are; for TLS they aren't).
- */
-
 ConnectionType CT_Socket;
 
+// 创建链接结构体,后续会将描述符塞到这个结构体里
 connection *connCreateSocket() {
     connection *conn = zcalloc(sizeof(connection));
     conn->type = &CT_Socket;

@@ -439,7 +439,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
             // 如果翻转了  先处理write 在处理read
             // 如果触发的是可读事件,调用事件注册时设置的读事件回调处理函数
             if (!invert && fe->mask & mask & AE_READABLE) {         // & & 检查事件是否仍然有效
-                fe->rfileProc(eventLoop, fd, fe->clientData, mask); // 可以读的,回调函数
+                fe->rfileProc(eventLoop, fd, fe->clientData, mask); // 可以读的,回调函数    【创建链接，读取数据】
                 fired++;
                 // 根本原因是事件循环可能从事件回调本身，导致事件指针无效
                 fe = &eventLoop->events[fd]; // 在调整大小的情况下刷新.    513931df

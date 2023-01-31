@@ -1620,7 +1620,7 @@ struct redisServer {
     long long stat_reply_buffer_expands; /* Total number of output buffer expands */
 
     // 配置
-    int verbosity;                                                       // 日志可见性
+    int verbosity;                                                       // 日志可见性,即日志等级
     int maxidletime;                                                     // 客户端最大空闲时间
     int tcpkeepalive;                                                    // 是否开启 SO_KEEPALIVE 选项
     int active_expire_enabled;                                           // 当测试时,可以禁用

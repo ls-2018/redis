@@ -120,7 +120,7 @@ static void monotonicInit_aarch64() {
 // 获取纳秒数,不会因为系统时间跳跃而有影响
 static monotime getMonotonicUs_posix() {
     struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts); // 就是开机到现在的时间
+    clock_gettime(CLOCK_MONOTONIC, &ts); // 就是开机到现在的时间e
     return ((uint64_t)ts.tv_sec) * 1000000 + ts.tv_nsec / 1000;
 }
 

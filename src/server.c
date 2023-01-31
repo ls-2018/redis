@@ -1144,7 +1144,6 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
         }
     }
 
-    /* Show some info about non-empty databases */
     // 打印数据库的键值对信息
     if (server.verbosity <= LL_VERBOSE) {
         run_with_period(5000) {
@@ -6497,7 +6496,10 @@ int redisIsSupervised(int mode) {
 }
 
 int iAmMaster(void) {
-    return ((!server.cluster_enabled && server.masterhost == NULL) || (server.cluster_enabled && nodeIsMaster(server.cluster->myself)));
+    return (
+        (!server.cluster_enabled && server.masterhost == NULL) ||        //
+        (server.cluster_enabled && nodeIsMaster(server.cluster->myself)) //
+    );
 }
 
 #ifdef REDIS_TEST

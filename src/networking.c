@@ -1314,7 +1314,7 @@ static void acceptCommonHandler(connection *conn, int flags, char *ip) {
 // 当有tcp链接到来时,会调用 .用于对连接服务监听套接字的客户端进行应答 与其AE_READABLE事件相关联
 void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
     // 连接
-    int cport, cfd, max = MAX_ACCEPTS_PER_CALL; // 1000
+    int cport, cfd, max = MAX_ACCEPTS_PER_CALL; // 一次调用epoll wait,最多创建1000个链接
     char cip[NET_IP_STR_LEN];                   // ip 地址,最长为46
     UNUSED(el);
     UNUSED(mask);
