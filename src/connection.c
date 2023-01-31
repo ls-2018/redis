@@ -41,12 +41,10 @@ static int connSocketConnect(connection *conn, const char *addr, int port, const
     return C_OK;
 }
 
-/* Returns true if a write handler is registered */
 int connHasWriteHandler(connection *conn) {
     return conn->write_handler != NULL;
 }
 
-/* Returns true if a read handler is registered */
 int connHasReadHandler(connection *conn) {
     return conn->read_handler != NULL;
 }
@@ -60,13 +58,7 @@ void *connGetPrivateData(connection *conn) {
     return conn->private_data;
 }
 
-/* ------ Pure socket connections ------- */
 
-/* A very incomplete list of implementation-specific calls.  Much of the above shall
- * move here as we implement additional connection types.
- */
-
-/* Close the connection and free resources. */
 static void connSocketClose(connection *conn) {
     if (conn->fd != -1) {
         aeDeleteFileEvent(server.el, conn->fd, AE_READABLE | AE_WRITABLE);
@@ -74,9 +66,6 @@ static void connSocketClose(connection *conn) {
         conn->fd = -1;
     }
 
-    /* If called from within a handler, schedule the close but
-     * keep the connection until the handler returns.
-     */
     if (connHasRefs(conn)) {
         conn->flags |= CONN_FLAG_CLOSE_SCHEDULED;
         return;
@@ -89,10 +78,6 @@ static int connSocketWrite(connection *conn, const void *data, size_t data_len) 
     int ret = write(conn->fd, data, data_len);
     if (ret < 0 && errno != EAGAIN) {
         conn->last_errno = errno;
-
-        /* Don't overwrite the state of a connection that is not already
-         * connected, not to mess with handler callbacks.
-         */
         if (errno != EINTR && conn->state == CONN_STATE_CONNECTED)
             conn->state = CONN_STATE_ERROR;
     }
@@ -104,10 +89,6 @@ static int connSocketWritev(connection *conn, const struct iovec *iov, int iovcn
     int ret = writev(conn->fd, iov, iovcnt);
     if (ret < 0 && errno != EAGAIN) {
         conn->last_errno = errno;
-
-        /* Don't overwrite the state of a connection that is not already
-         * connected, not to mess with handler callbacks.
-         */
         if (errno != EINTR && conn->state == CONN_STATE_CONNECTED)
             conn->state = CONN_STATE_ERROR;
     }
@@ -122,9 +103,6 @@ static int connSocketRead(connection *conn, void *buf, size_t buf_len) {
     } else if (ret < 0 && errno != EAGAIN) {
         conn->last_errno = errno;
 
-        /* Don't overwrite the state of a connection that is not already
-         * connected, not to mess with handler callbacks.
-         */
         if (errno != EINTR && conn->state == CONN_STATE_CONNECTED)
             conn->state = CONN_STATE_ERROR;
     }
@@ -283,7 +261,7 @@ ConnectionType CT_Socket = {
         .read = connSocketRead,
         .accept = connSocketAccept,
         .connect = connSocketConnect,
-        .set_write_handler = connSocketSetWriteHandler, // 会调用 .write
+        .set_write_handler = connSocketSetWriteHandler, // conn->write_handler=
         .set_read_handler = connSocketSetReadHandler,// conn->read_handler=readQueryFromClient
         .get_last_error = connSocketGetLastError,
         .blocking_connect = connSocketBlockingConnect,
