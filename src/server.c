@@ -41,6 +41,7 @@
 #endif
 
 #if defined(HAVE_SYSCTL_KIPC_SOMAXCONN) || defined(HAVE_SYSCTL_KERN_SOMAXCONN)
+
 #    include <sys/sysctl.h>
 
 #endif
@@ -99,8 +100,7 @@ void serverLogRaw(int level, const char *msg) {
 
     if (rawmode) {
         fprintf(fp, "%s", msg);
-    }
-    else {
+    } else {
         int off;
         struct timeval tv;
         int role_char;
@@ -111,17 +111,15 @@ void serverLogRaw(int level, const char *msg) {
         // 自定义的localtime函数,标准的 localtime 在多线程下可能出现死锁的情况
         nolocks_localtime(&tm, tv.tv_sec, server.timezone, server.daylight_active);
         off = strftime(buf, sizeof(buf), "%d %b %Y %H:%M:%S.", &tm);
-        snprintf(buf + off, sizeof(buf) - off, "%03d", (int)tv.tv_usec / 1000);
+        snprintf(buf + off, sizeof(buf) - off, "%03d", (int) tv.tv_usec / 1000);
         if (server.sentinel_mode) {
             role_char = 'X'; // 哨兵
-        }
-        else if (pid != server.pid) {
+        } else if (pid != server.pid) {
             role_char = 'C'; // TODO 目前看来,启动之初都会走这
-        }
-        else {
+        } else {
             role_char = (server.masterhost ? 'S' : 'M'); // master 或 slave
         }
-        fprintf(fp, "%d:%c %s %c %s\n", (int)getpid(), role_char, buf, c[level], msg);
+        fprintf(fp, "%d:%c %s %c %s\n", (int) getpid(), role_char, buf, c[level], msg);
     }
     fflush(fp);
 
@@ -175,7 +173,7 @@ void serverLogFromHandler(int level, const char *msg) {
         goto err;
     if (write(fd, "\n", 1) == -1)
         goto err;
-err:
+    err:
     if (!log_to_stdout)
         close(fd);
 }
@@ -186,7 +184,7 @@ long long ustime(void) {
     long long ust;
 
     gettimeofday(&tv, NULL);
-    ust = ((long long)tv.tv_sec) * 1000000;
+    ust = ((long long) tv.tv_sec) * 1000000;
     ust += tv.tv_usec;
     return ust;
 }
@@ -222,15 +220,15 @@ void dictVanillaFree(dict *d, void *val) {
 
 void dictListDestructor(dict *d, void *val) {
     UNUSED(d);
-    listRelease((list *)val);
+    listRelease((list *) val);
 }
 
 int dictSdsKeyCompare(dict *d, const void *key1, const void *key2) {
     int l1, l2;
     UNUSED(d);
 
-    l1 = sdslen((sds)key1);
-    l2 = sdslen((sds)key2);
+    l1 = sdslen((sds) key1);
+    l2 = sdslen((sds) key2);
     if (l1 != l2)
         return 0;
     return memcmp(key1, key2, l1) == 0;
@@ -257,7 +255,7 @@ void dictSdsDestructor(dict *d, void *val) {
 
 void *dictSdsDup(dict *d, const void *key) {
     UNUSED(d);
-    return sdsdup((const sds)key);
+    return sdsdup((const sds) key);
 }
 
 int dictObjKeyCompare(dict *d, const void *key1, const void *key2) {
@@ -267,25 +265,25 @@ int dictObjKeyCompare(dict *d, const void *key1, const void *key2) {
 
 uint64_t dictObjHash(const void *key) {
     const robj *o = key;
-    return dictGenHashFunction(o->ptr, sdslen((sds)o->ptr));
+    return dictGenHashFunction(o->ptr, sdslen((sds) o->ptr));
 }
 
 uint64_t dictSdsHash(const void *key) {
-    return dictGenHashFunction((unsigned char *)key, sdslen((char *)key));
+    return dictGenHashFunction((unsigned char *) key, sdslen((char *) key));
 }
 
 uint64_t dictSdsCaseHash(const void *key) {
-    return dictGenCaseHashFunction((unsigned char *)key, sdslen((char *)key));
+    return dictGenCaseHashFunction((unsigned char *) key, sdslen((char *) key));
 }
 
 /* Dict hash function for null terminated string */
 uint64_t distCStrHash(const void *key) {
-    return dictGenHashFunction((unsigned char *)key, strlen((char *)key));
+    return dictGenHashFunction((unsigned char *) key, strlen((char *) key));
 }
 
 /* Dict hash function for null terminated string */
 uint64_t distCStrCaseHash(const void *key) {
-    return dictGenCaseHashFunction((unsigned char *)key, strlen((char *)key));
+    return dictGenCaseHashFunction((unsigned char *) key, strlen((char *) key));
 }
 
 /* Dict compare function for null terminated string */
@@ -293,8 +291,8 @@ int distCStrKeyCompare(dict *d, const void *key1, const void *key2) {
     int l1, l2;
     UNUSED(d);
 
-    l1 = strlen((char *)key1);
-    l2 = strlen((char *)key2);
+    l1 = strlen((char *) key1);
+    l2 = strlen((char *) key2);
     if (l1 != l2)
         return 0;
     return memcmp(key1, key2, l1) == 0;
@@ -307,7 +305,7 @@ int distCStrKeyCaseCompare(dict *d, const void *key1, const void *key2) {
 }
 
 int dictEncObjKeyCompare(dict *d, const void *key1, const void *key2) {
-    robj *o1 = (robj *)key1, *o2 = (robj *)key2;
+    robj *o1 = (robj *) key1, *o2 = (robj *) key2;
     int cmp;
 
     if (o1->encoding == OBJ_ENCODING_INT && o2->encoding == OBJ_ENCODING_INT)
@@ -330,19 +328,17 @@ int dictEncObjKeyCompare(dict *d, const void *key1, const void *key2) {
 }
 
 uint64_t dictEncObjHash(const void *key) {
-    robj *o = (robj *)key;
+    robj *o = (robj *) key;
 
     if (sdsEncodedObject(o)) {
-        return dictGenHashFunction(o->ptr, sdslen((sds)o->ptr));
-    }
-    else if (o->encoding == OBJ_ENCODING_INT) {
+        return dictGenHashFunction(o->ptr, sdslen((sds) o->ptr));
+    } else if (o->encoding == OBJ_ENCODING_INT) {
         char buf[32];
         int len;
 
-        len = ll2string(buf, 32, (long)o->ptr);
-        return dictGenHashFunction((unsigned char *)buf, len);
-    }
-    else {
+        len = ll2string(buf, 32, (long) o->ptr);
+        return dictGenHashFunction((unsigned char *) buf, len);
+    } else {
         serverPanic("Unknown string encoding");
     }
 }
@@ -356,8 +352,7 @@ uint64_t dictEncObjHash(const void *key) {
 int dictExpandAllowed(size_t moreMem, double usedRatio) {
     if (usedRatio <= HASHTABLE_MAX_LOAD_FACTOR) {
         return !overMaxmemoryAfterAlloc(moreMem);
-    }
-    else {
+    } else {
         return 1; // 允许扩容
     }
 }
@@ -374,11 +369,13 @@ size_t dictEntryMetadataSize(dict *d) {
 
 /* Generic hash table type where keys are Redis Objects, Values
  * dummy pointers. */
-dictType objectKeyPointerValueDictType = {dictEncObjHash, NULL, NULL, dictEncObjKeyCompare, dictObjectDestructor, NULL, NULL};
+dictType objectKeyPointerValueDictType = {dictEncObjHash, NULL, NULL, dictEncObjKeyCompare, dictObjectDestructor, NULL,
+                                          NULL};
 
 /* Like objectKeyPointerValueDictType(), but values can be destroyed, if
  * not NULL, calling zfree(). */
-dictType objectKeyHeapPointerValueDictType = {dictEncObjHash, NULL, NULL, dictEncObjKeyCompare, dictObjectDestructor, dictVanillaFree, NULL};
+dictType objectKeyHeapPointerValueDictType = {dictEncObjHash, NULL, NULL, dictEncObjKeyCompare, dictObjectDestructor,
+                                              dictVanillaFree, NULL};
 
 /* Set dictionary type. Keys are SDS strings, values are not used. */
 dictType setDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, dictSdsDestructor, NULL};
@@ -388,77 +385,77 @@ dictType zsetDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, NULL, NULL,
 
 /* Db->dict, keys are sds strings, vals are Redis objects. */
 dictType dbDictType = {
-    dictSdsHash,
-    NULL,
-    NULL,
-    dictSdsKeyCompare,
-    dictSdsDestructor,    // key的释放函数
-    dictObjectDestructor, // value的释放函数
-    dictExpandAllowed,
-    dictEntryMetadataSize};
+        dictSdsHash,
+        NULL,
+        NULL,
+        dictSdsKeyCompare,
+        dictSdsDestructor,    // key的释放函数
+        dictObjectDestructor, // value的释放函数
+        dictExpandAllowed,
+        dictEntryMetadataSize};
 
 // Db->expires 的dict结构
 dictType dbExpiresDictType = {
-    dictSdsHash,
-    NULL,
-    NULL,
-    dictSdsKeyCompare, //
-    NULL,
-    NULL,
-    dictExpandAllowed};
+        dictSdsHash,
+        NULL,
+        NULL,
+        dictSdsKeyCompare, //
+        NULL,
+        NULL,
+        dictExpandAllowed};
 
 // sds->command 的dict结构
 dictType commandTableDictType = {
-    dictSdsCaseHash, //
-    NULL,
-    NULL,
-    dictSdsKeyCaseCompare, //
-    dictSdsDestructor,
-    NULL,
-    NULL};
+        dictSdsCaseHash, //
+        NULL,
+        NULL,
+        dictSdsKeyCaseCompare, //
+        dictSdsDestructor,
+        NULL,
+        NULL};
 
 /* Hash type hash table (note that small hashes are represented with listpacks) */
 dictType hashDictType = {
-    dictSdsHash, //
-    NULL,
-    NULL, //
-    dictSdsKeyCompare,
-    dictSdsDestructor,
-    dictSdsDestructor,
-    NULL};
+        dictSdsHash, //
+        NULL,
+        NULL, //
+        dictSdsKeyCompare,
+        dictSdsDestructor,
+        dictSdsDestructor,
+        NULL};
 
 /* Dict type without destructor */
 dictType sdsReplyDictType = {
-    dictSdsHash, //
-    NULL,
-    NULL, //
-    dictSdsKeyCompare,
-    NULL,
-    NULL,
-    NULL};
+        dictSdsHash, //
+        NULL,
+        NULL, //
+        dictSdsKeyCompare,
+        NULL,
+        NULL,
+        NULL};
 
 /* Keylist hash table type has unencoded redis objects as keys and
  * lists as values. It's used for blocking operations (BLPOP) and to
  * map swapped keys to a list of clients waiting for this keys to be loaded. */
 dictType keylistDictType = {
-    dictObjHash, //
-    NULL,
-    NULL, //
-    dictObjKeyCompare,
-    dictObjectDestructor,
-    dictListDestructor,
-    NULL};
+        dictObjHash, //
+        NULL,
+        NULL, //
+        dictObjKeyCompare,
+        dictObjectDestructor,
+        dictListDestructor,
+        NULL};
 
 /* Modules system dictionary type. Keys are module name,
  * values are pointer to RedisModule struct. */
 dictType modulesDictType = {
-    dictSdsCaseHash, //
-    NULL,
-    NULL,
-    dictSdsKeyCaseCompare,
-    dictSdsDestructor,
-    NULL,
-    NULL};
+        dictSdsCaseHash, //
+        NULL,
+        NULL,
+        dictSdsKeyCaseCompare,
+        dictSdsDestructor,
+        NULL,
+        NULL};
 
 // 缓存迁移的dict类型.
 dictType migrateCacheDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, dictSdsDestructor, NULL, NULL};
@@ -473,7 +470,8 @@ dictType externalStringType = {distCStrCaseHash, NULL, NULL, distCStrKeyCaseComp
 
 /* Dict for case-insensitive search using sds objects with a zmalloc
  * allocated object as the value. */
-dictType sdsHashDictType = {dictSdsCaseHash, NULL, NULL, dictSdsKeyCaseCompare, dictSdsDestructor, dictVanillaFree, NULL};
+dictType sdsHashDictType = {dictSdsCaseHash, NULL, NULL, dictSdsKeyCaseCompare, dictSdsDestructor, dictVanillaFree,
+                            NULL};
 
 int htNeedsResize(dict *dict) {
     long long size, used;
@@ -519,8 +517,7 @@ int incrementallyRehash(int dbid) {
 void updateDictResizePolicy(void) {
     if (!hasActiveChildProcess()) { // 是否正在运行的AOF进程
         dictEnableResize();
-    }
-    else {
+    } else {
         dictDisableResize();
     }
 }
@@ -610,13 +607,12 @@ int clientsCronResizeQueryBuffer(client *c) {
         if (idletime > 2) {
             // 空闲了一段时间
             c->querybuf = sdsRemoveFreeSpace(c->querybuf);
-        }
-        else if (querybuf_size > PROTO_RESIZE_THRESHOLD && querybuf_size / 2 > c->querybuf_peak) {
+        } else if (querybuf_size > PROTO_RESIZE_THRESHOLD && querybuf_size / 2 > c->querybuf_peak) {
             // 客户端不活跃,并且缓冲区大于水位线.
             size_t resize = sdslen(c->querybuf);
             if (resize < c->querybuf_peak)
                 resize = c->querybuf_peak;
-            if (c->bulklen != -1 && resize < (size_t)c->bulklen)
+            if (c->bulklen != -1 && resize < (size_t) c->bulklen)
                 resize = c->bulklen;
             c->querybuf = sdsResize(c->querybuf, resize);
         }
@@ -626,7 +622,7 @@ int clientsCronResizeQueryBuffer(client *c) {
     c->querybuf_peak = sdslen(c->querybuf);
     /* We reset to either the current used, or currently processed bulk size,
      * which ever is bigger. */
-    if (c->bulklen != -1 && (size_t)c->bulklen > c->querybuf_peak)
+    if (c->bulklen != -1 && (size_t) c->bulklen > c->querybuf_peak)
         c->querybuf_peak = c->bulklen;
     return 0;
 }
@@ -651,8 +647,7 @@ int clientsCronResizeOutputBuffer(client *c, mstime_t now_ms) {
     if (buffer_target_shrink_size >= PROTO_REPLY_MIN_BYTES && c->buf_peak < buffer_target_shrink_size) {
         new_buffer_size = max(PROTO_REPLY_MIN_BYTES, c->buf_peak + 1);
         server.stat_reply_buffer_shrinks++;
-    }
-    else if (buffer_target_expand_size < PROTO_REPLY_CHUNK_BYTES * 2 && c->buf_peak == c->buf_usable_size) {
+    } else if (buffer_target_expand_size < PROTO_REPLY_CHUNK_BYTES * 2 && c->buf_peak == c->buf_usable_size) {
         new_buffer_size = min(PROTO_REPLY_CHUNK_BYTES, buffer_target_expand_size);
         server.stat_reply_buffer_expands++;
     }
@@ -660,7 +655,8 @@ int clientsCronResizeOutputBuffer(client *c, mstime_t now_ms) {
     /* reset the peak value each server.reply_buffer_peak_reset_time seconds. in case the client will be idle
      * it will start to shrink.
      */
-    if (server.reply_buffer_peak_reset_time >= 0 && now_ms - c->buf_peak_last_reset_time >= server.reply_buffer_peak_reset_time) {
+    if (server.reply_buffer_peak_reset_time >= 0 &&
+        now_ms - c->buf_peak_last_reset_time >= server.reply_buffer_peak_reset_time) {
         c->buf_peak = c->bufpos;
         c->buf_peak_last_reset_time = now_ms;
     }
@@ -711,7 +707,7 @@ int clientsCronTrackExpansiveClients(client *c, int time_idx) {
  * halved we move it down a bucket.
  * For more details see CLIENT_MEM_USAGE_BUCKETS documentation in server.h. */
 static inline clientMemUsageBucket *getMemUsageBucket(size_t mem) {
-    int size_in_bits = 8 * (int)sizeof(mem);
+    int size_in_bits = 8 * (int) sizeof(mem);
     int clz = mem > 0 ? __builtin_clzl(mem) : size_in_bits;
     int bucket_idx = size_in_bits - clz;
     if (bucket_idx > CLIENT_MEM_USAGE_BUCKET_MAX_LOG)
@@ -744,8 +740,7 @@ int updateClientMemUsage(client *c) {
         server.stat_clients_type_memory[c->last_memory_type] -= c->last_memory_usage;
         server.stat_clients_type_memory[type] += mem;
         c->last_memory_type = type;
-    }
-    else {
+    } else {
         server.stat_clients_type_memory[type] += mem - c->last_memory_usage;
     }
 
@@ -895,8 +890,7 @@ void databasesCron(void) {
         if (iAmMaster()) {
             // 清除模式为 CYCLE_SLOW ,这个模式会尽量多清除过期键
             activeExpireCycle(ACTIVE_EXPIRE_CYCLE_SLOW);
-        }
-        else {
+        } else {
             expireSlaveKeys();
         }
     }
@@ -941,8 +935,7 @@ void databasesCron(void) {
                     /* If the function did some work, stop here, we'll do
                      * more at the next cron loop. */
                     break;
-                }
-                else {
+                } else {
                     /* If this db didn't need rehash, we'll try the next one. */
                     rehash_db++;
                     rehash_db %= server.dbnum;
@@ -1001,31 +994,27 @@ void checkChildrenDone(void) {
         }
 
         if (pid == -1) {
-            serverLog(LL_WARNING, "waitpid() returned an error: %s.  child_type: %s, child_pid = %d", strerror(errno), strChildType(server.child_type), (int)server.child_pid);
-        }
-        else if (pid == server.child_pid) {
+            serverLog(LL_WARNING, "waitpid() returned an error: %s.  child_type: %s, child_pid = %d", strerror(errno),
+                      strChildType(server.child_type), (int) server.child_pid);
+        } else if (pid == server.child_pid) {
             if (server.child_type == CHILD_TYPE_RDB) { // BGSAVE 执行完毕
 
                 backgroundSaveDoneHandler(exitcode, bysignal);
-            }
-            else if (server.child_type == CHILD_TYPE_AOF) { // BGREWRITEAOF 执行完毕
+            } else if (server.child_type == CHILD_TYPE_AOF) { // BGREWRITEAOF 执行完毕
 
                 backgroundRewriteDoneHandler(exitcode, bysignal);
-            }
-            else if (server.child_type == CHILD_TYPE_MODULE) {
+            } else if (server.child_type == CHILD_TYPE_MODULE) {
                 ModuleForkDoneHandler(exitcode, bysignal);
-            }
-            else {
+            } else {
                 serverPanic("Unknown child type %d for child pid %d", server.child_type, server.child_pid);
                 exit(1);
             }
             if (!bysignal && exitcode == 0)
                 receiveChildInfo();
             resetChildState();
-        }
-        else {
+        } else {
             if (!ldbRemoveChild(pid)) {
-                serverLog(LL_WARNING, "Warning, detected child with unmatched pid: %ld", (long)pid);
+                serverLog(LL_WARNING, "Warning, detected child with unmatched pid: %ld", (long) pid);
             }
         }
 
@@ -1050,7 +1039,9 @@ void cronUpdateMemoryStats() {
          * The fragmentation ratio it'll show is potentially more accurate
          * it excludes other RSS pages such as: shared libraries, LUA and other non-zmalloc
          * allocations, and allocator reserved pages that can be pursed (all not actual frag) */
-        zmalloc_get_allocator_info(&server.cron_malloc_stats.allocator_allocated, &server.cron_malloc_stats.allocator_active, &server.cron_malloc_stats.allocator_resident);
+        zmalloc_get_allocator_info(&server.cron_malloc_stats.allocator_allocated,
+                                   &server.cron_malloc_stats.allocator_active,
+                                   &server.cron_malloc_stats.allocator_resident);
         /* in case the allocator isn't providing these stats, fake them so that
          * fragmentation info still shows some (inaccurate metrics) */
         if (!server.cron_malloc_stats.allocator_resident) {
@@ -1135,8 +1126,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
 
         if (prepareForShutdown(shutdownFlags) == C_OK)
             exit(0);
-    }
-    else if (isShutdownInitiated()) {
+    } else if (isShutdownInitiated()) {
         if (server.mstime >= server.shutdown_mstime || isReadyToShutdown()) {
             if (finishShutdown() == C_OK)
                 exit(0);
@@ -1155,7 +1145,8 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
 
                 // 用 LOG 打印数量
                 if (used || vkeys) {
-                    serverLog(LL_VERBOSE, "数据库 %d: %lld keys (%lld volatile) in %lld slots HT.", j, used, vkeys, size);
+                    serverLog(LL_VERBOSE, "数据库 %d: %lld keys (%lld volatile) in %lld slots HT.", j, used, vkeys,
+                              size);
                 }
             }
         }
@@ -1165,7 +1156,9 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     // 如果服务器没有运行在 SENTINEL 模式下,那么打印客户端的连接信息
     if (!server.sentinel_mode) {
         run_with_period(5000) {
-            serverLog(LL_DEBUG, "serverCron:    %lu 个客户端已连接 (%lu 从链接), %zu 字节在使用", listLength(server.clients) - listLength(server.slaves), listLength(server.slaves), zmalloc_used_memory());
+            serverLog(LL_DEBUG, "serverCron:    %lu 个客户端已连接 (%lu 从链接), %zu 字节在使用",
+                      listLength(server.clients) - listLength(server.slaves), listLength(server.slaves),
+                      zmalloc_used_memory());
         }
     }
 
@@ -1186,8 +1179,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     if (hasActiveChildProcess() || ldbPendingChildren()) {
         run_with_period(1000) receiveChildInfo();
         checkChildrenDone();
-    }
-    else {
+    } else {
         /* If there is not a background saving/rewrite in progress check if
          * we have to save/rewrite now. */
         // 既然没有 BGSAVE 或者 BGREWRITEAOF 在执行,那么检查是否需要执行它们
@@ -1201,8 +1193,10 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
              * successful or if, in case of an error, at least
              * CONFIG_BGSAVE_RETRY_DELAY seconds already elapsed. */
             // 检查是否有某个保存条件已经满足了
-            if (server.dirty >= sp->changes && server.unixtime - server.lastsave > sp->seconds && (server.unixtime - server.lastbgsave_try > CONFIG_BGSAVE_RETRY_DELAY || server.lastbgsave_status == C_OK)) {
-                serverLog(LL_NOTICE, "%d changes in %d seconds. Saving...", sp->changes, (int)sp->seconds);
+            if (server.dirty >= sp->changes && server.unixtime - server.lastsave > sp->seconds &&
+                (server.unixtime - server.lastbgsave_try > CONFIG_BGSAVE_RETRY_DELAY ||
+                 server.lastbgsave_status == C_OK)) {
+                serverLog(LL_NOTICE, "%d changes in %d seconds. Saving...", sp->changes, (int) sp->seconds);
                 rdbSaveInfo rsi, *rsiptr;
                 rsiptr = rdbPopulateSaveInfo(&rsi);
                 // 执行 BGSAVE
@@ -1249,7 +1243,8 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
      * a higher frequency. */
     // 每1秒执行1次,检查AOF是否有写错误
     run_with_period(1000) {
-        if ((server.aof_state == AOF_ON || server.aof_state == AOF_WAIT_REWRITE) && server.aof_last_write_status == C_ERR) {
+        if ((server.aof_state == AOF_ON || server.aof_state == AOF_WAIT_REWRITE) &&
+            server.aof_last_write_status == C_ERR) {
             flushAppendOnlyFile(0);
         }
     }
@@ -1268,8 +1263,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     if (server.failover_state != NO_FAILOVER) {
         // 故障转移情况下,100ms执行一次
         run_with_period(100) replicationCron();
-    }
-    else {
+    } else {
         // 正常情况下,1s执行一次
         run_with_period(1000) replicationCron();
     }
@@ -1312,7 +1306,8 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
      * Note: this code must be after the replicationCron() call above so
      * make sure when refactoring this file to keep this order. This is useful
      * because we want to give priority to RDB savings for replication. */
-    if (!hasActiveChildProcess() && server.rdb_bgsave_scheduled && (server.unixtime - server.lastbgsave_try > CONFIG_BGSAVE_RETRY_DELAY || server.lastbgsave_status == C_OK)) {
+    if (!hasActiveChildProcess() && server.rdb_bgsave_scheduled &&
+        (server.unixtime - server.lastbgsave_try > CONFIG_BGSAVE_RETRY_DELAY || server.lastbgsave_status == C_OK)) {
         rdbSaveInfo rsi, *rsiptr;
         rsiptr = rdbPopulateSaveInfo(&rsi);
         if (rdbSaveBackground(SLAVE_REQ_NONE, server.rdb_filename, rsiptr) == C_OK)
@@ -1403,7 +1398,8 @@ void whileBlockedCron() {
             exit(0);
         }
         // 如果关闭失败,那么打印 LOG ,并移除关闭标识
-        serverLog(LL_WARNING, "SIGTERM received but errors trying to shut down the server, check the logs for more information");
+        serverLog(LL_WARNING,
+                  "SIGTERM received but errors trying to shut down the server, check the logs for more information");
         server.shutdown_asap = 0;
         server.last_sig_received = 0;
     }
@@ -1582,15 +1578,20 @@ void createSharedObjects(void) {
     shared.outofrangeerr = createObject(OBJ_STRING, sdsnew("-ERR 索引越界\r\n"));
     shared.noscripterr = createObject(OBJ_STRING, sdsnew("-NOSCRIPT 没有匹配到脚本,请使用EVAL.\r\n"));
     shared.loadingerr = createObject(OBJ_STRING, sdsnew("-LOADING 正在加载数据集到内存中\r\n"));
-    shared.slowevalerr = createObject(OBJ_STRING, sdsnew("-BUSY Redis正忙着运行一个脚本.你只能调用脚本KILL或SHUTDOWN NOSAVE.\r\n"));
-    shared.slowscripterr = createObject(OBJ_STRING, sdsnew("-BUSY Redis正忙着运行一个脚本.你只能调用函数KILL或SHUTDOWN NOSAVE.\r\n"));
+    shared.slowevalerr = createObject(OBJ_STRING,
+                                      sdsnew("-BUSY Redis正忙着运行一个脚本.你只能调用脚本KILL或SHUTDOWN NOSAVE.\r\n"));
+    shared.slowscripterr = createObject(OBJ_STRING,
+                                        sdsnew("-BUSY Redis正忙着运行一个脚本.你只能调用函数KILL或SHUTDOWN NOSAVE.\r\n"));
     shared.slowmoduleerr = createObject(OBJ_STRING, sdsnew("-BUSY Redis正在忙着运行一个模块命令.\r\n"));
-    shared.masterdownerr = createObject(OBJ_STRING, sdsnew("-MASTERDOWN MASTER链路断开,replica-serve-stale-data 设置为 'no'.\r\n"));
-    shared.bgsaveerr = createObject(OBJ_STRING, sdsnew("-MISCONF 配置了保存RDB快照,但目前无法持久化到磁盘.禁用 可能修改数据集的命令,因为该实例配置为在RDB快照失败时报告错误(stop-write-on-bgsave-error选项).\r\n"));
+    shared.masterdownerr = createObject(OBJ_STRING,
+                                        sdsnew("-MASTERDOWN MASTER链路断开,replica-serve-stale-data 设置为 'no'.\r\n"));
+    shared.bgsaveerr = createObject(OBJ_STRING,
+                                    sdsnew("-MISCONF 配置了保存RDB快照,但目前无法持久化到磁盘.禁用 可能修改数据集的命令,因为该实例配置为在RDB快照失败时报告错误(stop-write-on-bgsave-error选项).\r\n"));
     shared.roslaveerr = createObject(OBJ_STRING, sdsnew("-READONLY You can't write against a read only replica.\r\n"));
     shared.noautherr = createObject(OBJ_STRING, sdsnew("-NOAUTH Authentication required.\r\n"));
     shared.oomerr = createObject(OBJ_STRING, sdsnew("-OOM command not allowed when used memory > 'maxmemory'.\r\n"));
-    shared.execaborterr = createObject(OBJ_STRING, sdsnew("-EXECABORT Transaction discarded because of previous errors.\r\n"));
+    shared.execaborterr = createObject(OBJ_STRING,
+                                       sdsnew("-EXECABORT Transaction discarded because of previous errors.\r\n"));
     shared.noreplicaserr = createObject(OBJ_STRING, sdsnew("-NOREPLICAS Not enough good replicas to write.\r\n"));
     shared.busykeyerr = createObject(OBJ_STRING, sdsnew("-BUSYKEY Target key name already exists.\r\n"));
 
@@ -1621,7 +1622,9 @@ void createSharedObjects(void) {
         int dictid_len;
 
         dictid_len = ll2string(dictid_str, sizeof(dictid_str), j);
-        shared.select[j] = createObject(OBJ_STRING, sdscatprintf(sdsempty(), "*2\r\n$6\r\nSELECT\r\n$%d\r\n%s\r\n", dictid_len, dictid_str));
+        shared.select[j] = createObject(OBJ_STRING,
+                                        sdscatprintf(sdsempty(), "*2\r\n$6\r\nSELECT\r\n$%d\r\n%s\r\n", dictid_len,
+                                                     dictid_str));
     }
 
     // 发布与订阅的有关回复
@@ -1683,7 +1686,7 @@ void createSharedObjects(void) {
 
     // 常用整数 0~9999
     for (j = 0; j < OBJ_SHARED_INTEGERS; j++) {
-        shared.integers[j] = makeObjectShared(createObject(OBJ_STRING, (void *)(long)j));
+        shared.integers[j] = makeObjectShared(createObject(OBJ_STRING, (void *) (long) j));
         shared.integers[j]->encoding = OBJ_ENCODING_INT;
     }
     // 常用长度 bulk 或者 multi bulk 回复
@@ -1721,7 +1724,8 @@ void initServerConfig(void) {
     server.bindaddr_count = CONFIG_DEFAULT_BINDADDR_COUNT; // 2
     for (j = 0; j < CONFIG_DEFAULT_BINDADDR_COUNT; j++) {
         //  "*", "-::*"
-        server.bindaddr[j] = zstrdup(default_bindaddr[j]); // 字长与字节对齐 CPU一次性 能读取数据的二进制位数称为字长,也就是我们通常所说的32位系统(字长4个字节)、64位系统(字长8个字节)的由来
+        server.bindaddr[j] = zstrdup(
+                default_bindaddr[j]); // 字长与字节对齐 CPU一次性 能读取数据的二进制位数称为字长,也就是我们通常所说的32位系统(字长4个字节)、64位系统(字长8个字节)的由来
     }
     server.ipfd.count = 0;
     server.tlsfd.count = 0;
@@ -1845,20 +1849,20 @@ int restartServer(int flags, mstime_t delay) {
      * server instance. */
     if (access(server.executable, X_OK) == -1) {
         serverLog(
-            LL_WARNING,
-            "Can't restart: this process has no "
-            "permissions to execute %s",
-            server.executable);
+                LL_WARNING,
+                "Can't restart: this process has no "
+                "permissions to execute %s",
+                server.executable);
         return C_ERR;
     }
 
     /* Config rewriting. */
     if (flags & RESTART_SERVER_CONFIG_REWRITE && server.configfile && rewriteConfig(server.configfile, 0) == -1) {
         serverLog(
-            LL_WARNING,
-            "Can't restart: configuration rewrite process "
-            "failed: %s",
-            strerror(errno));
+                LL_WARNING,
+                "Can't restart: configuration rewrite process "
+                "failed: %s",
+                strerror(errno));
         return C_ERR;
     }
 
@@ -1870,7 +1874,7 @@ int restartServer(int flags, mstime_t delay) {
 
     /* Close all file descriptors, with the exception of stdin, stdout, stderr
      * which are useful if we restart a Redis server which is not daemonized. */
-    for (j = 3; j < (int)server.maxclients + 1024; j++) {
+    for (j = 3; j < (int) server.maxclients + 1024; j++) {
         /* Test the descriptor validity before closing it, otherwise
          * Valgrind issues a warning on close(). */
         if (fcntl(j, F_GETFD) != -1)
@@ -1898,8 +1902,7 @@ int setOOMScoreAdj(int process_class) {
     if (process_class == -1) {
         if (server.masterhost) {
             process_class = CONFIG_OOM_REPLICA;
-        }
-        else {
+        } else {
             process_class = CONFIG_OOM_MASTER;
         }
     }
@@ -1979,8 +1982,7 @@ void adjustOpenFilesLimit(void) {
     if (getrlimit(RLIMIT_NOFILE, &limit) == -1) {
         serverLog(LL_WARNING, "无法获取当前的NOFILE限制(%s),假设为1024并相应地设置最大客户端配置.", strerror(errno));
         server.maxclients = 1024 - CONFIG_MIN_RESERVED_FDS; // 1024 - 32
-    }
-    else {
+    } else {
         rlim_t oldlimit = limit.rlim_cur;
 
         // 如果当前限制不足以满足我们的需要,则设置最大文件数.
@@ -2018,15 +2020,21 @@ void adjustOpenFilesLimit(void) {
                  * to check if maxclients is now logically less than 1
                  * we test indirectly via bestlimit. */
                 if (bestlimit <= CONFIG_MIN_RESERVED_FDS) {
-                    serverLog(LL_WARNING, "你目前的'ulimit -n'为%llu,不足以让服务器启动.请将你的打开文件限制增加到至少%llu.退出.", (unsigned long long)oldlimit, (unsigned long long)maxfiles);
+                    serverLog(LL_WARNING,
+                              "你目前的'ulimit -n'为%llu,不足以让服务器启动.请将你的打开文件限制增加到至少%llu.退出.",
+                              (unsigned long long) oldlimit, (unsigned long long) maxfiles);
                     exit(1);
                 }
-                serverLog(LL_WARNING, "你要求的maxclients为%d,要求至少有%llu的最大文件描述符.", old_maxclients, (unsigned long long)maxfiles);
-                serverLog(LL_WARNING, "服务器不能将最大打开文件设置为%llu,因为操作系统错误:%s.", (unsigned long long)maxfiles, strerror(setrlimit_error));
-                serverLog(LL_WARNING, "当前最大打开的文件是%llu.maxclients已经减少到%d以补偿低ulimit.如果你需要更高的最大客户数,请增加'ulimit -n'.", (unsigned long long)bestlimit, server.maxclients);
-            }
-            else {
-                serverLog(LL_NOTICE, "最大打开文件数增加到%llu(最初设置为%llu).", (unsigned long long)maxfiles, (unsigned long long)oldlimit);
+                serverLog(LL_WARNING, "你要求的maxclients为%d,要求至少有%llu的最大文件描述符.", old_maxclients,
+                          (unsigned long long) maxfiles);
+                serverLog(LL_WARNING, "服务器不能将最大打开文件设置为%llu,因为操作系统错误:%s.",
+                          (unsigned long long) maxfiles, strerror(setrlimit_error));
+                serverLog(LL_WARNING,
+                          "当前最大打开的文件是%llu.maxclients已经减少到%d以补偿低ulimit.如果你需要更高的最大客户数,请增加'ulimit -n'.",
+                          (unsigned long long) bestlimit, server.maxclients);
+            } else {
+                serverLog(LL_NOTICE, "最大打开文件数增加到%llu(最初设置为%llu).", (unsigned long long) maxfiles,
+                          (unsigned long long) oldlimit);
             }
         }
     }
@@ -2056,7 +2064,9 @@ void checkTcpBacklogSettings(void) {
 
     if (sysctl(mib, 3, &somaxconn, &len, NULL, 0) == 0) {
         if (somaxconn > 0 && somaxconn < server.tcp_backlog) {
-            serverLog(LL_WARNING, "警告：由于 kern.ipc.somaxconn 被设置为较低的值%d，所以无法执行设置TCP backlog: %d [全连接队列数量=min(backlog,somaxconn)]。", server.tcp_backlog, somaxconn);
+            serverLog(LL_WARNING,
+                      "警告：由于 kern.ipc.somaxconn 被设置为较低的值%d，所以无法执行设置TCP backlog: %d [全连接队列数量=min(backlog,somaxconn)]。",
+                      server.tcp_backlog, somaxconn);
         }
     }
 #elif defined(HAVE_SYSCTL_KERN_SOMAXCONN)
@@ -2077,6 +2087,7 @@ void checkTcpBacklogSettings(void) {
     }
 #endif
 }
+
 // 关闭套接字
 void closeSocketListeners(socketFds *sfd) {
     int j;
@@ -2129,8 +2140,7 @@ int listenToPort(int port, socketFds *sfd) {
         if (strchr(addr, ':')) {
             // IPV6地址
             sfd->fd[sfd->count] = anetTcp6Server(server.neterr, port, addr, server.tcp_backlog);
-        }
-        else {
+        } else {
             // IPV4地址
             sfd->fd[sfd->count] = anetTcpServer(server.neterr, port, addr, server.tcp_backlog);
         }
@@ -2145,7 +2155,8 @@ int listenToPort(int port, socketFds *sfd) {
             // ESOCKTNOSUPPORT：所选协议不支持套接字类型
             if (net_errno == EADDRNOTAVAIL && optional)
                 continue;
-            if (net_errno == ENOPROTOOPT || net_errno == EPROTONOSUPPORT || net_errno == ESOCKTNOSUPPORT || net_errno == EPFNOSUPPORT || net_errno == EAFNOSUPPORT)
+            if (net_errno == ENOPROTOOPT || net_errno == EPROTONOSUPPORT || net_errno == ESOCKTNOSUPPORT ||
+                net_errno == EPFNOSUPPORT || net_errno == EAFNOSUPPORT)
                 continue;
 
             // 退出前 关闭监听
@@ -2287,7 +2298,8 @@ void initServer(void) {
     server.reply_buffer_resizing_enabled = 1;
     resetReplicationBuffer();
 
-    if ((server.tls_port || server.tls_replication || server.tls_cluster) && tlsConfigure(&server.tls_ctx_config) == C_ERR) {
+    if ((server.tls_port || server.tls_replication || server.tls_cluster) &&
+        tlsConfigure(&server.tls_ctx_config) == C_ERR) {
         serverLog(LL_WARNING, "配置TLS失败.查看日志了解更多信息.");
         exit(1);
     }
@@ -2323,7 +2335,8 @@ void initServer(void) {
     // 打开 UNIX 本地端口
     if (server.unixsocket != NULL) {
         unlink(server.unixsocket); /* don't care if this fails */
-        server.sofd = anetUnixServer(server.neterr, server.unixsocket, (mode_t)server.unixsocketperm, server.tcp_backlog);
+        server.sofd = anetUnixServer(server.neterr, server.unixsocket, (mode_t) server.unixsocketperm,
+                                     server.tcp_backlog);
         if (server.sofd == ANET_ERR) {
             serverLog(LL_WARNING, "Failed opening Unix socket: %s", server.neterr);
             exit(1);
@@ -2350,7 +2363,7 @@ void initServer(void) {
         server.db[j].avg_ttl = 0;
         server.db[j].defrag_later = listCreate();
         server.db[j].slots_to_keys = NULL; /* Set by clusterInit later on if necessary. */
-        listSetFreeMethod(server.db[j].defrag_later, (void (*)(void *))sdsfree);
+        listSetFreeMethod(server.db[j].defrag_later, (void (*)(void *)) sdsfree);
     }
     evictionPoolAlloc(); // 采样生成用于淘汰的候选 key 集合
 
@@ -2444,7 +2457,8 @@ void initServer(void) {
     /* 32位实例的地址空间被限制在4GB,所以如果用户提供的配置中没有显式的限制,我们使用'noeviction'策略的maxmemory将地址空间限制在3gb.
      * 这避免了Redis实例因为内存不足而导致无用的崩溃.*/
     if (server.arch_bits == 32 && server.maxmemory == 0) {
-        serverLog(LL_WARNING, "警告: 检测到32位实例,但没有设置内存限制.现在使用'noeviction'策略设置3 GB的最大内存限制.");
+        serverLog(LL_WARNING,
+                  "警告: 检测到32位实例,但没有设置内存限制.现在使用'noeviction'策略设置3 GB的最大内存限制.");
         server.maxmemory = 3072LL * (1024 * 1024); // 3GB    字节
         server.maxmemory_policy = MAXMEMORY_NO_EVICTION;
     }
@@ -2508,7 +2522,8 @@ void populateCommandLegacyRangeSpec(struct redisCommand *c) {
     if (c->key_specs_num == 0)
         return;
 
-    if (c->key_specs_num == 1 && c->key_specs[0].begin_search_type == KSPEC_BS_INDEX && c->key_specs[0].find_keys_type == KSPEC_FK_RANGE) {
+    if (c->key_specs_num == 1 && c->key_specs[0].begin_search_type == KSPEC_BS_INDEX &&
+        c->key_specs[0].find_keys_type == KSPEC_FK_RANGE) {
         /* Quick win */
         c->legacy_range_key_spec = c->key_specs[0];
         return;
@@ -2529,7 +2544,7 @@ void populateCommandLegacyRangeSpec(struct redisCommand *c) {
         if (lastkey_abs_index >= 0)
             lastkey_abs_index += c->key_specs[i].bs.index.pos;
         /* For lastkey we use unsigned comparison to handle negative values correctly */
-        lastkey = max((unsigned)lastkey, (unsigned)lastkey_abs_index);
+        lastkey = max((unsigned) lastkey, (unsigned) lastkey_abs_index);
     }
 
     if (firstkey == INT_MAX)
@@ -2541,7 +2556,8 @@ void populateCommandLegacyRangeSpec(struct redisCommand *c) {
     c->legacy_range_key_spec.begin_search_type = KSPEC_BS_INDEX;
     c->legacy_range_key_spec.bs.index.pos = firstkey;
     c->legacy_range_key_spec.find_keys_type = KSPEC_FK_RANGE;
-    c->legacy_range_key_spec.fk.range.lastkey = lastkey < 0 ? lastkey : (lastkey - firstkey); /* in the "range" spec, lastkey is relative to firstkey */
+    c->legacy_range_key_spec.fk.range.lastkey =
+            lastkey < 0 ? lastkey : (lastkey - firstkey); /* in the "range" spec, lastkey is relative to firstkey */
     c->legacy_range_key_spec.fk.range.keystep = 1;
     c->legacy_range_key_spec.fk.range.limit = 0;
 }
@@ -2687,7 +2703,7 @@ void resetCommandTableStats(dict *commands) {
 
     di = dictGetSafeIterator(commands);
     while ((de = dictNext(di)) != NULL) {
-        c = (struct redisCommand *)dictGetVal(de);
+        c = (struct redisCommand *) dictGetVal(de);
         c->microseconds = 0;   // 清零时间
         c->calls = 0;          // 清零调用次数
         c->rejected_calls = 0; // 清零次数
@@ -2721,8 +2737,7 @@ int redisOpArrayAppend(redisOpArray *oa, int dbid, robj **argv, int argc, int ta
 
     if (oa->numops == 0) {
         oa->capacity = 16;
-    }
-    else if (oa->numops >= oa->capacity) {
+    } else if (oa->numops >= oa->capacity) {
         oa->capacity *= 2;
     }
 
@@ -2758,6 +2773,7 @@ int isContainerCommandBySds(sds s) {
     int has_subcommands = base_cmd && base_cmd->subcommands_dict;
     return has_subcommands;
 }
+
 // OK
 struct redisCommand *lookupSubcommand(struct redisCommand *container, sds sub_name) {
     return dictFetchValue(container->subcommands_dict, sub_name);
@@ -2776,8 +2792,7 @@ struct redisCommand *lookupCommandLogic(dict *commands, robj **argv, int argc, i
             return NULL;
         // 只有一个参数,且没有子命令,例如         CONFIG
         return base_cmd;
-    }
-    else { /* argc > 1 && has_subcommands */
+    } else { /* argc > 1 && has_subcommands */
         if (strict && argc != 2)
             return NULL;
         //        目前我们只支持一层子命令
@@ -2825,6 +2840,7 @@ struct redisCommand *lookupCommandByCStringLogic(dict *commands, const char *s) 
     sdsfree(name);
     return cmd;
 }
+
 // 根据给定命令名字（C 字符串）,查找命令
 struct redisCommand *lookupCommandByCString(const char *s) {
     return lookupCommandByCStringLogic(server.commands, s);
@@ -2982,7 +2998,8 @@ void updateCommandLatencyHistogram(struct hdr_histogram **latency_histogram, int
     if (duration_hist > LATENCY_HISTOGRAM_MAX_VALUE)
         duration_hist = LATENCY_HISTOGRAM_MAX_VALUE;
     if (*latency_histogram == NULL) {
-        hdr_init(LATENCY_HISTOGRAM_MIN_VALUE, LATENCY_HISTOGRAM_MAX_VALUE, LATENCY_HISTOGRAM_PRECISION, latency_histogram);
+        hdr_init(LATENCY_HISTOGRAM_MIN_VALUE, LATENCY_HISTOGRAM_MAX_VALUE, LATENCY_HISTOGRAM_PRECISION,
+                 latency_histogram);
     }
     hdr_record_value(*latency_histogram, duration_hist);
 }
@@ -3042,8 +3059,7 @@ int incrCommandStatsOnError(struct redisCommand *cmd, int flags) {
             if (flags & ERROR_COMMAND_REJECTED) {
                 cmd->rejected_calls++;
                 res = 1;
-            }
-            else if (flags & ERROR_COMMAND_FAILED) {
+            } else if (flags & ERROR_COMMAND_FAILED) {
                 cmd->failed_calls++;
                 res = 1;
             }
@@ -3126,8 +3142,7 @@ void call(client *c, int flags) {
     // 计算命令执行耗费的时间
     if (monotonicGetType() == MONOTONIC_CLOCK_HW) {
         duration = getMonotonicUs() - monotonic_start;
-    }
-    else {
+    } else {
         duration = ustime() - call_timer;
     }
 
@@ -3203,7 +3218,8 @@ void call(client *c, int flags) {
     }
 
     // 将命令复制到 AOF 和 slave 节点
-    if (flags & CMD_CALL_PROPAGATE && (c->flags & CLIENT_PREVENT_PROP) != CLIENT_PREVENT_PROP && c->cmd->proc != execCommand && !(c->cmd->flags & CMD_MODULE)) {
+    if (flags & CMD_CALL_PROPAGATE && (c->flags & CLIENT_PREVENT_PROP) != CLIENT_PREVENT_PROP &&
+        c->cmd->proc != execCommand && !(c->cmd->flags & CMD_MODULE)) {
         int propagate_flags = PROPAGATE_NONE;
 
         /* Check if the command operated changes in the data set. If so
@@ -3291,8 +3307,7 @@ void rejectCommand(client *c, robj *reply) {
         c->cmd->rejected_calls++;
     if (c->cmd && c->cmd->proc == execCommand) {
         execCommandAbort(c, reply->ptr);
-    }
-    else {
+    } else {
         /* using addReplyError* rather than addReply so that the error can be logged. */
         addReplyErrorObject(c, reply);
     }
@@ -3306,8 +3321,7 @@ void rejectCommandSds(client *c, sds s) {
     if (c->cmd && c->cmd->proc == execCommand) {
         execCommandAbort(c, s);
         sdsfree(s);
-    }
-    else {
+    } else {
         /* The following frees 's'. */
         addReplyErrorSds(c, s);
     }
@@ -3346,16 +3360,15 @@ void populateCommandMovableKeys(struct redisCommand *cmd) {
     if (cmd->getkeys_proc && !(cmd->flags & CMD_MODULE)) {
         /* Redis command with getkeys proc */
         movablekeys = 1;
-    }
-    else if (cmd->flags & CMD_MODULE_GETKEYS) {
+    } else if (cmd->flags & CMD_MODULE_GETKEYS) {
         /* Module command with getkeys proc */
         movablekeys = 1;
-    }
-    else {
+    } else {
         /* Redis command without getkeys proc, but possibly has
          * movable keys because of a keys spec. */
         for (int i = 0; i < cmd->key_specs_num; i++) {
-            if (cmd->key_specs[i].begin_search_type != KSPEC_BS_INDEX || cmd->key_specs[i].find_keys_type != KSPEC_FK_RANGE) {
+            if (cmd->key_specs[i].begin_search_type != KSPEC_BS_INDEX ||
+                cmd->key_specs[i].find_keys_type != KSPEC_FK_RANGE) {
                 /* If we have a non-range spec it means we have movable keys */
                 movablekeys = 1;
                 break;
@@ -3378,18 +3391,19 @@ int commandCheckExistence(client *c, sds *err) {
     // 没有找到对应的命令
     if (isContainerCommandBySds(c->argv[0]->ptr)) {
         /* 如果我们找不到命令,但argv[0]本身是一个命令,这意味着我们正在处理一个无效的子命令.打印帮助.*/
-        sds cmd = sdsnew((char *)c->argv[0]->ptr);
+        sds cmd = sdsnew((char *) c->argv[0]->ptr);
         sdstoupper(cmd);
         *err = sdsnew(NULL);
-        *err = sdscatprintf(*err, "unknown subcommand '%.128s'. Try %s HELP.", (char *)c->argv[1]->ptr, cmd);
+        *err = sdscatprintf(*err, "unknown subcommand '%.128s'. Try %s HELP.", (char *) c->argv[1]->ptr, cmd);
         sdsfree(cmd);
-    }
-    else {
+    } else {
         sds args = sdsempty();
         int i;
-        for (i = 1; i < c->argc && sdslen(args) < 128; i++) args = sdscatprintf(args, "'%.*s' ", 128 - (int)sdslen(args), (char *)c->argv[i]->ptr);
+        for (i = 1; i < c->argc && sdslen(args) < 128; i++)
+            args = sdscatprintf(args, "'%.*s' ", 128 - (int) sdslen(args), (char *) c->argv[i]->ptr);
         *err = sdsnew(NULL);
-        *err = sdscatprintf(*err, "unknown command '%.128s', with args beginning with: %s", (char *)c->argv[0]->ptr, args);
+        *err = sdscatprintf(*err, "unknown command '%.128s', with args beginning with: %s", (char *) c->argv[0]->ptr,
+                            args);
         sdsfree(args);
     }
     /* Make sure there are no newlines in the string, otherwise invalid protocol
@@ -3430,7 +3444,7 @@ int processCommand(client *c) {
     }
 
     moduleCallCommandFilters(c);
-    printf("c->argv[0]->ptr->  %s\n", c->argv[0]->ptr); // SET
+    serverLog(LL_DEBUG, "c->argv[0]->ptr->  %s\n", (char *) c->argv[0]->ptr); // SET
     // 处理可能的安全攻击
     if (!strcasecmp(c->argv[0]->ptr, "host:") || !strcasecmp(c->argv[0]->ptr, "post")) {
         securityWarningCommand(c);
@@ -3438,9 +3452,8 @@ int processCommand(client *c) {
     }
 
     /* 如果我们在一个模块阻塞的上下文中,产生的结果是希望避免处理客户端,则延迟该命令*/
-    //    if (server.busy_module_yield_flags & BUSY_MODULE_YIELD_EVENTS) { // 感觉这么写也可以
-
-    if (server.busy_module_yield_flags != BUSY_MODULE_YIELD_NONE && !(server.busy_module_yield_flags & BUSY_MODULE_YIELD_CLIENTS)) {
+    if (server.busy_module_yield_flags != BUSY_MODULE_YIELD_NONE &&
+        !(server.busy_module_yield_flags & BUSY_MODULE_YIELD_CLIENTS)) {
         c->bpop.timeout = 0; // 设置阻塞超时为0,永不超时？
         blockClient(c, BLOCKED_POSTPONE);
         return C_OK;
@@ -3460,30 +3473,41 @@ int processCommand(client *c) {
 
     /* 检查该命令是否被标记为protected并且相关配置允许它*/
     if (c->cmd->flags & CMD_PROTECTED) {
-        if ((c->cmd->proc == debugCommand && !allowProtectedAction(server.enable_debug_cmd, c)) || (c->cmd->proc == moduleCommand && !allowProtectedAction(server.enable_module_cmd, c))) {
+        if ((c->cmd->proc == debugCommand && !allowProtectedAction(server.enable_debug_cmd, c)) ||
+            (c->cmd->proc == moduleCommand && !allowProtectedAction(server.enable_module_cmd, c))) {
             rejectCommandFormat(
-                c,
-                "%s command not allowed. If the %s option is set to \"local\", "
-                "you can run it from a local connection, otherwise you need to set this option "
-                "in the configuration file, and then restart the server.",
-                c->cmd->proc == debugCommand ? "DEBUG" : "MODULE", c->cmd->proc == debugCommand ? "enable-debug-command" : "enable-module-command");
+                    c,
+                    "%s command not allowed. If the %s option is set to \"local\", "
+                    "you can run it from a local connection, otherwise you need to set this option "
+                    "in the configuration file, and then restart the server.",
+                    c->cmd->proc == debugCommand ? "DEBUG" : "MODULE",
+                    c->cmd->proc == debugCommand ? "enable-debug-command" : "enable-module-command");
             return C_OK;
         }
     }
     // 是否是读命令
-    int is_read_command = (c->cmd->flags & CMD_READONLY) || (c->cmd->proc == execCommand && (c->mstate.cmd_flags & CMD_READONLY));
+    int is_read_command =
+            (c->cmd->flags & CMD_READONLY) || (c->cmd->proc == execCommand && (c->mstate.cmd_flags & CMD_READONLY));
     // 是否是写命令
-    int is_write_command = (c->cmd->flags & CMD_WRITE) || (c->cmd->proc == execCommand && (c->mstate.cmd_flags & CMD_WRITE));
+    int is_write_command =
+            (c->cmd->flags & CMD_WRITE) || (c->cmd->proc == execCommand && (c->mstate.cmd_flags & CMD_WRITE));
     // 是否会导致OOM
-    int is_denyoom_command = (c->cmd->flags & CMD_DENYOOM) || (c->cmd->proc == execCommand && (c->mstate.cmd_flags & CMD_DENYOOM));
+    int is_denyoom_command =
+            (c->cmd->flags & CMD_DENYOOM) || (c->cmd->proc == execCommand && (c->mstate.cmd_flags & CMD_DENYOOM));
     // 是否允许在从节点带有过期数据时执行的命令
-    int is_denystale_command = !(c->cmd->flags & CMD_STALE) || (c->cmd->proc == execCommand && (c->mstate.cmd_inv_flags & CMD_STALE));
+    int is_denystale_command =
+            !(c->cmd->flags & CMD_STALE) || (c->cmd->proc == execCommand && (c->mstate.cmd_inv_flags & CMD_STALE));
     // 允许在载入数据库时使用的命令
-    int is_denyloading_command = !(c->cmd->flags & CMD_LOADING) || (c->cmd->proc == execCommand && (c->mstate.cmd_inv_flags & CMD_LOADING));
+    int is_denyloading_command =
+            !(c->cmd->flags & CMD_LOADING) || (c->cmd->proc == execCommand && (c->mstate.cmd_inv_flags & CMD_LOADING));
     // 命令可能会产生复制流量、且允许写
-    int is_may_replicate_command = (c->cmd->flags & (CMD_WRITE | CMD_MAY_REPLICATE)) || (c->cmd->proc == execCommand && (c->mstate.cmd_flags & (CMD_WRITE | CMD_MAY_REPLICATE)));
+    int is_may_replicate_command = (c->cmd->flags & (CMD_WRITE | CMD_MAY_REPLICATE)) || (c->cmd->proc == execCommand &&
+                                                                                         (c->mstate.cmd_flags &
+                                                                                          (CMD_WRITE |
+                                                                                           CMD_MAY_REPLICATE)));
     // 在异步加载期间拒绝（当副本使用无盘同步swapdb时,允许访问旧数据集）.
-    int is_deny_async_loading_command = (c->cmd->flags & CMD_NO_ASYNC_LOADING) || (c->cmd->proc == execCommand && (c->mstate.cmd_flags & CMD_NO_ASYNC_LOADING));
+    int is_deny_async_loading_command = (c->cmd->flags & CMD_NO_ASYNC_LOADING) ||
+                                        (c->cmd->proc == execCommand && (c->mstate.cmd_flags & CMD_NO_ASYNC_LOADING));
     // 是否必须服从的客户端
     int obey_client = mustObeyClient(c);
 
@@ -3504,7 +3528,8 @@ int processCommand(client *c) {
     int acl_errpos;
     int acl_retval = ACLCheckAllPerm(c, &acl_errpos);
     if (acl_retval != ACL_OK) {
-        addACLLogEntry(c, acl_retval, (c->flags & CLIENT_MULTI) ? ACL_LOG_CTX_MULTI : ACL_LOG_CTX_TOPLEVEL, acl_errpos, NULL, NULL);
+        addACLLogEntry(c, acl_retval, (c->flags & CLIENT_MULTI) ? ACL_LOG_CTX_MULTI : ACL_LOG_CTX_TOPLEVEL, acl_errpos,
+                       NULL, NULL);
         switch (acl_retval) {
             case ACL_DENIED_CMD: {
                 rejectCommandFormat(c, "-NOPERM 这个用户没有权限运行 '%s' 命令", c->cmd->fullname);
@@ -3529,10 +3554,10 @@ int processCommand(client *c) {
     // 2) 命令没有 key 参数
     if (
         // 必须遵从的客户端 不能转向
-        server.cluster_enabled && !mustObeyClient(c) &&
-        (
-            // keys 可以移动 ,
-            (c->cmd->flags & CMD_MOVABLE_KEYS) || c->cmd->key_specs_num != 0 || c->cmd->proc == execCommand)) {
+            server.cluster_enabled && !mustObeyClient(c) &&
+            (
+                    // keys 可以移动 ,
+                    (c->cmd->flags & CMD_MOVABLE_KEYS) || c->cmd->key_specs_num != 0 || c->cmd->proc == execCommand)) {
         int error_code;
         clusterNode *n = getNodeByQuery(c, c->cmd, c->argv, c->argc, &c->slot, &error_code);
         if (n == NULL || n != server.cluster->myself) {
@@ -3541,8 +3566,7 @@ int processCommand(client *c) {
 
             if (c->cmd->proc == execCommand) {
                 discardTransaction(c);
-            }
-            else {
+            } else {
                 flagTransaction(c); // 标记事务
             }
             clusterRedirectClient(c, n, c->slot, error_code);
@@ -3582,7 +3606,8 @@ int processCommand(client *c) {
          * However, we never want to reject DISCARD, or even EXEC (unless it
          * contains denied commands, in which case is_denyoom_command is already
          * set. */
-        if (c->flags & CLIENT_MULTI && c->cmd->proc != execCommand && c->cmd->proc != discardCommand && c->cmd->proc != quitCommand && c->cmd->proc != resetCommand) {
+        if (c->flags & CLIENT_MULTI && c->cmd->proc != execCommand && c->cmd->proc != discardCommand &&
+            c->cmd->proc != quitCommand && c->cmd->proc != resetCommand) {
             reject_cmd_on_oom = 1;
         }
 
@@ -3594,7 +3619,8 @@ int processCommand(client *c) {
         /* Save out_of_memory result at script start, otherwise if we check OOM
          * until first write within script, memory used by lua stack and
          * arguments might interfere. */
-        if (c->cmd->proc == evalCommand || c->cmd->proc == evalShaCommand || c->cmd->proc == fcallCommand || c->cmd->proc == fcallroCommand) {
+        if (c->cmd->proc == evalCommand || c->cmd->proc == evalShaCommand || c->cmd->proc == fcallCommand ||
+            c->cmd->proc == fcallroCommand) {
             server.script_oom = out_of_memory;
         }
     }
@@ -3611,20 +3637,18 @@ int processCommand(client *c) {
         if (obey_client) { // 该客户端的命令必须服从
             if (!server.repl_ignore_disk_write_error && c->cmd->proc != pingCommand) {
                 serverPanic("副本无法将命令写入磁盘.");
-            }
-            else {
+            } else {
                 static mstime_t last_log_time_ms = 0;
                 const mstime_t log_interval_ms = 10000;
                 if (server.mstime > last_log_time_ms + log_interval_ms) {
                     last_log_time_ms = server.mstime;
                     serverLog(
-                        LL_WARNING,
-                        "Replica is applying a command even though "
-                        "it is unable to write to disk.");
+                            LL_WARNING,
+                            "Replica is applying a command even though "
+                            "it is unable to write to disk.");
                 }
             }
-        }
-        else {
+        } else {
             sds err = writeCommandsGetDiskErrorMessage(deny_write_type);
             rejectCommandSds(c, err);
             return C_OK;
@@ -3646,7 +3670,10 @@ int processCommand(client *c) {
     }
 
     // 订阅发布, 在RESP2中只允许一部分命令, RESP3没有限制
-    if ((c->flags & CLIENT_PUBSUB && c->resp == 2) && c->cmd->proc != pingCommand && c->cmd->proc != subscribeCommand && c->cmd->proc != ssubscribeCommand && c->cmd->proc != unsubscribeCommand && c->cmd->proc != sunsubscribeCommand && c->cmd->proc != psubscribeCommand && c->cmd->proc != punsubscribeCommand && c->cmd->proc != quitCommand &&
+    if ((c->flags & CLIENT_PUBSUB && c->resp == 2) && c->cmd->proc != pingCommand && c->cmd->proc != subscribeCommand &&
+        c->cmd->proc != ssubscribeCommand && c->cmd->proc != unsubscribeCommand &&
+        c->cmd->proc != sunsubscribeCommand && c->cmd->proc != psubscribeCommand &&
+        c->cmd->proc != punsubscribeCommand && c->cmd->proc != quitCommand &&
         c->cmd->proc != resetCommand) {
         // pingCommand
         // subscribeCommand
@@ -3658,12 +3685,15 @@ int processCommand(client *c) {
         // quitCommand
         // resetCommand
         // 这些命令, 只能在RESP3协议中使用
-        rejectCommandFormat(c, "不能执行'%s': 在当前上下文中只允许 (P|S)SUBSCRIBE / (P|S)UNSUBSCRIBE / PING / QUIT / RESET 命令的执行", c->cmd->fullname);
+        rejectCommandFormat(c,
+                            "不能执行'%s': 在当前上下文中只允许 (P|S)SUBSCRIBE / (P|S)UNSUBSCRIBE / PING / QUIT / RESET 命令的执行",
+                            c->cmd->fullname);
         return C_OK;
     }
 
     //    当replica-serve-stale-data为no,并且我们是一个与master链接断开的副本时,只允许带有 CMD_STALE 标志的命令,如 INFO, REPLICAOF等.
-    if (server.masterhost && server.repl_state != REPL_STATE_CONNECTED && server.repl_serve_stale_data == 0 && is_denystale_command) {
+    if (server.masterhost && server.repl_state != REPL_STATE_CONNECTED && server.repl_serve_stale_data == 0 &&
+        is_denystale_command) {
         rejectCommand(c, shared.masterdownerr);
         return C_OK;
     }
@@ -3688,14 +3718,11 @@ int processCommand(client *c) {
         // 命令没有设置 CMD_ALLOW_BUSY 标志
         if (server.busy_module_yield_flags && server.busy_module_yield_reply) { // yield标志,以及有数据
             rejectCommandFormat(c, "-BUSY %s", server.busy_module_yield_reply);
-        }
-        else if (server.busy_module_yield_flags) { // 只有yield标志
+        } else if (server.busy_module_yield_flags) { // 只有yield标志
             rejectCommand(c, shared.slowmoduleerr);
-        }
-        else if (scriptIsEval()) {
+        } else if (scriptIsEval()) {
             rejectCommand(c, shared.slowevalerr);
-        }
-        else {
+        } else {
             rejectCommand(c, shared.slowscripterr);
         }
         return C_OK;
@@ -3706,21 +3733,23 @@ int processCommand(client *c) {
         return C_OK;
     }
     // 如果服务器被暂停,则阻止客户端,直到暂停结束.执行中的复制 永远不会被暂停.
-    if (!(c->flags & CLIENT_SLAVE) && ((server.client_pause_type == CLIENT_PAUSE_ALL) || (server.client_pause_type == CLIENT_PAUSE_WRITE && is_may_replicate_command))) {
+    if (!(c->flags & CLIENT_SLAVE) && ((server.client_pause_type == CLIENT_PAUSE_ALL) ||
+                                       (server.client_pause_type == CLIENT_PAUSE_WRITE && is_may_replicate_command))) {
         c->bpop.timeout = 0;
         blockClient(c, BLOCKED_POSTPONE);
         return C_OK;
     }
 
     // 如果客户端有CLIENT_MULTI标记,并且当前不是exec、discard、multi、watch、quit、reset命令
-    if (c->flags & CLIENT_MULTI && c->cmd->proc != execCommand && c->cmd->proc != discardCommand && c->cmd->proc != multiCommand && c->cmd->proc != watchCommand && c->cmd->proc != quitCommand && c->cmd->proc != resetCommand) {
+    if (c->flags & CLIENT_MULTI && c->cmd->proc != execCommand && c->cmd->proc != discardCommand &&
+        c->cmd->proc != multiCommand && c->cmd->proc != watchCommand && c->cmd->proc != quitCommand &&
+        c->cmd->proc != resetCommand) {
         // 在事务上下文中
         // 除 EXEC 、 DISCARD 、 MULTI 和 WATCH 命令之外
         // 其他所有命令都会被入队到事务队列中
         queueMultiCommand(c); // 将命令入队保存,等待后续一起处理
         addReply(c, shared.queued);
-    }
-    else {
+    } else {
         // 执行命令
         call(c, CMD_CALL_FULL); // 调用call函数执行命令
         c->woff = server.master_repl_offset;
@@ -3737,11 +3766,11 @@ int processCommand(client *c) {
 /* ====================== Error lookup and execution ===================== */
 
 void incrementErrorCount(const char *fullerr, size_t namelen) {
-    struct redisError *error = raxFind(server.errors, (unsigned char *)fullerr, namelen);
+    struct redisError *error = raxFind(server.errors, (unsigned char *) fullerr, namelen);
     if (error == raxNotFound) {
         error = zmalloc(sizeof(*error));
         error->count = 0;
-        raxInsert(server.errors, (unsigned char *)fullerr, namelen, error, NULL);
+        raxInsert(server.errors, (unsigned char *) fullerr, namelen, error, NULL);
     }
     error->count++;
 }
@@ -3859,13 +3888,11 @@ static void cancelShutdown(void) {
 int abortShutdown(void) {
     if (isShutdownInitiated()) {
         cancelShutdown();
-    }
-    else if (server.shutdown_asap) {
+    } else if (server.shutdown_asap) {
         /* Signal handler has requested shutdown, but it hasn't been initiated
          * yet. Just clear the flag. */
         server.shutdown_asap = 0;
-    }
-    else {
+    } else {
         /* Shutdown neither initiated nor requested. */
         return C_ERR;
     }
@@ -3892,11 +3919,14 @@ int finishShutdown(void) {
         if (replica->repl_ack_off != server.master_repl_offset) {
             num_lagging_replicas++;
             long lag = replica->replstate == SLAVE_STATE_ONLINE ? time(NULL) - replica->repl_ack_time : 0;
-            serverLog(LL_WARNING, "Lagging replica %s reported offset %lld behind master, lag=%ld, state=%s.", replicationGetSlaveName(replica), server.master_repl_offset - replica->repl_ack_off, lag, replstateToString(replica->replstate));
+            serverLog(LL_WARNING, "Lagging replica %s reported offset %lld behind master, lag=%ld, state=%s.",
+                      replicationGetSlaveName(replica), server.master_repl_offset - replica->repl_ack_off, lag,
+                      replstateToString(replica->replstate));
         }
     }
     if (num_replicas > 0) {
-        serverLog(LL_NOTICE, "%d of %d replicas are in sync when shutting down.", num_replicas - num_lagging_replicas, num_replicas);
+        serverLog(LL_NOTICE, "%d of %d replicas are in sync when shutting down.", num_replicas - num_lagging_replicas,
+                  num_replicas);
     }
 
     /* Kill all the Lua debugger forked sessions. */
@@ -3932,8 +3962,7 @@ int finishShutdown(void) {
         if (server.aof_state == AOF_WAIT_REWRITE) {
             if (force) {
                 serverLog(LL_WARNING, "Writing initial AOF. Exit anyway.");
-            }
-            else {
+            } else {
                 serverLog(LL_WARNING, "Writing initial AOF, can't exit.");
                 goto error;
             }
@@ -3971,8 +4000,7 @@ int finishShutdown(void) {
              * synchronization... */
             if (force) {
                 serverLog(LL_WARNING, "Error trying to save the DB. Exit anyway.");
-            }
-            else {
+            } else {
                 serverLog(LL_WARNING, "Error trying to save the DB, can't exit.");
                 if (server.supervised_mode == SUPERVISED_SYSTEMD)
                     redisCommunicateSystemd("STATUS=Error trying to save the DB, can't exit.\n");
@@ -4007,7 +4035,7 @@ int finishShutdown(void) {
     serverLog(LL_WARNING, "%s is now ready to exit, bye bye...", server.sentinel_mode ? "Sentinel" : "Redis");
     return C_OK;
 
-error:
+    error:
     serverLog(LL_WARNING, "Errors trying to shut down the server. Check the logs for more information.");
     cancelShutdown();
     return C_ERR;
@@ -4024,8 +4052,7 @@ error:
 int writeCommandsDeniedByDiskError(void) {
     if (server.stop_writes_on_bgsave_err && server.saveparamslen > 0 && server.lastbgsave_status == C_ERR) {
         return DISK_ERROR_TYPE_RDB;
-    }
-    else if (server.aof_state != AOF_OFF) { // 没有关闭
+    } else if (server.aof_state != AOF_OFF) { // 没有关闭
         if (server.aof_last_write_status == C_ERR) {
             return DISK_ERROR_TYPE_AOF;
         }
@@ -4045,9 +4072,9 @@ sds writeCommandsGetDiskErrorMessage(int error_code) {
     sds ret = NULL;
     if (error_code == DISK_ERROR_TYPE_RDB) {
         ret = sdsdup(shared.bgsaveerr->ptr);
-    }
-    else {
-        ret = sdscatfmt(sdsempty(), "-MISCONF Errors writing to the AOF file: %s", strerror(server.aof_last_write_errno));
+    } else {
+        ret = sdscatfmt(sdsempty(), "-MISCONF Errors writing to the AOF file: %s",
+                        strerror(server.aof_last_write_errno));
     }
     return ret;
 }
@@ -4068,8 +4095,7 @@ void pingCommand(client *c) {
             addReplyBulkCBuffer(c, "", 0);
         else
             addReplyBulk(c, c->argv[1]);
-    }
-    else {
+    } else {
         if (c->argc == 1)
             addReply(c, shared.pong);
         else
@@ -4118,71 +4144,72 @@ void addReplyCommandFlags(client *c, uint64_t flags, replyFlagNames *replyFlags)
 
 void addReplyFlagsForCommand(client *c, struct redisCommand *cmd) {
     replyFlagNames flagNames[] = {
-        {CMD_WRITE, "write"},
-        {CMD_READONLY, "readonly"},
-        {CMD_DENYOOM, "denyoom"},
-        {CMD_MODULE, "module"},
-        {CMD_ADMIN, "admin"},
-        {CMD_PUBSUB, "pubsub"},
-        {CMD_NOSCRIPT, "noscript"},
-        {CMD_BLOCKING, "blocking"},
-        {CMD_LOADING, "loading"},
-        {CMD_STALE, "stale"},
-        {CMD_SKIP_MONITOR, "skip_monitor"},
-        {CMD_SKIP_SLOWLOG, "skip_slowlog"},
-        {CMD_ASKING, "asking"},
-        {CMD_FAST, "fast"},
-        {CMD_NO_AUTH, "no_auth"},
-        {CMD_MAY_REPLICATE, "may_replicate"},
-        /* {CMD_SENTINEL,          "sentinel"}, Hidden on purpose */
-        /* {CMD_ONLY_SENTINEL,     "only_sentinel"}, Hidden on purpose */
-        {CMD_NO_MANDATORY_KEYS, "no_mandatory_keys"},
-        /* {CMD_PROTECTED,         "protected"}, Hidden on purpose */
-        {CMD_NO_ASYNC_LOADING, "no_async_loading"},
-        {CMD_NO_MULTI, "no_multi"},
-        {CMD_MOVABLE_KEYS, "movablekeys"},
-        {CMD_ALLOW_BUSY, "allow_busy"},
-        {0, NULL}};
+            {CMD_WRITE,             "write"},
+            {CMD_READONLY,          "readonly"},
+            {CMD_DENYOOM,           "denyoom"},
+            {CMD_MODULE,            "module"},
+            {CMD_ADMIN,             "admin"},
+            {CMD_PUBSUB,            "pubsub"},
+            {CMD_NOSCRIPT,          "noscript"},
+            {CMD_BLOCKING,          "blocking"},
+            {CMD_LOADING,           "loading"},
+            {CMD_STALE,             "stale"},
+            {CMD_SKIP_MONITOR,      "skip_monitor"},
+            {CMD_SKIP_SLOWLOG,      "skip_slowlog"},
+            {CMD_ASKING,            "asking"},
+            {CMD_FAST,              "fast"},
+            {CMD_NO_AUTH,           "no_auth"},
+            {CMD_MAY_REPLICATE,     "may_replicate"},
+            /* {CMD_SENTINEL,          "sentinel"}, Hidden on purpose */
+            /* {CMD_ONLY_SENTINEL,     "only_sentinel"}, Hidden on purpose */
+            {CMD_NO_MANDATORY_KEYS, "no_mandatory_keys"},
+            /* {CMD_PROTECTED,         "protected"}, Hidden on purpose */
+            {CMD_NO_ASYNC_LOADING,  "no_async_loading"},
+            {CMD_NO_MULTI,          "no_multi"},
+            {CMD_MOVABLE_KEYS,      "movablekeys"},
+            {CMD_ALLOW_BUSY,        "allow_busy"},
+            {0, NULL}};
     addReplyCommandFlags(c, cmd->flags, flagNames);
 }
+
 // 文档标志
 void addReplyDocFlagsForCommand(client *c, struct redisCommand *cmd) {
     replyFlagNames docFlagNames[] = {
-        {.flag = CMD_DOC_DEPRECATED, .name = "deprecated"}, // 弃用
-        {.flag = CMD_DOC_SYSCMD, .name = "syscmd"},         // 系统命令
-        {.flag = 0, .name = NULL}                           //
+            {.flag = CMD_DOC_DEPRECATED, .name = "deprecated"}, // 弃用
+            {.flag = CMD_DOC_SYSCMD, .name = "syscmd"},         // 系统命令
+            {.flag = 0, .name = NULL}                           //
     };
     addReplyCommandFlags(c, cmd->doc_flags, docFlagNames);
 }
 
 void addReplyFlagsForKeyArgs(client *c, uint64_t flags) {
     replyFlagNames docFlagNames[] = {
-        {.flag = CMD_KEY_RO, .name = "RO"},
-        {.flag = CMD_KEY_RW, .name = "RW"},
-        {.flag = CMD_KEY_OW, .name = "OW"},
-        {.flag = CMD_KEY_RM, .name = "RM"},
-        {.flag = CMD_KEY_ACCESS, .name = "access"},
-        {.flag = CMD_KEY_UPDATE, .name = "update"},
-        {.flag = CMD_KEY_INSERT, .name = "insert"},
-        {.flag = CMD_KEY_DELETE, .name = "delete"},
-        {.flag = CMD_KEY_NOT_KEY, .name = "not_key"},
-        {.flag = CMD_KEY_INCOMPLETE, .name = "incomplete"},
-        {.flag = CMD_KEY_VARIABLE_FLAGS, .name = "variable_flags"},
-        {.flag = 0, NULL}};
+            {.flag = CMD_KEY_RO, .name = "RO"},
+            {.flag = CMD_KEY_RW, .name = "RW"},
+            {.flag = CMD_KEY_OW, .name = "OW"},
+            {.flag = CMD_KEY_RM, .name = "RM"},
+            {.flag = CMD_KEY_ACCESS, .name = "access"},
+            {.flag = CMD_KEY_UPDATE, .name = "update"},
+            {.flag = CMD_KEY_INSERT, .name = "insert"},
+            {.flag = CMD_KEY_DELETE, .name = "delete"},
+            {.flag = CMD_KEY_NOT_KEY, .name = "not_key"},
+            {.flag = CMD_KEY_INCOMPLETE, .name = "incomplete"},
+            {.flag = CMD_KEY_VARIABLE_FLAGS, .name = "variable_flags"},
+            {.flag = 0, NULL}};
     addReplyCommandFlags(c, flags, docFlagNames);
 }
 
 /* Must match redisCommandArgType */
 const char *ARG_TYPE_STR[] = {
-    "string", "integer", "double", "key", "pattern", "unix-time", "pure-token", "oneof", "block",
+        "string", "integer", "double", "key", "pattern", "unix-time", "pure-token", "oneof", "block",
 };
 
 void addReplyFlagsForArg(client *c, uint64_t flags) {
     replyFlagNames argFlagNames[] = {
-        {.flag = CMD_ARG_OPTIONAL, .name = "optional"},
-        {.flag = CMD_ARG_MULTIPLE, .name = "multiple"},
-        {.flag = CMD_ARG_MULTIPLE_TOKEN, .name = "multiple_token"},
-        {.flag = 0, .name = NULL},
+            {.flag = CMD_ARG_OPTIONAL, .name = "optional"},
+            {.flag = CMD_ARG_MULTIPLE, .name = "multiple"},
+            {.flag = CMD_ARG_MULTIPLE_TOKEN, .name = "multiple_token"},
+            {.flag = 0, .name = NULL},
     };
     addReplyCommandFlags(c, flags, argFlagNames);
 }
@@ -4248,12 +4275,12 @@ void addReplyCommandArgList(client *c, struct redisCommandArg *args, int num_arg
 
 /* Must match redisCommandRESP2Type */
 const char *RESP2_TYPE_STR[] = {
-    "simple-string", "error", "integer", "bulk-string", "null-bulk-string", "array", "null-array",
+        "simple-string", "error", "integer", "bulk-string", "null-bulk-string", "array", "null-array",
 };
 
 /* Must match redisCommandRESP3Type */
 const char *RESP3_TYPE_STR[] = {
-    "simple-string", "error", "integer", "double", "bulk-string", "array", "map", "set", "bool", "null",
+        "simple-string", "error", "integer", "double", "bulk-string", "array", "map", "set", "bool", "null",
 };
 
 void addReplyCommandHistory(client *c, struct redisCommand *cmd) {
@@ -4370,7 +4397,9 @@ void addReplyCommandKeySpecs(client *c, struct redisCommand *cmd) {
 }
 
 /* Reply with an array of sub-command using the provided reply callback. */
-void addReplyCommandSubCommands(client *c, struct redisCommand *cmd, void (*reply_function)(client *, struct redisCommand *), int use_map) {
+void
+addReplyCommandSubCommands(client *c, struct redisCommand *cmd, void (*reply_function)(client *, struct redisCommand *),
+                           int use_map) {
     if (!cmd->subcommands_dict) {
         addReplySetLen(c, 0);
         return;
@@ -4383,7 +4412,7 @@ void addReplyCommandSubCommands(client *c, struct redisCommand *cmd, void (*repl
     dictEntry *de;
     dictIterator *di = dictGetSafeIterator(cmd->subcommands_dict);
     while ((de = dictNext(di)) != NULL) {
-        struct redisCommand *sub = (struct redisCommand *)dictGetVal(de);
+        struct redisCommand *sub = (struct redisCommand *) dictGetVal(de);
         if (use_map)
             addReplyBulkCBuffer(c, sub->fullname, sdslen(sub->fullname));
         reply_function(c, sub);
@@ -4392,14 +4421,15 @@ void addReplyCommandSubCommands(client *c, struct redisCommand *cmd, void (*repl
 }
 
 // 命令属于哪个组
-const char *COMMAND_GROUP_STR[] = {"generic", "string", "list", "set", "sorted-set", "hash", "pubsub", "transactions", "connection", "server", "scripting", "hyperloglog", "cluster", "sentinel", "geo", "stream", "bitmap", "module"};
+const char *COMMAND_GROUP_STR[] = {"generic", "string", "list", "set", "sorted-set", "hash", "pubsub", "transactions",
+                                   "connection", "server", "scripting", "hyperloglog", "cluster", "sentinel", "geo",
+                                   "stream", "bitmap", "module"};
 
 // Redis命令的输出.用于COMMAND命令和命令信息.
 void addReplyCommandInfo(client *c, struct redisCommand *cmd) {
     if (!cmd) {
         addReplyNull(c);
-    }
-    else {
+    } else {
         int firstkey = 0, lastkey = 0, keystep = 0;
         if (cmd->legacy_range_key_spec.begin_search_type != KSPEC_BS_INVALID) {
             firstkey = cmd->legacy_range_key_spec.bs.index.pos;
@@ -4505,12 +4535,10 @@ void getKeysSubcommandImpl(client *c, int with_flags) {
     if (!cmd) {
         addReplyError(c, "Invalid command specified");
         return;
-    }
-    else if (cmd->getkeys_proc == NULL && cmd->key_specs_num == 0) {
+    } else if (cmd->getkeys_proc == NULL && cmd->key_specs_num == 0) {
         addReplyError(c, "The command has no key arguments");
         return;
-    }
-    else if ((cmd->arity > 0 && cmd->arity != c->argc - 2) || ((c->argc - 2) < -cmd->arity)) {
+    } else if ((cmd->arity > 0 && cmd->arity != c->argc - 2) || ((c->argc - 2) < -cmd->arity)) {
         addReplyError(c, "Invalid number of arguments specified for command");
         return;
     }
@@ -4518,18 +4546,15 @@ void getKeysSubcommandImpl(client *c, int with_flags) {
     if (!getKeysFromCommandWithSpecs(cmd, c->argv + 2, c->argc - 2, GET_KEYSPEC_DEFAULT, &result)) {
         if (cmd->flags & CMD_NO_MANDATORY_KEYS) {
             addReplyArrayLen(c, 0);
-        }
-        else {
+        } else {
             addReplyError(c, "Invalid arguments specified for command");
         }
-    }
-    else {
+    } else {
         addReplyArrayLen(c, result.numkeys);
         for (j = 0; j < result.numkeys; j++) {
             if (!with_flags) {
                 addReplyBulk(c, c->argv[result.keys[j].pos + 2]);
-            }
-            else {
+            } else {
                 addReplyArrayLen(c, 2);
                 addReplyBulk(c, c->argv[result.keys[j].pos + 2]);
                 addReplyFlagsForKeyArgs(c, result.keys[j].flags);
@@ -4578,8 +4603,7 @@ typedef struct {
     sds arg;
     struct {
         int valid;
-        union
-        {
+        union {
             uint64_t aclcat;
             void *module_handle;
         } u;
@@ -4660,22 +4684,18 @@ void commandListCommand(client *c) {
             char *filtertype = c->argv[i + 1]->ptr;
             if (!strcasecmp(filtertype, "module")) {
                 filter.type = COMMAND_LIST_FILTER_MODULE;
-            }
-            else if (!strcasecmp(filtertype, "aclcat")) {
+            } else if (!strcasecmp(filtertype, "aclcat")) {
                 filter.type = COMMAND_LIST_FILTER_ACLCAT;
-            }
-            else if (!strcasecmp(filtertype, "pattern")) {
+            } else if (!strcasecmp(filtertype, "pattern")) {
                 filter.type = COMMAND_LIST_FILTER_PATTERN;
-            }
-            else {
+            } else {
                 addReplyErrorObject(c, shared.syntaxerr);
                 return;
             }
             got_filter = 1;
             filter.arg = c->argv[i + 2]->ptr;
             i += 2;
-        }
-        else {
+        } else {
             addReplyErrorObject(c, shared.syntaxerr);
             return;
         }
@@ -4686,8 +4706,7 @@ void commandListCommand(client *c) {
 
     if (got_filter) {
         commandListWithFilter(c, server.commands, filter, &numcmds);
-    }
-    else {
+    } else {
         commandListWithoutFilter(c, server.commands, &numcmds);
     }
 
@@ -4707,8 +4726,7 @@ void commandInfoCommand(client *c) {
             addReplyCommandInfo(c, dictGetVal(de)); // COMMAND INFO [<command-name> ...]
         }
         dictReleaseIterator(di);
-    }
-    else {
+    } else {
         addReplyArrayLen(c, c->argc - 2);
         for (i = 2; i < c->argc; i++) {
             addReplyCommandInfo(c, lookupCommandBySds(c->argv[i]->ptr)); // COMMAND INFO [<command-name> ...]
@@ -4732,8 +4750,7 @@ void commandDocsCommand(client *c) {
             addReplyCommandDocs(c, cmd);
         }
         dictReleaseIterator(di);
-    }
-    else {
+    } else {
         // 使用请求命令的数组进行回复(如果我们找到它们)
         int numcmds = 0;
         void *replylen = addReplyDeferredLen(c); // 使用空节点 占位  server.reply
@@ -4758,21 +4775,21 @@ void commandGetKeysCommand(client *c) {
 // command help
 void commandHelpCommand(client *c) {
     const char *help[] = {
-        "(no subcommand)",
-        "    返回所有Redis命令的详细信息.",
-        "COUNT",
-        "    返回Redis服务器中命令的总数.",
-        "LIST",
-        "    返回Redis服务器中所有命令的列表.",
-        "INFO [<command-name> ...]",
-        "    返回多个Redis命令详情.如果没有给出命令名称,则返回所有命令的文档详细信息.",
-        "DOCS [<command-name> ...]",
-        "    返回多个Redis命令的详细文档[更加详细].如果没有给出命令名称,则返回所有命令的文档详细信息.",
-        "GETKEYS <full-command>",
-        "    从一个完整的Redis命令中返回对应的key.",
-        "GETKEYSANDFLAGS <full-command>",
-        "    从一个完整的Redis命令中返回key和访问标志.",
-        NULL};
+            "(no subcommand)",
+            "    返回所有Redis命令的详细信息.",
+            "COUNT",
+            "    返回Redis服务器中命令的总数.",
+            "LIST",
+            "    返回Redis服务器中所有命令的列表.",
+            "INFO [<command-name> ...]",
+            "    返回多个Redis命令详情.如果没有给出命令名称,则返回所有命令的文档详细信息.",
+            "DOCS [<command-name> ...]",
+            "    返回多个Redis命令的详细文档[更加详细].如果没有给出命令名称,则返回所有命令的文档详细信息.",
+            "GETKEYS <full-command>",
+            "    从一个完整的Redis命令中返回对应的key.",
+            "GETKEYSANDFLAGS <full-command>",
+            "    从一个完整的Redis命令中返回key和访问标志.",
+            NULL};
 
     addReplyHelp(c, help);
 }
@@ -4785,28 +4802,22 @@ void bytesToHuman(char *s, unsigned long long n) {
     if (n < 1024) {
         /* Bytes */
         sprintf(s, "%lluB", n);
-    }
-    else if (n < (1024 * 1024)) {
-        d = (double)n / (1024);
+    } else if (n < (1024 * 1024)) {
+        d = (double) n / (1024);
         sprintf(s, "%.2fK", d);
-    }
-    else if (n < (1024LL * 1024 * 1024)) {
-        d = (double)n / (1024 * 1024);
+    } else if (n < (1024LL * 1024 * 1024)) {
+        d = (double) n / (1024 * 1024);
         sprintf(s, "%.2fM", d);
-    }
-    else if (n < (1024LL * 1024 * 1024 * 1024)) {
-        d = (double)n / (1024LL * 1024 * 1024);
+    } else if (n < (1024LL * 1024 * 1024 * 1024)) {
+        d = (double) n / (1024LL * 1024 * 1024);
         sprintf(s, "%.2fG", d);
-    }
-    else if (n < (1024LL * 1024 * 1024 * 1024 * 1024)) {
-        d = (double)n / (1024LL * 1024 * 1024 * 1024);
+    } else if (n < (1024LL * 1024 * 1024 * 1024 * 1024)) {
+        d = (double) n / (1024LL * 1024 * 1024 * 1024);
         sprintf(s, "%.2fT", d);
-    }
-    else if (n < (1024LL * 1024 * 1024 * 1024 * 1024 * 1024)) {
-        d = (double)n / (1024LL * 1024 * 1024 * 1024 * 1024);
+    } else if (n < (1024LL * 1024 * 1024 * 1024 * 1024 * 1024)) {
+        d = (double) n / (1024LL * 1024 * 1024 * 1024 * 1024);
         sprintf(s, "%.2fP", d);
-    }
-    else {
+    } else {
         /* Let's hope we never need this */
         sprintf(s, "%lluB", n);
     }
@@ -4819,7 +4830,9 @@ sds fillPercentileDistributionLatencies(sds info, const char *histogram_name, st
         char fbuf[128];
         size_t len = sprintf(fbuf, "%f", server.latency_tracking_info_percentiles[j]);
         len = trimDoubleString(fbuf, len);
-        info = sdscatprintf(info, "p%s=%.3f", fbuf, ((double)hdr_value_at_percentile(histogram, server.latency_tracking_info_percentiles[j])) / 1000.0f);
+        info = sdscatprintf(info, "p%s=%.3f", fbuf,
+                            ((double) hdr_value_at_percentile(histogram, server.latency_tracking_info_percentiles[j])) /
+                            1000.0f);
         if (j != server.latency_tracking_info_percentiles_len - 1)
             info = sdscatlen(info, ",", 1);
     }
@@ -4866,17 +4879,19 @@ sds genRedisInfoStringCommandStats(sds info, dict *commands) {
     di = dictGetSafeIterator(commands);
     while ((de = dictNext(di)) != NULL) {
         char *tmpsafe;
-        c = (struct redisCommand *)dictGetVal(de);
+        c = (struct redisCommand *) dictGetVal(de);
         if (c->calls || c->failed_calls || c->rejected_calls) {
             info = sdscatprintf(
-                info,                                                                                           //
-                "cmdstat_%s:calls=%lld,usec=%lld,usec_per_call=%.2f,rejected_calls=%lld,failed_calls=%lld\r\n", //
-                getSafeInfoString(c->fullname, sdslen(c->fullname), &tmpsafe),                                  // 具体命令
-                c->calls,                                                                                       // 调用次数
-                c->microseconds,                                                                                // 耗费CPU时间
-                (c->calls == 0) ? 0 : ((float)c->microseconds / c->calls),                                      // 每个命令平均耗费的CPU(单位为微妙)
-                c->rejected_calls,                                                                              //
-                c->failed_calls                                                                                 //
+                    info,                                                                                           //
+                    "cmdstat_%s:calls=%lld,usec=%lld,usec_per_call=%.2f,rejected_calls=%lld,failed_calls=%lld\r\n", //
+                    getSafeInfoString(c->fullname, sdslen(c->fullname),
+                                      &tmpsafe),                                  // 具体命令
+                    c->calls,                                                                                       // 调用次数
+                    c->microseconds,                                                                                // 耗费CPU时间
+                    (c->calls == 0) ? 0 : ((float) c->microseconds /
+                                           c->calls),                                      // 每个命令平均耗费的CPU(单位为微妙)
+                    c->rejected_calls,                                                                              //
+                    c->failed_calls                                                                                 //
             );
             if (tmpsafe != NULL) {
                 zfree(tmpsafe);
@@ -4898,9 +4913,11 @@ sds genRedisInfoStringLatencyStats(sds info, dict *commands) {
     di = dictGetSafeIterator(commands);
     while ((de = dictNext(di)) != NULL) {
         char *tmpsafe;
-        c = (struct redisCommand *)dictGetVal(de);
+        c = (struct redisCommand *) dictGetVal(de);
         if (c->latency_histogram) {
-            info = fillPercentileDistributionLatencies(info, getSafeInfoString(c->fullname, sdslen(c->fullname), &tmpsafe), c->latency_histogram);
+            info = fillPercentileDistributionLatencies(info,
+                                                       getSafeInfoString(c->fullname, sdslen(c->fullname), &tmpsafe),
+                                                       c->latency_histogram);
             if (tmpsafe != NULL)
                 zfree(tmpsafe);
         }
@@ -4937,7 +4954,8 @@ void releaseInfoSectionDict(dict *sec) {
  * 'out_all' and 'out_everything' are optional.
  * The resulting dictionary should be released with releaseInfoSectionDict. */
 dict *genInfoSectionDict(robj **argv, int argc, char **defaults, int *out_all, int *out_everything) {
-    char *default_sections[] = {"server", "clients", "memory", "persistence", "stats", "replication", "cpu", "module_list", "errorstats", "cluster", "keyspace", NULL};
+    char *default_sections[] = {"server", "clients", "memory", "persistence", "stats", "replication", "cpu",
+                                "module_list", "errorstats", "cluster", "keyspace", NULL};
     if (!defaults)
         defaults = default_sections;
 
@@ -4957,18 +4975,15 @@ dict *genInfoSectionDict(robj **argv, int argc, char **defaults, int *out_all, i
     for (int i = 0; i < argc; i++) {
         if (!strcasecmp(argv[i]->ptr, "default")) {
             addInfoSectionsToDict(section_dict, defaults);
-        }
-        else if (!strcasecmp(argv[i]->ptr, "all")) {
+        } else if (!strcasecmp(argv[i]->ptr, "all")) {
             if (out_all)
                 *out_all = 1;
-        }
-        else if (!strcasecmp(argv[i]->ptr, "everything")) {
+        } else if (!strcasecmp(argv[i]->ptr, "everything")) {
             if (out_everything)
                 *out_everything = 1;
             if (out_all)
                 *out_all = 1;
-        }
-        else {
+        } else {
             sds section = sdsnew(argv[i]->ptr);
             if (dictAdd(section_dict, section, NULL) != DICT_OK)
                 sdsfree(section);
@@ -5009,8 +5024,7 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
                 supervised = "systemd";
             else
                 supervised = "unknown";
-        }
-        else {
+        } else {
             supervised = "no";
         }
 
@@ -5026,43 +5040,49 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         unsigned int lruclock;
         atomicGet(server.lru_clock, lruclock); // 初始化 LRU 时间
         info = sdscatfmt(
-            info,
-            "# Server\r\n"
-            "redis_version:%s\r\n"
-            "redis_git_sha1:%s\r\n"
-            "redis_git_dirty:%i\r\n"
-            "redis_build_id:%s\r\n"
-            "redis_mode:%s\r\n"
-            "os:%s %s %s\r\n"
-            "arch_bits:%i\r\n"
-            "monotonic_clock:%s\r\n"
-            "multiplexing_api:%s\r\n"
-            "atomicvar_api:%s\r\n"
-            "gcc_version:%i.%i.%i\r\n"
-            "process_id:%I\r\n"
-            "process_supervised:%s\r\n"
-            "run_id:%s\r\n"
-            "tcp_port:%i\r\n"
-            "server_time_usec:%I\r\n"
-            "uptime_in_seconds:%I\r\n"
-            "uptime_in_days:%I\r\n"
-            "hz:%i\r\n"
-            "configured_hz:%i\r\n"
-            "lru_clock:%u\r\n"
-            "executable:%s\r\n"
-            "config_file:%s\r\n"
-            "io_threads_active:%i\r\n",
-            REDIS_VERSION, redisGitSHA1(), strtol(redisGitDirty(), NULL, 10) > 0, redisBuildIdString(), mode, name.sysname, name.release, name.machine, server.arch_bits, monotonicInfoString(), aeGetApiName(), REDIS_ATOMIC_API,
+                info,
+                "# Server\r\n"
+                "redis_version:%s\r\n"
+                "redis_git_sha1:%s\r\n"
+                "redis_git_dirty:%i\r\n"
+                "redis_build_id:%s\r\n"
+                "redis_mode:%s\r\n"
+                "os:%s %s %s\r\n"
+                "arch_bits:%i\r\n"
+                "monotonic_clock:%s\r\n"
+                "multiplexing_api:%s\r\n"
+                "atomicvar_api:%s\r\n"
+                "gcc_version:%i.%i.%i\r\n"
+                "process_id:%I\r\n"
+                "process_supervised:%s\r\n"
+                "run_id:%s\r\n"
+                "tcp_port:%i\r\n"
+                "server_time_usec:%I\r\n"
+                "uptime_in_seconds:%I\r\n"
+                "uptime_in_days:%I\r\n"
+                "hz:%i\r\n"
+                "configured_hz:%i\r\n"
+                "lru_clock:%u\r\n"
+                "executable:%s\r\n"
+                "config_file:%s\r\n"
+                "io_threads_active:%i\r\n",
+                REDIS_VERSION, redisGitSHA1(), strtol(redisGitDirty(), NULL, 10) > 0, redisBuildIdString(), mode,
+                name.sysname, name.release, name.machine, server.arch_bits, monotonicInfoString(), aeGetApiName(),
+                REDIS_ATOMIC_API,
 #ifdef __GNUC__
-            __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__,
+                __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__,
 #else
-            0, 0, 0,
+                0, 0, 0,
 #endif
-            (int64_t)getpid(), supervised, server.runid, server.port ? server.port : server.tls_port, (int64_t)server.ustime, (int64_t)uptime, (int64_t)(uptime / (3600 * 24)), server.hz, server.config_hz, lruclock, server.executable ? server.executable : "", server.configfile ? server.configfile : "", server.io_threads_active);
+                (int64_t) getpid(), supervised, server.runid, server.port ? server.port : server.tls_port,
+                (int64_t) server.ustime, (int64_t) uptime, (int64_t) (uptime / (3600 * 24)), server.hz,
+                server.config_hz, lruclock, server.executable ? server.executable : "",
+                server.configfile ? server.configfile : "", server.io_threads_active);
 
         /* Conditional properties */
         if (isShutdownInitiated()) {
-            info = sdscatfmt(info, "shutdown_in_milliseconds:%I\r\n", (int64_t)(server.shutdown_mstime - server.mstime));
+            info = sdscatfmt(info, "shutdown_in_milliseconds:%I\r\n",
+                             (int64_t) (server.shutdown_mstime - server.mstime));
         }
     }
 
@@ -5083,7 +5103,8 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         info = sdscatprintf(info, "# 由于BLPOP,BRPOP,BRPOPLPUSH而被阻塞的客户端\r\n");
         info = sdscatprintf(info, "blocked_clients:%d\r\n", server.blocked_clients);
         info = sdscatprintf(info, "tracking_clients:%d\r\n", server.tracking_clients);
-        info = sdscatprintf(info, "clients_in_timeout_table:%llu\r\n", (unsigned long long)raxSize(server.clients_timeout_table));
+        info = sdscatprintf(info, "clients_in_timeout_table:%llu\r\n",
+                            (unsigned long long) raxSize(server.clients_timeout_table));
     }
 
     /* Memory */
@@ -5144,20 +5165,21 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         info = sdscatprintf(info, "allocator_allocated:%zu\r\n", server.cron_malloc_stats.allocator_allocated);
         info = sdscatprintf(info, "allocator_active:%zu\r\n", server.cron_malloc_stats.allocator_active);
         info = sdscatprintf(info, "allocator_resident:%zu\r\n", server.cron_malloc_stats.allocator_resident);
-        info = sdscatprintf(info, "total_system_memory:%lu\r\n", (unsigned long)total_system_mem);
+        info = sdscatprintf(info, "total_system_memory:%lu\r\n", (unsigned long) total_system_mem);
         info = sdscatprintf(info, "total_system_memory_human:%s\r\n", total_system_hmem);
         info = sdscatprintf(info, "used_memory_lua:%lld\r\n", memory_lua);
         info = sdscatprintf(info, "used_memory_vm_eval:%lld\r\n", memory_lua);
         info = sdscatprintf(info, "used_memory_lua_human:%s\r\n", used_memory_lua_hmem);
-        info = sdscatprintf(info, "used_memory_scripts_eval:%lld\r\n", (long long)mh->lua_caches);
+        info = sdscatprintf(info, "used_memory_scripts_eval:%lld\r\n", (long long) mh->lua_caches);
         info = sdscatprintf(info, "number_of_cached_scripts:%lu\r\n", dictSize(evalScriptsDict()));
         info = sdscatprintf(info, "number_of_functions:%lu\r\n", functionsNum());
         info = sdscatprintf(info, "number_of_libraries:%lu\r\n", functionsLibNum());
         info = sdscatprintf(info, "used_memory_vm_functions:%lld\r\n", memory_functions);
         info = sdscatprintf(info, "used_memory_vm_total:%lld\r\n", memory_functions + memory_lua);
         info = sdscatprintf(info, "used_memory_vm_total_human:%s\r\n", used_memory_vm_total_hmem);
-        info = sdscatprintf(info, "used_memory_functions:%lld\r\n", (long long)mh->functions_caches);
-        info = sdscatprintf(info, "used_memory_scripts:%lld\r\n", (long long)mh->lua_caches + (long long)mh->functions_caches);
+        info = sdscatprintf(info, "used_memory_functions:%lld\r\n", (long long) mh->functions_caches);
+        info = sdscatprintf(info, "used_memory_scripts:%lld\r\n",
+                            (long long) mh->lua_caches + (long long) mh->functions_caches);
         info = sdscatprintf(info, "used_memory_scripts_human:%s\r\n", used_memory_scripts_hmem);
         info = sdscatprintf(info, "maxmemory:%lld\r\n", server.maxmemory);
         info = sdscatprintf(info, "maxmemory_human:%s\r\n", maxmemory_hmem);
@@ -5193,19 +5215,20 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         double fork_perc = 0;
         if (server.stat_module_progress) {
             fork_perc = server.stat_module_progress * 100;
-        }
-        else if (server.stat_current_save_keys_total) {
-            fork_perc = ((double)server.stat_current_save_keys_processed / server.stat_current_save_keys_total) * 100;
+        } else if (server.stat_current_save_keys_total) {
+            fork_perc = ((double) server.stat_current_save_keys_processed / server.stat_current_save_keys_total) * 100;
         }
         int aof_bio_fsync_status;
         atomicGet(server.aof_bio_fsync_status, aof_bio_fsync_status);
 
         info = sdscatprintf(info, "# Persistence\r\n");
-        info = sdscatprintf(info, "loading:%d\r\n", (int)(server.loading && !server.async_loading));
-        info = sdscatprintf(info, "async_loading:%d\r\n", (int)server.async_loading);
+        info = sdscatprintf(info, "loading:%d\r\n", (int) (server.loading && !server.async_loading));
+        info = sdscatprintf(info, "async_loading:%d\r\n", (int) server.async_loading);
         info = sdscatprintf(info, "current_cow_peak:%zu\r\n", server.stat_current_cow_peak);
         info = sdscatprintf(info, "current_cow_size:%zu\r\n", server.stat_current_cow_bytes);
-        info = sdscatprintf(info, "current_cow_size_age:%lu\r\n", server.stat_current_cow_updated ? (unsigned long)elapsedMs(server.stat_current_cow_updated) / 1000 : 0);
+        info = sdscatprintf(info, "current_cow_size_age:%lu\r\n", server.stat_current_cow_updated ?
+                                                                  (unsigned long) elapsedMs(
+                                                                          server.stat_current_cow_updated) / 1000 : 0);
         info = sdscatprintf(info, "current_fork_perc:%.2f\r\n", fork_perc);
         info = sdscatprintf(info, "current_save_keys_processed:%zu\r\n", server.stat_current_save_keys_processed);
         info = sdscatprintf(info, "current_save_keys_total:%zu\r\n", server.stat_current_save_keys_total);
@@ -5213,10 +5236,12 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         info = sdscatprintf(info, "rdb_changes_since_last_save:%lld\r\n", server.dirty);
         info = sdscatprintf(info, "rdb_bgsave_in_progress:%d\r\n", server.child_type == CHILD_TYPE_RDB);
         info = sdscatprintf(info, "# 最后一次持久化保存磁盘的时间戳\r\n");
-        info = sdscatprintf(info, "rdb_last_save_time:%jd\r\n", (intmax_t)server.lastsave);
+        info = sdscatprintf(info, "rdb_last_save_time:%jd\r\n", (intmax_t) server.lastsave);
         info = sdscatprintf(info, "rdb_last_bgsave_status:%s\r\n", (server.lastbgsave_status == C_OK) ? "ok" : "err");
-        info = sdscatprintf(info, "rdb_last_bgsave_time_sec:%jd\r\n", (intmax_t)server.rdb_save_time_last);
-        info = sdscatprintf(info, "rdb_current_bgsave_time_sec:%jd\r\n", (intmax_t)((server.child_type != CHILD_TYPE_RDB) ? -1 : time(NULL) - server.rdb_save_time_start));
+        info = sdscatprintf(info, "rdb_last_bgsave_time_sec:%jd\r\n", (intmax_t) server.rdb_save_time_last);
+        info = sdscatprintf(info, "rdb_current_bgsave_time_sec:%jd\r\n",
+                            (intmax_t) ((server.child_type != CHILD_TYPE_RDB) ? -1 : time(NULL) -
+                                                                                     server.rdb_save_time_start));
         info = sdscatprintf(info, "rdb_saves:%lld\r\n", server.stat_rdb_saves);
         info = sdscatprintf(info, "rdb_last_cow_size:%zu\r\n", server.stat_rdb_cow_bytes);
         info = sdscatprintf(info, "rdb_last_load_keys_expired:%lld\r\n", server.rdb_last_load_keys_expired);
@@ -5224,19 +5249,23 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         info = sdscatprintf(info, "aof_enabled:%d\r\n", server.aof_state != AOF_OFF);
         info = sdscatprintf(info, "aof_rewrite_in_progress:%d\r\n", server.child_type == CHILD_TYPE_AOF);
         info = sdscatprintf(info, "aof_rewrite_scheduled:%d\r\n", server.aof_rewrite_scheduled);
-        info = sdscatprintf(info, "aof_last_rewrite_time_sec:%jd\r\n", (intmax_t)server.aof_rewrite_time_last);
-        info = sdscatprintf(info, "aof_current_rewrite_time_sec:%jd\r\n", (intmax_t)((server.child_type != CHILD_TYPE_AOF) ? -1 : time(NULL) - server.aof_rewrite_time_start));
-        info = sdscatprintf(info, "aof_last_bgrewrite_status:%s\r\n", (server.aof_lastbgrewrite_status == C_OK) ? "ok" : "err");
+        info = sdscatprintf(info, "aof_last_rewrite_time_sec:%jd\r\n", (intmax_t) server.aof_rewrite_time_last);
+        info = sdscatprintf(info, "aof_current_rewrite_time_sec:%jd\r\n",
+                            (intmax_t) ((server.child_type != CHILD_TYPE_AOF) ? -1 : time(NULL) -
+                                                                                     server.aof_rewrite_time_start));
+        info = sdscatprintf(info, "aof_last_bgrewrite_status:%s\r\n",
+                            (server.aof_lastbgrewrite_status == C_OK) ? "ok" : "err");
         info = sdscatprintf(info, "aof_rewrites:%lld\r\n", server.stat_aof_rewrites);
         info = sdscatprintf(info, "aof_rewrites_consecutive_failures:%lld\r\n", server.stat_aofrw_consecutive_failures);
-        info = sdscatprintf(info, "aof_last_write_status:%s\r\n", (server.aof_last_write_status == C_OK && aof_bio_fsync_status == C_OK) ? "ok" : "err");
+        info = sdscatprintf(info, "aof_last_write_status:%s\r\n",
+                            (server.aof_last_write_status == C_OK && aof_bio_fsync_status == C_OK) ? "ok" : "err");
         info = sdscatprintf(info, "aof_last_cow_size:%zu\r\n", server.stat_aof_cow_bytes);
         info = sdscatprintf(info, "module_fork_in_progress:%d\r\n", server.child_type == CHILD_TYPE_MODULE);
         info = sdscatprintf(info, "module_fork_last_cow_size:%zu\r\n", server.stat_module_cow_bytes);
 
         if (server.aof_enabled) {
-            info = sdscatprintf(info, "aof_current_size:%lld\r\n", (long long)server.aof_current_size);
-            info = sdscatprintf(info, "aof_base_size:%lld\r\n", (long long)server.aof_rewrite_base_size);
+            info = sdscatprintf(info, "aof_current_size:%lld\r\n", (long long) server.aof_current_size);
+            info = sdscatprintf(info, "aof_base_size:%lld\r\n", (long long) server.aof_rewrite_base_size);
             info = sdscatprintf(info, "aof_pending_rewrite:%d\r\n", server.aof_rewrite_scheduled);
             info = sdscatprintf(info, "aof_buffer_length:%zu\r\n", sdslen(server.aof_buf));
             info = sdscatprintf(info, "aof_pending_bio_fsync:%llu\r\n", bioPendingJobsOfType(BIO_AOF_FSYNC));
@@ -5249,11 +5278,10 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
             off_t remaining_bytes = 1;
 
             if (server.loading_total_bytes) {
-                perc = ((double)server.loading_loaded_bytes / server.loading_total_bytes) * 100;
+                perc = ((double) server.loading_loaded_bytes / server.loading_total_bytes) * 100;
                 remaining_bytes = server.loading_total_bytes - server.loading_loaded_bytes;
-            }
-            else if (server.loading_rdb_used_mem) {
-                perc = ((double)server.loading_loaded_bytes / server.loading_rdb_used_mem) * 100;
+            } else if (server.loading_rdb_used_mem) {
+                perc = ((double) server.loading_loaded_bytes / server.loading_rdb_used_mem) * 100;
                 remaining_bytes = server.loading_rdb_used_mem - server.loading_loaded_bytes;
                 /* used mem is only a (bad) estimation of the rdb file size, avoid going over 100% */
                 if (perc > 99.99)
@@ -5266,17 +5294,18 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
             if (elapsed == 0) {
                 eta = 1; /* A fake 1 second figure if we don't have
                             enough info */
-            }
-            else {
+            } else {
                 eta = (elapsed * remaining_bytes) / (server.loading_loaded_bytes + 1);
             }
 
-            info = sdscatprintf(info, "loading_start_time:%jd\r\n", (intmax_t)server.loading_start_time);
-            info = sdscatprintf(info, "loading_total_bytes:%llu\r\n", (unsigned long long)server.loading_total_bytes);
-            info = sdscatprintf(info, "loading_rdb_used_mem:%llu\r\n", (unsigned long long)server.loading_rdb_used_mem);
-            info = sdscatprintf(info, "loading_loaded_bytes:%llu\r\n", (unsigned long long)server.loading_loaded_bytes);
+            info = sdscatprintf(info, "loading_start_time:%jd\r\n", (intmax_t) server.loading_start_time);
+            info = sdscatprintf(info, "loading_total_bytes:%llu\r\n", (unsigned long long) server.loading_total_bytes);
+            info = sdscatprintf(info, "loading_rdb_used_mem:%llu\r\n",
+                                (unsigned long long) server.loading_rdb_used_mem);
+            info = sdscatprintf(info, "loading_loaded_bytes:%llu\r\n",
+                                (unsigned long long) server.loading_loaded_bytes);
             info = sdscatprintf(info, "loading_loaded_perc:%.2f\r\n", perc);
-            info = sdscatprintf(info, "loading_eta_seconds:%jd\r\n", (intmax_t)eta);
+            info = sdscatprintf(info, "loading_eta_seconds:%jd\r\n", (intmax_t) eta);
         }
     }
 
@@ -5284,8 +5313,10 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
     if (all_sections || (dictFind(section_dict, "stats") != NULL)) {
         long long stat_total_reads_processed, stat_total_writes_processed;
         long long stat_net_input_bytes, stat_net_output_bytes;
-        long long current_eviction_exceeded_time = server.stat_last_eviction_exceeded_time ? (long long)elapsedUs(server.stat_last_eviction_exceeded_time) : 0;
-        long long current_active_defrag_time = server.stat_last_active_defrag_time ? (long long)elapsedUs(server.stat_last_active_defrag_time) : 0;
+        long long current_eviction_exceeded_time = server.stat_last_eviction_exceeded_time ? (long long) elapsedUs(
+                server.stat_last_eviction_exceeded_time) : 0;
+        long long current_active_defrag_time = server.stat_last_active_defrag_time ? (long long) elapsedUs(
+                server.stat_last_active_defrag_time) : 0;
         atomicGet(server.stat_total_reads_processed, stat_total_reads_processed);
         atomicGet(server.stat_total_writes_processed, stat_total_writes_processed);
         atomicGet(server.stat_net_input_bytes, stat_net_input_bytes);
@@ -5302,8 +5333,10 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         info = sdscatprintf(info, "instantaneous_ops_per_sec:%lld\r\n", getInstantaneousMetric(STATS_METRIC_COMMAND));
         info = sdscatprintf(info, "total_net_input_bytes:%lld\r\n", stat_net_input_bytes);
         info = sdscatprintf(info, "total_net_output_bytes:%lld\r\n", stat_net_output_bytes);
-        info = sdscatprintf(info, "instantaneous_input_kbps:%.2f\r\n", (float)getInstantaneousMetric(STATS_METRIC_NET_INPUT) / 1024);
-        info = sdscatprintf(info, "instantaneous_output_kbps:%.2f\r\n", (float)getInstantaneousMetric(STATS_METRIC_NET_OUTPUT) / 1024);
+        info = sdscatprintf(info, "instantaneous_input_kbps:%.2f\r\n",
+                            (float) getInstantaneousMetric(STATS_METRIC_NET_INPUT) / 1024);
+        info = sdscatprintf(info, "instantaneous_output_kbps:%.2f\r\n",
+                            (float) getInstantaneousMetric(STATS_METRIC_NET_OUTPUT) / 1024);
         info = sdscatprintf(info, "# 由于达到max client限制而被拒绝的连接数\r\n");
         info = sdscatprintf(info, "rejected_connections:%lld\r\n", server.stat_rejected_conn);
         info = sdscatprintf(info, "sync_full:%lld\r\n", server.stat_sync_full);
@@ -5313,12 +5346,14 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         info = sdscatprintf(info, "sync_partial_err:%lld\r\n", server.stat_sync_partial_err);
         info = sdscatprintf(info, "expired_keys:%lld\r\n", server.stat_expiredkeys);
         info = sdscatprintf(info, "expired_stale_perc:%.2f\r\n", server.stat_expired_stale_perc * 100);
-        info = sdscatprintf(info, "expired_time_cap_reached_count:%lld\r\n", server.stat_expired_time_cap_reached_count);
+        info = sdscatprintf(info, "expired_time_cap_reached_count:%lld\r\n",
+                            server.stat_expired_time_cap_reached_count);
         info = sdscatprintf(info, "expire_cycle_cpu_milliseconds:%lld\r\n", server.stat_expire_cycle_time_used / 1000);
         info = sdscatprintf(info, "# 由于最大内存限制被移除的key的数量\r\n");
         info = sdscatprintf(info, "evicted_keys:%lld\r\n", server.stat_evictedkeys);
         info = sdscatprintf(info, "evicted_clients:%lld\r\n", server.stat_evictedclients);
-        info = sdscatprintf(info, "total_eviction_exceeded_time:%lld\r\n", (server.stat_total_eviction_exceeded_time + current_eviction_exceeded_time) / 1000);
+        info = sdscatprintf(info, "total_eviction_exceeded_time:%lld\r\n",
+                            (server.stat_total_eviction_exceeded_time + current_eviction_exceeded_time) / 1000);
         info = sdscatprintf(info, "current_eviction_exceeded_time:%lld\r\n", current_eviction_exceeded_time / 1000);
         info = sdscatprintf(info, "keyspace_hits:%lld\r\n", server.stat_keyspace_hits);
         info = sdscatprintf(info, "# key值查找失败(没有命中)次数\r\n");
@@ -5333,11 +5368,12 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         info = sdscatprintf(info, "active_defrag_misses:%lld\r\n", server.stat_active_defrag_misses);
         info = sdscatprintf(info, "active_defrag_key_hits:%lld\r\n", server.stat_active_defrag_key_hits);
         info = sdscatprintf(info, "active_defrag_key_misses:%lld\r\n", server.stat_active_defrag_key_misses);
-        info = sdscatprintf(info, "total_active_defrag_time:%lld\r\n", (server.stat_total_active_defrag_time + current_active_defrag_time) / 1000);
+        info = sdscatprintf(info, "total_active_defrag_time:%lld\r\n",
+                            (server.stat_total_active_defrag_time + current_active_defrag_time) / 1000);
         info = sdscatprintf(info, "current_active_defrag_time:%lld\r\n", current_active_defrag_time / 1000);
-        info = sdscatprintf(info, "tracking_total_keys:%lld\r\n", (unsigned long long)trackingGetTotalKeys());
-        info = sdscatprintf(info, "tracking_total_items:%lld\r\n", (unsigned long long)trackingGetTotalItems());
-        info = sdscatprintf(info, "tracking_total_prefixes:%lld\r\n", (unsigned long long)trackingGetTotalPrefixes());
+        info = sdscatprintf(info, "tracking_total_keys:%lld\r\n", (unsigned long long) trackingGetTotalKeys());
+        info = sdscatprintf(info, "tracking_total_items:%lld\r\n", (unsigned long long) trackingGetTotalItems());
+        info = sdscatprintf(info, "tracking_total_prefixes:%lld\r\n", (unsigned long long) trackingGetTotalPrefixes());
         info = sdscatprintf(info, "unexpected_error_replies:%lld\r\n", server.stat_unexpected_error_replies);
         info = sdscatprintf(info, "total_error_replies:%lld\r\n", server.stat_total_error_replies);
         info = sdscatprintf(info, "dump_payload_sanitizations:%lld\r\n", server.stat_dump_payload_sanitizations);
@@ -5354,10 +5390,10 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         if (sections++)
             info = sdscat(info, "\r\n");
         info = sdscatprintf(
-            info,
-            "# Replication\r\n"
-            "role:%s\r\n",
-            server.masterhost == NULL ? "master" : "slave");
+                info,
+                "# Replication\r\n"
+                "role:%s\r\n",
+                server.masterhost == NULL ? "master" : "slave");
         if (server.masterhost) {
             long long slave_repl_offset = 1;
             long long slave_read_repl_offset = 1;
@@ -5365,17 +5401,18 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
             if (server.master) {
                 slave_repl_offset = server.master->reploff;
                 slave_read_repl_offset = server.master->read_reploff;
-            }
-            else if (server.cached_master) {
+            } else if (server.cached_master) {
                 slave_repl_offset = server.cached_master->reploff;
                 slave_read_repl_offset = server.cached_master->read_reploff;
             }
 
             info = sdscatprintf(info, "master_host:%s\r\n", server.masterhost);
             info = sdscatprintf(info, "master_port:%d\r\n", server.masterport);
-            info = sdscatprintf(info, "master_link_status:%s\r\n", (server.repl_state == REPL_STATE_CONNECTED) ? "up" : "down");
+            info = sdscatprintf(info, "master_link_status:%s\r\n",
+                                (server.repl_state == REPL_STATE_CONNECTED) ? "up" : "down");
             info = sdscatprintf(info, "# 最近一次主从交互之后的秒数\r\n");
-            info = sdscatprintf(info, "master_last_io_seconds_ago:%d\r\n", server.master ? ((int)(server.unixtime - server.master->lastinteraction)) : -1);
+            info = sdscatprintf(info, "master_last_io_seconds_ago:%d\r\n",
+                                server.master ? ((int) (server.unixtime - server.master->lastinteraction)) : -1);
             info = sdscatprintf(info, "master_sync_in_progress:%d\r\n", server.repl_state == REPL_STATE_TRANSFER);
             info = sdscatprintf(info, "slave_read_repl_offset:%lld\r\n", slave_read_repl_offset);
             info = sdscatprintf(info, "slave_repl_offset:%lld\r\n", slave_repl_offset);
@@ -5383,18 +5420,22 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
             if (server.repl_state == REPL_STATE_TRANSFER) {
                 double perc = 0;
                 if (server.repl_transfer_size) {
-                    perc = ((double)server.repl_transfer_read / server.repl_transfer_size) * 100;
+                    perc = ((double) server.repl_transfer_read / server.repl_transfer_size) * 100;
                 }
-                info = sdscatprintf(info, "master_sync_total_bytes:%lld\r\n", (long long)server.repl_transfer_size);
-                info = sdscatprintf(info, "master_sync_read_bytes:%lld\r\n", (long long)server.repl_transfer_read);
-                info = sdscatprintf(info, "master_sync_left_bytes:%lld\r\n", (long long)(server.repl_transfer_size - server.repl_transfer_read));
+                info = sdscatprintf(info, "master_sync_total_bytes:%lld\r\n", (long long) server.repl_transfer_size);
+                info = sdscatprintf(info, "master_sync_read_bytes:%lld\r\n", (long long) server.repl_transfer_read);
+                info = sdscatprintf(info, "master_sync_left_bytes:%lld\r\n",
+                                    (long long) (server.repl_transfer_size - server.repl_transfer_read));
                 info = sdscatprintf(info, "master_sync_perc:%.2f\r\n", perc);
-                info = sdscatprintf(info, "master_sync_last_io_seconds_ago:%d\r\n", (int)(server.unixtime - server.repl_transfer_lastio));
+                info = sdscatprintf(info, "master_sync_last_io_seconds_ago:%d\r\n",
+                                    (int) (server.unixtime - server.repl_transfer_lastio));
             }
 
             if (server.repl_state != REPL_STATE_CONNECTED) {
                 info = sdscatprintf(info, "# 主从断开的持续时间（以秒为单位)\r\n");
-                info = sdscatprintf(info, "master_link_down_since_seconds:%jd\r\n", server.repl_down_since ? (intmax_t)(server.unixtime - server.repl_down_since) : -1);
+                info = sdscatprintf(info, "master_link_down_since_seconds:%jd\r\n",
+                                    server.repl_down_since ? (intmax_t) (server.unixtime - server.repl_down_since)
+                                                           : -1);
             }
             info = sdscatprintf(info, "slave_priority:%d\r\n", server.slave_priority);
             info = sdscatprintf(info, "slave_read_only:%d\r\n", server.repl_slave_ro);
@@ -5433,10 +5474,10 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
                     lag = time(NULL) - slave->repl_ack_time;
 
                 info = sdscatprintf(
-                    info,
-                    "slave%d:ip=%s,port=%d,state=%s,"
-                    "offset=%lld,lag=%ld\r\n",
-                    slaveid, slaveip, slave->slave_listening_port, state, slave->repl_ack_off, lag);
+                        info,
+                        "slave%d:ip=%s,port=%d,state=%s,"
+                        "offset=%lld,lag=%ld\r\n",
+                        slaveid, slaveip, slave->slave_listening_port, state, slave->repl_ack_off, lag);
                 slaveid++;
             }
         }
@@ -5449,33 +5490,35 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         // 复制积压缓冲区如果设置得太小，会导致里面的指令被覆盖掉找不到偏移量，从而触发全量同步
         info = sdscatprintf(info, "复制积压缓冲区\r\n");
         info = sdscatprintf(info, "repl_backlog_size:%lld\r\n", server.repl_backlog_size);
-        info = sdscatprintf(info, "repl_backlog_first_byte_offset:%lld\r\n", server.repl_backlog ? server.repl_backlog->offset : 0);
-        info = sdscatprintf(info, "repl_backlog_histlen:%lld\r\n", server.repl_backlog ? server.repl_backlog->histlen : 0);
+        info = sdscatprintf(info, "repl_backlog_first_byte_offset:%lld\r\n",
+                            server.repl_backlog ? server.repl_backlog->offset : 0);
+        info = sdscatprintf(info, "repl_backlog_histlen:%lld\r\n",
+                            server.repl_backlog ? server.repl_backlog->histlen : 0);
     }
 
     /* CPU */
     if (all_sections || (dictFind(
-                             section_dict, //
-                             "cpu") != NULL)) {
+            section_dict, //
+            "cpu") != NULL)) {
         if (sections++)
             info = sdscat(
-                info, //
-                "\r\n");
+                    info, //
+                    "\r\n");
 
         struct rusage self_ru, c_ru;
         getrusage(RUSAGE_SELF, &self_ru);
         getrusage(RUSAGE_CHILDREN, &c_ru);
         info = sdscatprintf(
-            info,
-            "# CPU\r\n"
-            "used_cpu_sys:%ld.%06ld\r\n"
-            "used_cpu_user:%ld.%06ld\r\n"
-            "used_cpu_sys_children:%ld.%06ld\r\n"
-            "used_cpu_user_children:%ld.%06ld\r\n",
-            (long)self_ru.ru_stime.tv_sec, (long)self_ru.ru_stime.tv_usec, //
-            (long)self_ru.ru_utime.tv_sec, (long)self_ru.ru_utime.tv_usec, //
-            (long)c_ru.ru_stime.tv_sec, (long)c_ru.ru_stime.tv_usec,       //
-            (long)c_ru.ru_utime.tv_sec, (long)c_ru.ru_utime.tv_usec        //
+                info,
+                "# CPU\r\n"
+                "used_cpu_sys:%ld.%06ld\r\n"
+                "used_cpu_user:%ld.%06ld\r\n"
+                "used_cpu_sys_children:%ld.%06ld\r\n"
+                "used_cpu_user_children:%ld.%06ld\r\n",
+                (long) self_ru.ru_stime.tv_sec, (long) self_ru.ru_stime.tv_usec, //
+                (long) self_ru.ru_utime.tv_sec, (long) self_ru.ru_utime.tv_usec, //
+                (long) c_ru.ru_stime.tv_sec, (long) c_ru.ru_stime.tv_usec,       //
+                (long) c_ru.ru_utime.tv_sec, (long) c_ru.ru_utime.tv_usec        //
         );
 #ifdef RUSAGE_THREAD
         struct rusage m_ru;
@@ -5492,7 +5535,8 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
     }
 
     /* Modules */
-    if (all_sections || (dictFind(section_dict, "module_list") != NULL) || (dictFind(section_dict, "modules") != NULL)) {
+    if (all_sections || (dictFind(section_dict, "module_list") != NULL) ||
+        (dictFind(section_dict, "modules") != NULL)) {
         if (sections++)
             info = sdscat(info, "\r\n");
         info = sdscatprintf(info, "# Modules\r\n");
@@ -5518,8 +5562,9 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         struct redisError *e;
         while (raxNext(&ri)) {
             char *tmpsafe;
-            e = (struct redisError *)ri.data;
-            info = sdscatprintf(info, "errorstat_%.*s:count=%lld\r\n", (int)ri.key_len, getSafeInfoString((char *)ri.key, ri.key_len, &tmpsafe), e->count);
+            e = (struct redisError *) ri.data;
+            info = sdscatprintf(info, "errorstat_%.*s:count=%lld\r\n", (int) ri.key_len,
+                                getSafeInfoString((char *) ri.key, ri.key_len, &tmpsafe), e->count);
             if (tmpsafe != NULL)
                 zfree(tmpsafe);
         }
@@ -5541,10 +5586,10 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         if (sections++)
             info = sdscat(info, "\r\n");
         info = sdscatprintf(
-            info,
-            "# Cluster\r\n"
-            "cluster_enabled:%d\r\n",
-            server.cluster_enabled);
+                info,
+                "# Cluster\r\n"
+                "cluster_enabled:%d\r\n",
+                server.cluster_enabled);
     }
 
     /* Key space */
@@ -5560,7 +5605,8 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
             keys = dictSize(server.db[j].dict);
             vkeys = dictSize(server.db[j].expires);
             if (keys || vkeys) {
-                info = sdscatprintf(info, "db%d:keys=%lld,expires=%lld,avg_ttl=%lld\r\n", j, keys, vkeys, server.db[j].avg_ttl);
+                info = sdscatprintf(info, "db%d:keys=%lld,expires=%lld,avg_ttl=%lld\r\n", j, keys, vkeys,
+                                    server.db[j].avg_ttl);
             }
         }
     }
@@ -5568,10 +5614,11 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
     /* Get info from modules.
      * if user asked for "everything" or "modules", or a specific section
      * that's not found yet. */
-    if (everything || dictFind(section_dict, "modules") != NULL || sections < (int)dictSize(section_dict)) {
+    if (everything || dictFind(section_dict, "modules") != NULL || sections < (int) dictSize(section_dict)) {
         info = modulesCollectInfo(
-            info, everything || dictFind(section_dict, "modules") != NULL ? NULL : section_dict, 0, /* not a crash report */
-            sections);
+                info, everything || dictFind(section_dict, "modules") != NULL ? NULL : section_dict,
+                0, /* not a crash report */
+                sections);
     }
     return info;
 }
@@ -5813,7 +5860,7 @@ void createPidFile(void) {
     /* Try to write the pid file in a best-effort way. */
     FILE *fp = fopen(server.pid_file, "w");
     if (fp) {
-        fprintf(fp, "%d\n", (int)getpid());
+        fprintf(fp, "%d\n", (int) getpid());
         fclose(fp);
     }
 }
@@ -5845,7 +5892,8 @@ void daemonize(void) {
 }
 
 void version(void) {
-    printf("Redis server v=%s sha=%s:%d malloc=%s bits=%d build=%llx\n", REDIS_VERSION, redisGitSHA1(), atoi(redisGitDirty()) > 0, ZMALLOC_LIB, sizeof(long) == 4 ? 32 : 64, (unsigned long long)redisBuildId());
+    printf("Redis server v=%s sha=%s:%d malloc=%s bits=%d build=%llx\n", REDIS_VERSION, redisGitSHA1(),
+           atoi(redisGitDirty()) > 0, ZMALLOC_LIB, sizeof(long) == 4 ? 32 : 64, (unsigned long long) redisBuildId());
     exit(0);
 }
 
@@ -5886,13 +5934,14 @@ void redisAsciiArt(void) {
      * forced us to do so via redis.conf. */
     // 如果:log文件是标准输出且标准输出是tty且syslog日志被禁用,则显示ASCII标志.如果用户强迫我们通过redis.conf这样做,也显示logo.
 
-    int show_logo = ((!server.syslog_enabled && server.logfile[0] == '\0' && isatty(fileno(stdout))) || server.always_show_logo);
+    int show_logo = ((!server.syslog_enabled && server.logfile[0] == '\0' && isatty(fileno(stdout))) ||
+                     server.always_show_logo);
 
     if (!show_logo) {
         serverLog(LL_NOTICE, "Running mode=%s, port=%d.", mode, server.port ? server.port : server.tls_port);
-    }
-    else {
-        snprintf(buf, 1024 * 16, ascii_logo, REDIS_VERSION, redisGitSHA1(), strtol(redisGitDirty(), NULL, 10) > 0, (sizeof(long) == 8) ? "64" : "32", mode, server.port ? server.port : server.tls_port, (long)getpid());
+    } else {
+        snprintf(buf, 1024 * 16, ascii_logo, REDIS_VERSION, redisGitSHA1(), strtol(redisGitDirty(), NULL, 10) > 0,
+                 (sizeof(long) == 8) ? "64" : "32", mode, server.port ? server.port : server.tls_port, (long) getpid());
         serverLogRaw(LL_NOTICE | LL_RAW, buf);
     }
     zfree(buf);
@@ -5904,7 +5953,8 @@ int changeBindAddr(void) {
     closeSocketListeners(&server.tlsfd);
 
     /* Bind to the new port */
-    if ((server.port != 0 && listenToPort(server.port, &server.ipfd) != C_OK) || (server.tls_port != 0 && listenToPort(server.tls_port, &server.tlsfd) != C_OK)) {
+    if ((server.port != 0 && listenToPort(server.port, &server.ipfd) != C_OK) ||
+        (server.tls_port != 0 && listenToPort(server.tls_port, &server.tlsfd) != C_OK)) {
         serverLog(LL_WARNING, "Failed to bind");
 
         closeSocketListeners(&server.ipfd);
@@ -5959,6 +6009,7 @@ int changeListenPort(int port, socketFds *sfd, aeFileProc *accept_handler) {
 
     return C_OK;
 }
+
 // 信号的处理器
 static void sigShutdownHandler(int sig) {
     char *msg;
@@ -5982,8 +6033,7 @@ static void sigShutdownHandler(int sig) {
         serverLogFromHandler(LL_WARNING, "You insist... exiting now.");
         rdbRemoveTempFile(getpid(), 1);
         exit(1); /* Exit with an error since this was not a clean shutdown. */
-    }
-    else if (server.loading) {
+    } else if (server.loading) {
         msg = "Received shutdown signal during loading, scheduling shutdown.";
     }
 
@@ -6093,8 +6143,7 @@ int redisFork(int purpose) {
         setOOMScoreAdj(CONFIG_OOM_BGCHILD);
         dismissMemoryInChild();
         closeChildUnusedResourceAfterFork(); // 关闭子进程从父进程中继承过来不需要使用的资源
-    }
-    else {
+    } else {
         /* Parent */
         if (childpid == -1) {
             int fork_errno = errno;
@@ -6106,7 +6155,8 @@ int redisFork(int purpose) {
 
         server.stat_total_forks++;
         server.stat_fork_time = ustime() - start;
-        server.stat_fork_rate = (double)zmalloc_used_memory() * 1000000 / server.stat_fork_time / (1024 * 1024 * 1024); /* GB per second. */
+        server.stat_fork_rate = (double) zmalloc_used_memory() * 1000000 / server.stat_fork_time /
+                                (1024 * 1024 * 1024); /* GB per second. */
         latencyAddSampleIfNeeded("fork", server.stat_fork_time / 1000);
 
         /* The child_pid and child_type are only for mutual exclusive children.
@@ -6202,8 +6252,8 @@ void dismissMemoryInChild(void) {
     if (server.thp_enabled)
         return;
 
-        /* Currently we use zmadvise_dontneed only when we use jemalloc with Linux.
-         * so we avoid these pointless loops when they're not going to do anything. */
+    /* Currently we use zmadvise_dontneed only when we use jemalloc with Linux.
+     * so we avoid these pointless loops when they're not going to do anything. */
 #if defined(USE_JEMALLOC) && defined(__linux__)
     listIter li;
     listNode *ln;
@@ -6254,8 +6304,7 @@ void loadDataFromDisk(void) {
         if (ret == AOF_FAILED || ret == AOF_OPEN_ERR) {
             exit(1);
         }
-    }
-    else { // AOF 持久化未打开
+    } else { // AOF 持久化未打开
 
         rdbSaveInfo rsi = RDB_SAVE_INFO_INIT;
         errno = 0; /* Prevent a stale value from affecting error checking */
@@ -6269,7 +6318,7 @@ void loadDataFromDisk(void) {
         // 尝试载入 RDB 文件
         if (rdbLoad(server.rdb_filename, &rsi, rdb_flags) == C_OK) {
             // 打印载入信息,并计算载入耗时长度
-            serverLog(LL_NOTICE, "DB loaded from disk: %.3f seconds", (float)(ustime() - start) / 1000000);
+            serverLog(LL_NOTICE, "DB loaded from disk: %.3f seconds", (float) (ustime() - start) / 1000000);
 
             /* Restore the replication ID / offset from the RDB file. */
             if (rsi.repl_id_is_set && rsi.repl_offset != -1 &&
@@ -6285,8 +6334,7 @@ void loadDataFromDisk(void) {
                      * with masters. */
                     replicationCacheMasterUsingMyself();
                     selectDb(server.cached_master, rsi.repl_stream_db);
-                }
-                else {
+                } else {
                     /* If this is a master, we can save the replication info
                      * as secondary ID and offset, in order to allow replicas
                      * to partial resynchronizations with masters. */
@@ -6300,8 +6348,7 @@ void loadDataFromDisk(void) {
                     server.repl_no_slaves_since = time(NULL);
                 }
             }
-        }
-        else if (errno != ENOENT) {
+        } else if (errno != ENOENT) {
             serverLog(LL_WARNING, "Fatal error loading the DB: %s. Exiting.", strerror(errno));
             exit(1);
         }
@@ -6329,14 +6376,13 @@ void redisOutOfMemoryHandler(size_t allocation_size) {
 static sds redisProcTitleGetVariable(const sds varname, void *arg) {
     if (!strcmp(varname, "title")) {
         return sdsnew(arg);
-    }
-    else if (!strcmp(varname, "listen-addr")) {
+    } else if (!strcmp(varname, "listen-addr")) {
         if (server.port || server.tls_port)
-            return sdscatprintf(sdsempty(), "%s:%u", server.bindaddr_count ? server.bindaddr[0] : "*", server.port ? server.port : server.tls_port);
+            return sdscatprintf(sdsempty(), "%s:%u", server.bindaddr_count ? server.bindaddr[0] : "*",
+                                server.port ? server.port : server.tls_port);
         else
             return sdscatprintf(sdsempty(), "unixsocket:%s", server.unixsocket);
-    }
-    else if (!strcmp(varname, "server-mode")) {
+    } else if (!strcmp(varname, "server-mode")) {
         // 启动集群？
         if (server.cluster_enabled)
             return sdsnew("[cluster]");
@@ -6344,27 +6390,22 @@ static sds redisProcTitleGetVariable(const sds varname, void *arg) {
             return sdsnew("[sentinel]");
         else
             return sdsempty();
-    }
-    else if (!strcmp(varname, "config-file")) {
+    } else if (!strcmp(varname, "config-file")) {
         return sdsnew(server.configfile ? server.configfile : "-");
-    }
-    else if (!strcmp(varname, "port")) {
+    } else if (!strcmp(varname, "port")) {
         return sdscatprintf(sdsempty(), "%u", server.port);
-    }
-    else if (!strcmp(varname, "tls-port")) {
+    } else if (!strcmp(varname, "tls-port")) {
         return sdscatprintf(sdsempty(), "%u", server.tls_port);
-    }
-    else if (!strcmp(varname, "unixsocket")) {
+    } else if (!strcmp(varname, "unixsocket")) {
         return sdsnew(server.unixsocket);
-    }
-    else
+    } else
         return NULL; /* Unknown variable name */
 }
 
 /* Expand the specified proc-title-template string and return a newly
  * allocated sds, or NULL. */
 static sds expandProcTitleTemplate(const char *template, const char *title) {
-    sds res = sdstemplate(template, redisProcTitleGetVariable, (void *)title);
+    sds res = sdstemplate(template, redisProcTitleGetVariable, (void *) title);
     if (!res)
         return NULL;
     return sdstrim(res, " ");
@@ -6443,7 +6484,8 @@ static int redisSupervisedUpstart(void) {
 /* Attempt to set up systemd supervision. Returns 1 if successful. */
 static int redisSupervisedSystemd(void) {
 #ifndef HAVE_LIBSYSTEMD
-    serverLog(LL_WARNING, "systemd supervision requested or auto-detected, but Redis is compiled without libsystemd support!");
+    serverLog(LL_WARNING,
+              "systemd supervision requested or auto-detected, but Redis is compiled without libsystemd support!");
     return 0;
 #else
     if (redisCommunicateSystemd("STATUS=Redis is loading...\n") <= 0)
@@ -6470,8 +6512,7 @@ int redisIsSupervised(int mode) {
         if (getenv("UPSTART_JOB")) {
             serverLog(LL_VERBOSE, "Upstart管理守护进程");
             mode = SUPERVISED_UPSTART;
-        }
-        else if (getenv("NOTIFY_SOCKET")) {
+        } else if (getenv("NOTIFY_SOCKET")) {
             serverLog(LL_VERBOSE, "Systemd 管理守护进程");
             mode = SUPERVISED_SYSTEMD;
         }
@@ -6497,8 +6538,8 @@ int redisIsSupervised(int mode) {
 
 int iAmMaster(void) {
     return (
-        (!server.cluster_enabled && server.masterhost == NULL) ||        //
-        (server.cluster_enabled && nodeIsMaster(server.cluster->myself)) //
+            (!server.cluster_enabled && server.masterhost == NULL) ||        //
+            (server.cluster_enabled && nodeIsMaster(server.cluster->myself)) //
     );
 }
 
@@ -6585,14 +6626,16 @@ int main(int argc, char **argv) {
     spt_init(argc, argv);
 #endif
 
-    setlocale(LC_COLLATE, "");                                                // 函数既可以用来对当前程序进行地域设置（本地设置、区域设置）,也可以用来获取当前程序的地域设置信息.
+    setlocale(LC_COLLATE,
+              "");                                                // 函数既可以用来对当前程序进行地域设置（本地设置、区域设置）,也可以用来获取当前程序的地域设置信息.
     tzset();                                                                  // 设置时间环境变量【
     zmalloc_set_oom_handler(redisOutOfMemoryHandler);                         // 内存溢出的注册回调,redisOutOfMemoryHandler只用来打日志
     srand(time(NULL) ^ getpid());                                             // 随机种子
     gettimeofday(&tv, NULL);                                                  // 获取系统时间
-    init_genrand64(((long long)tv.tv_sec * 1000000 + tv.tv_usec) ^ getpid()); // 初始化 状态向量数组       秒+100000微秒
+    init_genrand64(((long long) tv.tv_sec * 1000000 + tv.tv_usec) ^ getpid()); // 初始化 状态向量数组       秒+100000微秒
     crc64_init();                                                             // 根据本地时间生成一个随机数种子,后面要介绍的dict结构体内会有用到
-    umask(server.umask = umask(0777));                                        // 设置即将创建的文件权限掩码 如果设置了0777  ,那么创建的文件权限就是  777-777=000  没有任何权限
+    umask(server.umask = umask(
+            0777));                                        // 设置即将创建的文件权限掩码 如果设置了0777  ,那么创建的文件权限就是  777-777=000  没有任何权限
 
     // 设置随机种子
     uint8_t hashseed[16];
@@ -6612,7 +6655,7 @@ int main(int argc, char **argv) {
 
     tlsInit(); // 和ssl相关的初始化
     // 将可执行路径和参数存储在安全的地方,以便稍后能够重新启动服务器.
-    sds s = (sds)getAbsolutePath(argv[0]);
+    sds s = (sds) getAbsolutePath(argv[0]);
     printf("sds ---->: %s\n", s);
     server.executable = getAbsolutePath(argv[0]);
     server.exec_argv = zmalloc(sizeof(char *) * (argc + 1));
@@ -6634,7 +6677,7 @@ int main(int argc, char **argv) {
         // strstr(str1,str2) 函数用于判断字符串str2是否是str1的子串
         redis_check_rdb_main(argc, argv, NULL);
     }
-    // 如果运行的是redis-check-aof程序,调用redis_check_aof_main函数检测AOF文件
+        // 如果运行的是redis-check-aof程序,调用redis_check_aof_main函数检测AOF文件
     else if (strstr(exec_name, "redis-check-aof") != NULL) {
         redis_check_aof_main(argc, argv);
     }
@@ -6655,8 +6698,7 @@ int main(int argc, char **argv) {
             if (argc == 3) {
                 memtest(atoi(argv[2]), 50);
                 exit(0);
-            }
-            else {
+            } else {
                 fprintf(stderr, "请指定要测试的内存量(以兆为单位).\n");
                 fprintf(stderr, "Example: ./redis-server --test-memory 4096\n\n");
                 exit(1);
@@ -6680,20 +6722,19 @@ int main(int argc, char **argv) {
             if (argv[j][0] == '-' && argv[j][1] == '\0' && (j == 1 || j == argc - 1)) {
                 config_from_stdin = 1;
             }
-            // 对用户给定的其余选项进行分析,并将分析所得的字符串追加稍后载入的配置文件的内容之后
-            // 比如 --port 6380 会被分析为 "port 6380\n"
-            /* All the other options are parsed and conceptually appended to the
-             * configuration file. For instance --port 6380 will generate the
-             * string "port 6380\n" to be parsed after the actual config file
-             * and stdin input are parsed (if they exist). */
+                // 对用户给定的其余选项进行分析,并将分析所得的字符串追加稍后载入的配置文件的内容之后
+                // 比如 --port 6380 会被分析为 "port 6380\n"
+                /* All the other options are parsed and conceptually appended to the
+                 * configuration file. For instance --port 6380 will generate the
+                 * string "port 6380\n" to be parsed after the actual config file
+                 * and stdin input are parsed (if they exist). */
             else if (argv[j][0] == '-' && argv[j][1] == '-') {
                 /* Option name */
                 if (sdslen(options))
                     options = sdscat(options, "\n");
                 options = sdscat(options, argv[j] + 2);
                 options = sdscat(options, " ");
-            }
-            else {
+            } else {
                 /* Option argument */
                 options = sdscatrepr(options, argv[j], strlen(argv[j]));
                 options = sdscat(options, " ");
@@ -6722,7 +6763,8 @@ int main(int argc, char **argv) {
     }
 
     serverLog(LL_WARNING, "-------> Redis is starting <-------");
-    serverLog(LL_WARNING, "Redis version=%s,bits=%d,commit=%s,modified=%d,pid=%d,just started", REDIS_VERSION, (sizeof(long) == 8) ? 64 : 32, redisGitSHA1(), strtol(redisGitDirty(), NULL, 10) > 0, (int)getpid());
+    serverLog(LL_WARNING, "Redis version=%s,bits=%d,commit=%s,modified=%d,pid=%d,just started", REDIS_VERSION,
+              (sizeof(long) == 8) ? 64 : 32, redisGitSHA1(), strtol(redisGitDirty(), NULL, 10) > 0, (int) getpid());
     serverLog(LL_WARNING, "配置已加载");
     //    阶段四：初始化 server
 
@@ -6795,14 +6837,12 @@ int main(int argc, char **argv) {
         if (server.supervised_mode == SUPERVISED_SYSTEMD) { // systemd模式
             if (!server.masterhost) {
                 redisCommunicateSystemd("STATUS=准备接收连接\n");
-            }
-            else {
+            } else {
                 redisCommunicateSystemd("STATUS=准备以只读模式接受连接.等待 MASTER <-> REPLICA 同步\n");
             }
             redisCommunicateSystemd("READY=1\n");
         }
-    }
-    else {
+    } else {
         ACLLoadUsersAtStartup();
         InitServerLast();    // 初始化网络 IO 相关的线程资源
         sentinelIsRunning(); // 设置启动哨兵模式
@@ -6814,7 +6854,8 @@ int main(int argc, char **argv) {
 
     // 检查不正常的 maxmemory 配置
     if (server.maxmemory > 0 && server.maxmemory < 1024 * 1024) {
-        serverLog(LL_WARNING, "警报:您指定了小于1MB的 maxmemory 值(当前值是%llu字节).你确定这是你想要的吗?", server.maxmemory);
+        serverLog(LL_WARNING, "警报:您指定了小于1MB的 maxmemory 值(当前值是%llu字节).你确定这是你想要的吗?",
+                  server.maxmemory);
     }
     // 设置CPU亲和
     redisSetCpuAffinity(server.server_cpulist);

@@ -50,7 +50,6 @@
 #include "config.h"
 #include "server.h"
 
-#define UNUSED(x) (void)(x)
 // 打印错误信息
 static void anetSetError(char *err, const char *fmt, ...) {
     va_list ap;
@@ -89,6 +88,7 @@ int anetSetBlock(char *err, int fd, int non_block) {
     }
     return ANET_OK;
 }
+
 // 将 fd 设置为非阻塞模式（O_NONBLOCK）
 int anetNonBlock(char *err, int fd) {
     return anetSetBlock(err, fd, 1);
@@ -161,11 +161,12 @@ int anetKeepAlive(char *err, int fd, int interval) {
         return ANET_ERR;
     }
 #else
-    ((void)interval); /* Avoid unused var warning for non Linux systems. */
+    ((void) interval); /* Avoid unused var warning for non Linux systems. */
 #endif
 
     return ANET_OK;
 }
+
 // 打开或关闭 Nagle 算法
 static int anetSetTcpNoDelay(char *err, int fd, int val) {
     if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val)) == -1) {
@@ -174,12 +175,14 @@ static int anetSetTcpNoDelay(char *err, int fd, int val) {
     }
     return ANET_OK;
 }
+
 // 禁用 Nagle 算法
 int anetEnableTcpNoDelay(char *err, int fd) {
     //    启动TCP_NODELAY,就意味着禁用了Nagle算法,允许小包的发送.
     //    https://blog.csdn.net/qq_32907195/article/details/120287099
     return anetSetTcpNoDelay(err, fd, 1);
 }
+
 // 启用 Nagle 算法
 int anetDisableTcpNoDelay(char *err, int fd) {
     return anetSetTcpNoDelay(err, fd, 0);
@@ -235,17 +238,17 @@ int anetResolve(char *err, char *host, char *ipbuf, size_t ipbuf_len, int flags)
         return ANET_ERR;
     }
     if (info->ai_family == AF_INET) {
-        struct sockaddr_in *sa = (struct sockaddr_in *)info->ai_addr;
+        struct sockaddr_in *sa = (struct sockaddr_in *) info->ai_addr;
         inet_ntop(AF_INET, &(sa->sin_addr), ipbuf, ipbuf_len);
-    }
-    else {
-        struct sockaddr_in6 *sa = (struct sockaddr_in6 *)info->ai_addr;
+    } else {
+        struct sockaddr_in6 *sa = (struct sockaddr_in6 *) info->ai_addr;
         inet_ntop(AF_INET6, &(sa->sin6_addr), ipbuf, ipbuf_len);
     }
 
     freeaddrinfo(info);
     return ANET_OK;
 }
+
 // 设置地址为可重用
 static int anetSetReuseAddr(char *err, int fd) {
     int yes = 1;
@@ -256,6 +259,7 @@ static int anetSetReuseAddr(char *err, int fd) {
     }
     return ANET_OK;
 }
+
 // 创建并返回 socket
 static int anetCreateSocket(char *err, int domain) {
     int s;
@@ -339,21 +343,20 @@ static int anetTcpGenericConnect(char *err, const char *addr, int port, const ch
     if (p == NULL)
         anetSetError(err, "creating socket: %s", strerror(errno));
 
-error:
+    error:
     if (s != ANET_ERR) {
         close(s);
         s = ANET_ERR;
     }
 
-end:
+    end:
     freeaddrinfo(servinfo);
 
     /* Handle best effort binding: if a binding address was used, but it is
      * not possible to create a socket, try again without a binding address. */
     if (s == ANET_ERR && source_addr && (flags & ANET_CONNECT_BE_BINDING)) {
         return anetTcpGenericConnect(err, addr, port, NULL, flags);
-    }
-    else {
+    } else {
         return s;
     }
 }
@@ -366,6 +369,7 @@ int anetTcpNonBlockConnect(char *err, const char *addr, int port) {
 int anetTcpNonBlockBestEffortBindConnect(char *err, const char *addr, int port, const char *source_addr) {
     return anetTcpGenericConnect(err, addr, port, source_addr, ANET_CONNECT_NONBLOCK | ANET_CONNECT_BE_BINDING);
 }
+
 // 创建阻塞、非阻塞  本地连接
 int anetUnixGenericConnect(char *err, const char *path, int flags) {
     int s;
@@ -382,7 +386,7 @@ int anetUnixGenericConnect(char *err, const char *path, int flags) {
             return ANET_ERR;
         }
     }
-    if (connect(s, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
+    if (connect(s, (struct sockaddr *) &sa, sizeof(sa)) == -1) {
         if (errno == EINPROGRESS && flags & ANET_CONNECT_NONBLOCK)
             return s;
 
@@ -467,12 +471,12 @@ static int _anetTcpServer(char *err, int port, char *bindaddr, int af, int backl
         goto error;
     }
 
-error:
+    error:
     if (s != -1) {
         close(s);
     }
     s = ANET_ERR;
-end:
+    end:
     freeaddrinfo(servinfo);
     return s;
 }
@@ -503,7 +507,7 @@ int anetUnixServer(char *err, char *path, mode_t perm, int backlog) {
     memset(&sa, 0, sizeof(sa));
     sa.sun_family = AF_LOCAL;
     strncpy(sa.sun_path, path, sizeof(sa.sun_path) - 1);
-    if (anetListen(err, s, (struct sockaddr *)&sa, sizeof(sa), backlog) == ANET_ERR) {
+    if (anetListen(err, s, (struct sockaddr *) &sa, sizeof(sa), backlog) == ANET_ERR) {
         return ANET_ERR;
     }
     if (perm) {
@@ -553,24 +557,23 @@ int anetTcpAccept(char *err, int serversock, char *ip, size_t ip_len, int *port)
     struct sockaddr_storage sa;
     socklen_t salen = sizeof(sa);
     // 从6379端口,接收新的链接
-    if ((fd = anetGenericAccept(err, serversock, (struct sockaddr *)&sa, &salen)) == ANET_ERR) {
+    if ((fd = anetGenericAccept(err, serversock, (struct sockaddr *) &sa, &salen)) == ANET_ERR) {
         return ANET_ERR;
     }
 
     if (sa.ss_family == AF_INET) { //   ipv4
-        struct sockaddr_in *s = (struct sockaddr_in *)&sa;
+        struct sockaddr_in *s = (struct sockaddr_in *) &sa;
         if (ip) {
             // 将IPv4或IPv6 Internet网络地址转换为 Internet标准格式的字符串。
-            inet_ntop(AF_INET, (void *)&(s->sin_addr), ip, ip_len);
+            inet_ntop(AF_INET, (void *) &(s->sin_addr), ip, ip_len);
         }
         if (port) {
             *port = ntohs(s->sin_port);
         }
-    }
-    else { // ipv6
-        struct sockaddr_in6 *s = (struct sockaddr_in6 *)&sa;
+    } else { // ipv6
+        struct sockaddr_in6 *s = (struct sockaddr_in6 *) &sa;
         if (ip) {
-            inet_ntop(AF_INET6, (void *)&(s->sin6_addr), ip, ip_len);
+            inet_ntop(AF_INET6, (void *) &(s->sin6_addr), ip, ip_len);
         }
         if (port) {
             *port = ntohs(s->sin6_port);
@@ -584,7 +587,7 @@ int anetUnixAccept(char *err, int s) {
     int fd;
     struct sockaddr_un sa;
     socklen_t salen = sizeof(sa);
-    if ((fd = anetGenericAccept(err, s, (struct sockaddr *)&sa, &salen)) == ANET_ERR)
+    if ((fd = anetGenericAccept(err, s, (struct sockaddr *) &sa, &salen)) == ANET_ERR)
         return ANET_ERR;
 
     return fd;
@@ -596,53 +599,48 @@ int anetFdToString(int fd, char *ip, size_t ip_len, int *port, int fd_to_str_typ
     socklen_t salen = sizeof(sa);
 
     if (fd_to_str_type == FD_TO_PEER_NAME) {
-        if (getpeername(fd, (struct sockaddr *)&sa, &salen) == -1)
+        if (getpeername(fd, (struct sockaddr *) &sa, &salen) == -1)
             goto error;
-    }
-    else {
-        if (getsockname(fd, (struct sockaddr *)&sa, &salen) == -1)
+    } else {
+        if (getsockname(fd, (struct sockaddr *) &sa, &salen) == -1)
             goto error;
     }
 
     if (sa.ss_family == AF_INET) {
-        struct sockaddr_in *s = (struct sockaddr_in *)&sa;
+        struct sockaddr_in *s = (struct sockaddr_in *) &sa;
         if (ip) {
-            if (inet_ntop(AF_INET, (void *)&(s->sin_addr), ip, ip_len) == NULL)
+            if (inet_ntop(AF_INET, (void *) &(s->sin_addr), ip, ip_len) == NULL)
                 goto error;
         }
         if (port)
             *port = ntohs(s->sin_port);
-    }
-    else if (sa.ss_family == AF_INET6) {
-        struct sockaddr_in6 *s = (struct sockaddr_in6 *)&sa;
+    } else if (sa.ss_family == AF_INET6) {
+        struct sockaddr_in6 *s = (struct sockaddr_in6 *) &sa;
         if (ip) {
-            if (inet_ntop(AF_INET6, (void *)&(s->sin6_addr), ip, ip_len) == NULL)
+            if (inet_ntop(AF_INET6, (void *) &(s->sin6_addr), ip, ip_len) == NULL)
                 goto error;
         }
         if (port)
             *port = ntohs(s->sin6_port);
-    }
-    else if (sa.ss_family == AF_UNIX) {
+    } else if (sa.ss_family == AF_UNIX) {
         if (ip) {
             int res = snprintf(ip, ip_len, "/unixsocket");
-            if (res < 0 || (unsigned int)res >= ip_len)
+            if (res < 0 || (unsigned int) res >= ip_len)
                 goto error;
         }
         if (port)
             *port = 0;
-    }
-    else {
+    } else {
         goto error;
     }
     return 0;
 
-error:
+    error:
     if (ip) {
         if (ip_len >= 2) {
             ip[0] = '?';
             ip[1] = '\0';
-        }
-        else if (ip_len == 1) {
+        } else if (ip_len == 1) {
             ip[0] = '\0';
         }
     }
@@ -718,7 +716,7 @@ int anetPipe(int fds[2], int read_flags, int write_flags) {
 
     return 0;
 
-error:
+    error:
     close(fds[0]);
     close(fds[1]);
     return -1;
