@@ -212,18 +212,11 @@ void sdsclear(sds s) {
     s[0] = '\0';
 }
 
-/* Enlarge the free space at the end of the sds string so that the caller
- * is sure that after calling this function can overwrite up to addlen
- * bytes after the end of the string, plus one more byte for nul term.
- * If there's already sufficient free space, this function returns without any
- * action, if there isn't sufficient free space, it'll allocate what's missing,
- * and possibly more:
- * When greedy is 1, enlarge more than needed, to avoid need for future reallocs
- * on incremental growth.
- * When greedy is 0, enlarge just enough so that there's free space for 'addlen'.
- *
- * Note: this does not change the *length* of the sds string as returned
- * by sdslen(), but only the free buffer space we have. */
+// 扩大sds字符串末尾的空闲空间，以便调用者确保在调用此函数后可以覆盖字符串末尾后最多addlen字节，再加上一个字节用于nul项。
+// 如果已经有足够的空闲空间，这个函数不做任何操作就返回，如果没有足够的空闲空间，它会分配缺少的部分，甚至更多:
+// 当greedy为1时，放大超过所需，以避免未来对增量增长的重新分配。
+// 当greedy为0时，放大到足够大，以便为'addlen'留出自由空间。
+// 注意:这不会改变sdslen()返回的sds字符串的长度，而只改变我们拥有的空闲缓冲区空间
 sds _sdsMakeRoomFor(sds s, size_t addlen, int greedy) {
     void *sh, *newsh;
     size_t avail = sdsavail(s);

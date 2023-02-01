@@ -326,8 +326,8 @@ extern int configOOMScoreAdjValuesDefaults[CONFIG_OOM_COUNT];
 #define BLOCKED_NUM 8      // 阻塞状态
 
 // 请求类型
-#define PROTO_REQ_INLINE 1    // 内联型
-#define PROTO_REQ_MULTIBULK 2 // 协议型
+#define PROTO_REQ_INLINE 1    // 内联型  命令不是以“*”开头
+#define PROTO_REQ_MULTIBULK 2 // 协议型  命令是以“*”开头
 
 // 用于客户端限制的客户端类型,目前只用于 max-client-output-buffer
 #define CLIENT_TYPE_NORMAL 0     // 正常的 请求-应答客户端、监视器
@@ -1074,21 +1074,15 @@ typedef struct client {
     list *watched_keys;                       // 被监视的键s
     dict *pubsub_channels;                    // 记录了客户端所有订阅的频道 键为频道名字,值为 NULL 也即是,一个频道的集合
     list *pubsub_patterns;                    // 记录了客户端所有订阅频道的信息 新结构总是被添加到表尾
-    dict *pubsubshard_channels;               /* shard level channels a client is interested in (SSUBSCRIBE) */
-    sds peerid;                               /* Cached peer ID. */
-    sds sockname;                             /* Cached connection target address. */
-    listNode *client_list_node;               /* list node in client list */
-    listNode *postponed_list_node;            /* list node within the postponed list */
-    listNode *pending_read_list_node;         /* 使用多线程时 等待读的客户端*/
-    RedisModuleUserChangedFunc auth_callback; /* Module callback to execute
-                                               * when the authenticated user
-                                               * changes. */
-    void *auth_callback_privdata;             /* Private data that is passed when the auth
-                                               * changed callback is executed. Opaque for
-                                               * Redis Core. */
-    void *auth_module;                        /* The module that owns the callback, which is used
-                                               * to disconnect the client if the module is
-                                               * unloaded for cleanup. Opaque for Redis Core.*/
+    dict *pubsubshard_channels;               // shard level channels a client is interested in (SSUBSCRIBE) */
+    sds peerid;                               // Cached peer ID. */
+    sds sockname;                             // Cached connection target address. */
+    listNode *client_list_node;               // list node in client list */
+    listNode *postponed_list_node;            // list node within the postponed list */
+    listNode *pending_read_list_node;         // 此client在server结构体待读链表上存储的地址
+    RedisModuleUserChangedFunc auth_callback; // Module callback to execute when the authenticated user changes. */
+    void *auth_callback_privdata;             /* Private data that is passed when the auth changed callback is executed. Opaque for Redis Core. */
+    void *auth_module;                        /* The module that owns the callback, which is used to disconnect the client if the module is unloaded for cleanup. Opaque for Redis Core.*/
 
     /* If this client is in tracking mode and this field is non zero, invalidation messages for keys fetched by this client will be send to the specified client ID. */
     uint64_t client_tracking_redirection;
@@ -1514,7 +1508,7 @@ struct redisServer {
     list *clients;                                                           // 一个链表、保存了所有客户端
     list *clients_to_close;                                                  // 链表,保存了所有待关闭的客户端          , 添加连接时,可能需要锁
     list *clients_pending_write;                                             // 要写或安装的处理程序.
-    list *clients_pending_read;                                              // 客户端有待读的套接字缓冲区.
+    list *clients_pending_read;                                              // 连接加入到等待读处理队列.
     list *slaves;                                                            // 保存了所有从服务器
     list *monitors;                                                          // 保存了所有监视器
     client *current_client;                                                  // 服务器的当前客户端,仅用于崩溃报告
@@ -1606,10 +1600,10 @@ struct redisServer {
     long long stat_dump_payload_sanitizations;          /* Number deep dump payloads integrity validations. */
     long long stat_io_reads_processed;                  /* Number of read events processed by IO / Main threads */
     long long stat_io_writes_processed;                 /* Number of write events processed by IO / Main threads */
-    redisAtomic long long stat_total_reads_processed;   /* Total number of read events processed */
-    redisAtomic long long stat_total_writes_processed;  /* Total number of write events processed */
-    /* The following two are used to track instantaneous metrics, like
-     * number of operations per second, network traffic. */
+    redisAtomic long long stat_total_reads_processed;   // 已处理的读事件总数
+    redisAtomic long long stat_total_writes_processed;  // 已处理的写事件总数
+
+    // 下面两个用于跟踪瞬时指标，如每秒操作数、网络流量。
     struct {
         long long last_sample_time;              // 最后一次进行抽样的时间
         long long last_sample_count;             // 最后一次抽样时,服务器已执行命令的数量

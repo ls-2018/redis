@@ -2614,22 +2614,28 @@ int processInputBuffer(client *c) {
 void readQueryFromClient(connection *conn) {
     client *c = connGetPrivateData(conn);
     int nread, big_arg = 0;
-    size_t qblen, old_qblen, readlen;
+    size_t qblen;
+    size_t old_qblen;
+    size_t readlen;
 
     //    主线程将 待读客户端 添加到Read任务队列（生产者）
     if (postponeClientRead(c)) { // 延迟读
         return;
     }
 
-    /* 更新服务器上读取的总次数 */
+    // 更新 已处理的读事件总数
     atomicIncr(server.stat_total_reads_processed, 1);
 
     readlen = PROTO_IOBUF_LEN; // 读入长度（默认为 16 MB）
 
-    //    如果这是一个多批量请求,并且我们正在处理一个足够大的批量应答,那么尽量使查询缓冲区包含恰好代表该对象的SDS字符串的概率最大化,
-    //    甚至冒着需要更多read(2)调用的风险.通过这种方式,函数processMultiBulkBuffer()可以避免复制缓冲区来创建代表参数的Redis对象.
+    // #define PROTO_REQ_INLINE 1    // 内联型  命令不是以“*”开头
+    // #define PROTO_REQ_MULTIBULK 2 // 协议型  命令是以“*”开头
 
-    if (c->reqtype == PROTO_REQ_MULTIBULK && c->multibulklen && c->bulklen != -1 && c->bulklen >= PROTO_MBULK_BIG_ARG) {
+    if (c->reqtype == PROTO_REQ_MULTIBULK && // 命令是以“*”开头
+        c->multibulklen &&                   // 剩余未读取的命令内容数量
+        c->bulklen != -1                     // 命令内容的长度 在一个批量请求中
+        && c->bulklen >= PROTO_MBULK_BIG_ARG //
+    ) {
         // 协议型  消息
 
         // multibulklen表示待从读取的参数的个数
@@ -2656,18 +2662,19 @@ void readQueryFromClient(connection *conn) {
     // 获取查询缓冲区当前内容的长度
     // 如果读取出现 short read ,那么可能会有内容滞留在读取缓冲区里面
     // 这些滞留内容也许不能完整构成一个符合协议的命令,
-    qblen = sdslen(c->querybuf); // 已有的数据长度
+    qblen = sdslen(c->querybuf); // 输入缓冲区,保存客户端发送的命令请求;会根据输入内容动态地缩小或者扩大,但它的最 大大小不能超过1GB,否则服务器将关闭这个客户端.
     old_qblen = sdslen(c->querybuf);
-    //    主客户端的querybuf可能会变得贪婪.
-    if (!(c->flags & CLIENT_MASTER) && (big_arg || sdsalloc(c->querybuf) < PROTO_IOBUF_LEN)) {
-        //        当读取BIG_ARG时,我们不会向查询缓冲区中读取超过一个的参数,所以我们不需要预先分配比我们需要的更多的参数,所以使用非贪婪增长.
-        //        对于查询缓冲区的初始分配,我们也不想使用贪婪增长,以避免与RESIZE_THRESHOLD机制发生冲突.
+
+    if (!(c->flags & CLIENT_MASTER) &&                       // 该客户端不是一个主节点
+        (big_arg || sdsalloc(c->querybuf) < PROTO_IOBUF_LEN) // 客户端发送的数据过大或者小于默认值, 都使用默认分配策略
+    ) {
+        // 当读取BIG_ARG时,我们不会向查询缓冲区中读取超过一个的参数,所以我们不需要预先分配比我们需要的更多的参数,所以使用非贪婪增长.
+        // 对于查询缓冲区的初始分配,我们也不想使用贪婪增长,以避免与RESIZE_THRESHOLD机制发生冲突.
         c->querybuf = sdsMakeRoomForNonGreedy(c->querybuf, readlen); // 分配空间
     }
     else {
         c->querybuf = sdsMakeRoomFor(c->querybuf, readlen); // 为查询缓冲区分配空间
-        /* 从套接字读取尽可能多的数据以保存Read(2)系统调用.*/
-        readlen = sdsavail(c->querybuf);
+        readlen = sdsavail(c->querybuf);                    // 从套接字读取尽可能多的数据以保存Read(2)系统调用.
     }
     // 读入内容到查询缓存
     nread = connRead(c->conn, c->querybuf + qblen, readlen); // "*2\r\n$7\r\nCOMMAND\r\n$4\r\nDOCS\r\n"
