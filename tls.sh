@@ -1,11 +1,16 @@
 make BUILD_TLS=yes
 ./utils/gen-test-certs.sh
 
-# make MALLOC=libc
-# make MALLOC=jemalloc
+# https://slproweb.com/products/Win32OpenSSL.html
+# https://slproweb.com/download/Win64OpenSSL-3_0_7.msi
+# set OpenSSLDir="D:\Program Files\OpenSSL-Win64"
 # yum install openssl openssl-devel -y
 # sudo apt-get install libssl-dev -y
+
+# make MALLOC=libc
+# make MALLOC=jemalloc
 # test
+
 #./runtest --tlslibhiredis_ssl.a
 #./runtest-cluster --tls
 
