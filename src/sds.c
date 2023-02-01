@@ -393,33 +393,12 @@ size_t sdsAllocSize(sds s) {
     return sdsHdrSize(s[-1]) + alloc + 1;
 }
 
-/* Return the pointer of the actual SDS allocation (normally SDS strings
- * are referenced by the start of the string buffer). */
+// 返回实际SDS分配的指针(通常SDS字符串由字符串缓冲区的开始引用)。
 void *sdsAllocPtr(sds s) {
     return (void *)(s - sdsHdrSize(s[-1]));
 }
 
-/* 增加sds的长度,并根据'incr'减小字符串末尾的剩余空间.还在字符串的新结尾设置null项.
- *
- * This function is used in order to fix the string length after the
- * user calls sdsMakeRoomFor(), writes something after the end of
- * the current string, and finally needs to set the new length.
- *
- * Note: it is possible to use a negative increment in order to
- * right-trim the string.
- *
- * Usage example:
- *
- * Using sdsIncrLen() and sdsMakeRoomFor() it is possible to mount the
- * following schema, to cat bytes coming from the kernel to the end of an
- * sds string without copying into an intermediate buffer:
- *
- * oldlen = sdslen(s);
- * s = sdsMakeRoomFor(s, BUFFER_SIZE);
- * nread = read(fd, s+oldlen, BUFFER_SIZE);
- * ... check for nread <= 0 and handle it ...
- * sdsIncrLen(s, nread);
- */
+// 对s增加incr空间的长度,只是将\0后移incr个长度
 void sdsIncrLen(sds s, ssize_t incr) {
     unsigned char flags = s[-1];
     size_t len;

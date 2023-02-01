@@ -922,7 +922,7 @@ typedef struct multiState {
     int count;            // 已入队命令计数
     int cmd_flags;        // 所有命令中是否有被设置  CMD_READONLY|CMD_WRITE|CMD_MAY_REPLICATE|CMD_NO_ASYNC_LOADING
     int cmd_inv_flags;    // 与cmd_flags相同,    CMD_STALE|CMD_LOADING */
-    size_t argv_len_sums; // 所有命令参数使用的内存*/
+    size_t argv_len_sums; // 所有命令参数使用的内存
 } multiState;
 
 // 阻塞状态
@@ -1084,7 +1084,7 @@ typedef struct client {
     void *auth_callback_privdata;             /* Private data that is passed when the auth changed callback is executed. Opaque for Redis Core. */
     void *auth_module;                        /* The module that owns the callback, which is used to disconnect the client if the module is unloaded for cleanup. Opaque for Redis Core.*/
 
-    /* If this client is in tracking mode and this field is non zero, invalidation messages for keys fetched by this client will be send to the specified client ID. */
+    // 如果此客户端处于跟踪模式，且该字段不为零，则此客户端获取的无效key消息将发送到指定的客户端ID
     uint64_t client_tracking_redirection;
     rax *client_tracking_prefixes; /* A dictionary of prefixes we are already subscribed to in BCAST mode, in the context of client side caching. */
     /* In updateClientMemUsage() we track the memory usage of
@@ -1098,7 +1098,7 @@ typedef struct client {
     listNode *mem_usage_bucket_node;
     clientMemUsageBucket *mem_usage_bucket;
 
-    listNode *ref_repl_buf_node; // 复制缓冲区块的引用节点 值是 replBufBlock*
+    listNode *ref_repl_buf_node; // 复制缓冲区块的引用节点 值是 replBufBlock
     size_t ref_block_pos;        /* Access position of referenced buffer block, i.e. the next offset to send. */
 
     // 响应堆栈
@@ -1833,7 +1833,7 @@ struct redisServer {
     int list_max_listpack_size;
     int list_compress_depth;
     // time cache */
-    redisAtomic time_t unixtime; // Unix time sampled every cron cycle. */
+    redisAtomic time_t unixtime; // Unix时间 采样每个cron周期。
     time_t timezone;             // 时区
     int daylight_active;         // 夏令时标志(大于0说明夏令时有效,等于0说明无效,小于0说明信息不可用)
     mstime_t mstime;             // 毫秒

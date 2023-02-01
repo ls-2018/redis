@@ -278,9 +278,7 @@ void *zrealloc_usable(void *ptr, size_t size, size_t *usable) {
     return ptr;
 }
 
-/* Provide zmalloc_size() for systems where this function is not provided by
- * malloc itself, given that in that case we store a header with this
- * information as the first bytes of every allocation. */
+// malloc本身不提供该函数的系统提供zmalloc_size()，因为在这种情况下，我们将此信息作为每次分配的第一个字节存储一个头文件。
 #ifndef HAVE_MALLOC_SIZE
 
 size_t zmalloc_size(void *ptr) {
@@ -288,7 +286,7 @@ size_t zmalloc_size(void *ptr) {
     size_t size = *((size_t *)realptr);
     return size + PREFIX_SIZE;
 }
-
+// 获取malloc实际分配的内存大小
 size_t zmalloc_usable_size(void *ptr) {
     return zmalloc_size(ptr) - PREFIX_SIZE;
 }

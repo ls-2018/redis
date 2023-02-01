@@ -336,11 +336,7 @@ int connGetState(connection *conn) {
     return conn->state;
 }
 
-/* Return a text that describes the connection, suitable for inclusion
- * in CLIENT LIST and similar outputs.
- *
- * For sockets, we always return "fd=<fdnum>" to maintain compatibility.
- */
+// 返回描述连接的文本
 const char *connGetInfo(connection *conn, char *buf, size_t buf_len) {
     snprintf(buf, buf_len - 1, "fd=%i", conn == NULL ? -1 : conn->fd);
     return buf;

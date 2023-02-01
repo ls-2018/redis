@@ -42,9 +42,7 @@ int postponeClientRead(client *c);
 
 int ProcessingEventsWhileBlocked = 0; /* See processEventsWhileBlocked(). */
 
-/* Return the size consumed from the allocator, for the specified SDS string,
- * including internal fragmentation. This function is used in order to compute
- * the client output buffer size. */
+// 返回指定SDS字符串从分配器消耗的大小，包括内部碎片。这个函数用于计算客户端输出缓冲区大小。
 size_t sdsZmallocSize(sds s) {
     void *sh = sdsAllocPtr(s);
     return zmalloc_size(sh);
@@ -2614,9 +2612,9 @@ int processInputBuffer(client *c) {
 void readQueryFromClient(connection *conn) {
     client *c = connGetPrivateData(conn);
     int nread, big_arg = 0;
-    size_t qblen;
-    size_t old_qblen;
-    size_t readlen;
+    size_t qblen;     // 缓冲区中存在的数据长度
+    size_t old_qblen; // 缓冲区中存在的数据长度，备份
+    size_t readlen;   // 缓冲区长度
 
     //    主线程将 待读客户端 添加到Read任务队列（生产者）
     if (postponeClientRead(c)) { // 延迟读
@@ -2676,8 +2674,8 @@ void readQueryFromClient(connection *conn) {
         c->querybuf = sdsMakeRoomFor(c->querybuf, readlen); // 为查询缓冲区分配空间
         readlen = sdsavail(c->querybuf);                    // 从套接字读取尽可能多的数据以保存Read(2)系统调用.
     }
-    // 读入内容到查询缓存
-    nread = connRead(c->conn, c->querybuf + qblen, readlen); // "*2\r\n$7\r\nCOMMAND\r\n$4\r\nDOCS\r\n"
+    // 读入内容到查询缓存，从qblen开始存储数据,
+    nread = connRead(c->conn, c->querybuf + qblen, readlen); // "*2\r\n$7\r\nCOMMAND\r\n$4\r\nDOCS\r\n\001"
     if (nread == -1) {                                       // 读入出错
         if (connGetState(conn) == CONN_STATE_CONNECTED) {
             return;
@@ -2690,13 +2688,14 @@ void readQueryFromClient(connection *conn) {
     }
     else if (nread == 0) { // 遇到 EOF
         if (server.verbosity <= LL_VERBOSE) {
-            sds info = catClientInfoString(sdsempty(), c);
-            serverLog(LL_VERBOSE, "Client closed connection %s", info);
+            sds info = catClientInfoString(sdsempty(), c); // 获取客户端的各项信息
+            serverLog(LL_VERBOSE, "客户端关闭了链接 %s", info);
             sdsfree(info);
         }
         freeClientAsync(c);
         goto done;
     }
+
     sdsIncrLen(c->querybuf, nread);
     // 根据内容,更新查询缓冲区（SDS） free 和 len 属性
     // 并将 '\0' 正确地放到内容的最后
@@ -2773,10 +2772,7 @@ char *getClientPeerId(client *c) {
     return c->peerid;
 }
 
-/* This function returns the client bound socket name, by creating and caching
- * it if client->sockname is NULL, otherwise returning the cached value.
- * The Socket Name never changes during the life of the client, however it
- * is expensive to compute. */
+// 返回IP:port
 char *getClientSockname(client *c) {
     char sockname[NET_ADDR_STR_LEN];
 
@@ -2787,9 +2783,12 @@ char *getClientSockname(client *c) {
     return c->sockname;
 }
 
-// 获取客户端的各项信息,将它们储存到 sds 值 s 里面,并返回.
+// 获取客户端的各项信息,将它们储存到 s 里面,并返回.
 sds catClientInfoString(sds s, client *client) {
-    char flags[16], events[3], conninfo[CONN_INFO_LEN], *p;
+    char flags[16];
+    char events[3];
+    char conninfo[CONN_INFO_LEN];
+    char *p;
 
     p = flags;
     if (client->flags & CLIENT_SLAVE) {
@@ -2832,15 +2831,18 @@ sds catClientInfoString(sds s, client *client) {
 
     p = events;
     if (client->conn) {
-        if (connHasReadHandler(client->conn))
+        if (connHasReadHandler(client->conn)) {
             *p++ = 'r';
-        if (connHasWriteHandler(client->conn))
+        }
+        if (connHasWriteHandler(client->conn)) {
             *p++ = 'w';
+        }
     }
     *p = '\0';
 
-    /* Compute the total memory consumed by this client. */
-    size_t obufmem, total_mem = getClientMemoryUsage(client, &obufmem);
+    size_t obufmem = 0;
+    // 计算此客户端消耗的总内存。
+    size_t total_mem = getClientMemoryUsage(client, &obufmem);
 
     size_t used_blocks_of_repl_buf = 0;
     if (client->ref_repl_buf_node) {
@@ -2849,35 +2851,35 @@ sds catClientInfoString(sds s, client *client) {
         used_blocks_of_repl_buf = last->id - cur->id + 1;
     }
     sds ret;
-    ret = sdscatfmt(s, "id=%U", (unsigned long long)client->id);
-    ret = sdscatfmt(s, "addr=%s", getClientPeerId(client));
-    ret = sdscatfmt(s, "laddr=%s", getClientSockname(client));
-    ret = sdscatfmt(s, "%s", connGetInfo(client->conn, conninfo, sizeof(conninfo)));
-    ret = sdscatfmt(s, "name=%s", client->name ? (char *)client->name->ptr : "");
-    ret = sdscatfmt(s, "age=%I", (long long)(server.unixtime - client->ctime));
-    ret = sdscatfmt(s, "idle=%I", (long long)(server.unixtime - client->lastinteraction));
+    ret = sdscatfmt(s, "id=%U", (unsigned long long)client->id);                     //
+    ret = sdscatfmt(s, "addr=%s", getClientPeerId(client));                          // 只有IP
+    ret = sdscatfmt(s, "laddr=%s", getClientSockname(client));                       // IP:PORT
+    ret = sdscatfmt(s, "%s", connGetInfo(client->conn, conninfo, sizeof(conninfo))); // 返回描述连接的文本 fd=7
+    ret = sdscatfmt(s, "名称=%s", client->name ? (char *)client->name->ptr : "");
+    ret = sdscatfmt(s, "存活时间=%I", (long long)(server.unixtime - client->ctime)); // 服务端当前时间-客户端创建时间
+    ret = sdscatfmt(s, "空闲时间=%I", (long long)(server.unixtime - client->lastinteraction));
     ret = sdscatfmt(s, "flags=%s", flags);
     ret = sdscatfmt(s, "db=%i", client->db->id);
-    ret = sdscatfmt(s, "sub=%i", (int)dictSize(client->pubsub_channels));
-    ret = sdscatfmt(s, "psub=%i", (int)listLength(client->pubsub_patterns));
-    ret = sdscatfmt(s, "multi=%i", (client->flags & CLIENT_MULTI) ? client->mstate.count : -1);
+    ret = sdscatfmt(s, "订阅频道的数量=%i", (int)dictSize(client->pubsub_channels));
+    ret = sdscatfmt(s, "订阅频道正则模式的数量=%i", (int)listLength(client->pubsub_patterns));
+    ret = sdscatfmt(s, "正在执行的事务数量=%i", (client->flags & CLIENT_MULTI) ? client->mstate.count : -1);
 
     // 缓冲区溢出会导致客户端连接关闭
-    ret = sdscatfmt(s, "qbuf=%U", (unsigned long long)sdslen(client->querybuf));        // 表示输入缓冲区已经使用的大小.
-    ret = sdscatfmt(s, "qbuf-free=%U", (unsigned long long)sdsavail(client->querybuf)); // 表示输入缓冲区尚未使用的大小.
-    ret = sdscatfmt(s, "argv-mem=%U", (unsigned long long)client->argv_len_sum);
+    ret = sdscatfmt(s, "输入缓冲区大小已用空间=%U", (unsigned long long)sdslen(client->querybuf));
+    ret = sdscatfmt(s, "输入缓冲区大小可用空间=%U", (unsigned long long)sdsavail(client->querybuf));
+    ret = sdscatfmt(s, "argv列表中对象长度的和=%U", (unsigned long long)client->argv_len_sum);
     ret = sdscatfmt(s, "multi-mem=%U", (unsigned long long)client->mstate.argv_len_sums);
-    ret = sdscatfmt(s, "rbs=%U", (unsigned long long)client->buf_usable_size);
-    ret = sdscatfmt(s, "rbp=%U", (unsigned long long)client->buf_peak);
-    ret = sdscatfmt(s, "obl=%U", (unsigned long long)client->bufpos);
+    ret = sdscatfmt(s, "可使用的内存大小=%U", (unsigned long long)client->buf_usable_size);
+    ret = sdscatfmt(s, "最近5秒间隔内使用的缓冲器的峰值=%U", (unsigned long long)client->buf_peak);
+    ret = sdscatfmt(s, "记录了buf数组目前已使用的字节数量=%U", (unsigned long long)client->bufpos);
     ret = sdscatfmt(s, "oll=%U", (unsigned long long)listLength(client->reply) + used_blocks_of_repl_buf);
-    ret = sdscatfmt(s, "omem=%U", (unsigned long long)obufmem);
-    ret = sdscatfmt(s, "tot-mem=%U", (unsigned long long)total_mem);
-    ret = sdscatfmt(s, "events=%s", events);
-    ret = sdscatfmt(s, "cmd=%s", client->lastcmd ? client->lastcmd->fullname : "NULL"); // 表示客户端最新执行的命令
-    ret = sdscatfmt(s, "user=%s", client->user ? client->user->name : "(superuser)");
-    ret = sdscatfmt(s, "redir=%I", (client->flags & CLIENT_TRACKING) ? (long long)client->client_tracking_redirection : -1);
-    ret = sdscatfmt(s, "resp=%i", client->resp);
+    ret = sdscatfmt(s, "客户端输出缓冲区使用的内存=%U", (unsigned long long)obufmem);
+    ret = sdscatfmt(s, "计算此客户端消耗的总内存=%U", (unsigned long long)total_mem);
+    ret = sdscatfmt(s, "客户端注册的回调函数[rw]=%s", events);
+    ret = sdscatfmt(s, "最近执行的命令=%s", client->lastcmd ? client->lastcmd->fullname : "NULL"); // 表示客户端最新执行的命令
+    ret = sdscatfmt(s, "用户=%s", client->user ? client->user->name : "(superuser)");
+    ret = sdscatfmt(s, "客户端追踪者ID=%I", (client->flags & CLIENT_TRACKING) ? (long long)client->client_tracking_redirection : -1);
+    ret = sdscatfmt(s, "resp协议版本=%i", client->resp);
 
     return ret;
 }
@@ -3309,10 +3311,7 @@ void clientCommand(client *c) {
             if (!strcasecmp(c->argv[j]->ptr, "redirect") && moreargs) {
                 j++;
                 if (redir != 0) {
-                    addReplyError(
-                        c,
-                        "A client can only redirect to a single "
-                        "other client");
+                    addReplyError(c, "A client can only redirect to a single other client");
                     zfree(prefix);
                     return;
                 }
@@ -3325,10 +3324,7 @@ void clientCommand(client *c) {
                  * right now, even if it is possible that it gets disconnected
                  * later. Still a valid sanity check. */
                 if (lookupClientByID(redir) == NULL) {
-                    addReplyError(
-                        c,
-                        "The client ID you want redirect to "
-                        "does not exist");
+                    addReplyError(c, "The client ID you want redirect to does not exist");
                     zfree(prefix);
                     return;
                 }
@@ -3769,13 +3765,12 @@ size_t getClientOutputBufferMemoryUsage(client *c) {
     }
 }
 
-/* Returns the total client's memory usage.
- * Optionally, if output_buffer_mem_usage is not NULL, it fills it with
- * the client output buffer memory usage portion of the total. */
+// 返回客户端总的内存使用情况
 size_t getClientMemoryUsage(client *c, size_t *output_buffer_mem_usage) {
     size_t mem = getClientOutputBufferMemoryUsage(c);
-    if (output_buffer_mem_usage != NULL)
+    if (output_buffer_mem_usage != NULL) {
         *output_buffer_mem_usage = mem;
+    }
     mem += sdsZmallocSize(c->querybuf);
     mem += zmalloc_size(c);
     mem += c->buf_usable_size;
