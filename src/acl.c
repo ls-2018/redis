@@ -28,7 +28,7 @@
  */
 
 #include "server.h"
-#include "sha256.h"
+#include "over-sha256.h"
 #include <fcntl.h>
 #include <ctype.h>
 

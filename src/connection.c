@@ -21,8 +21,7 @@ connection *connCreateAcceptedSocket(int fd) {
     return conn;
 }
 
-static int connSocketConnect(connection *conn, const char *addr, int port, const char *src_addr,
-                             ConnectionCallbackFunc connect_handler) {
+static int connSocketConnect(connection *conn, const char *addr, int port, const char *src_addr, ConnectionCallbackFunc connect_handler) {
     // 从库和主库建立链接
     int fd = anetTcpNonBlockBestEffortBindConnect(NULL, addr, port, src_addr);
     if (fd == -1) {
@@ -57,7 +56,6 @@ void connSetPrivateData(connection *conn, void *data) {
 void *connGetPrivateData(connection *conn) {
     return conn->private_data;
 }
-
 
 static void connSocketClose(connection *conn) {
     if (conn->fd != -1) {
@@ -100,7 +98,8 @@ static int connSocketRead(connection *conn, void *buf, size_t buf_len) {
     int ret = read(conn->fd, buf, buf_len);
     if (!ret) {
         conn->state = CONN_STATE_CLOSED;
-    } else if (ret < 0 && errno != EAGAIN) {
+    }
+    else if (ret < 0 && errno != EAGAIN) {
         conn->last_errno = errno;
 
         if (errno != EINTR && conn->state == CONN_STATE_CONNECTED)
@@ -139,8 +138,7 @@ static int connSocketSetWriteHandler(connection *conn, ConnectionCallbackFunc fu
         conn->flags &= ~CONN_FLAG_WRITE_BARRIER;
     if (!conn->write_handler)
         aeDeleteFileEvent(server.el, conn->fd, AE_WRITABLE);
-    else if (aeCreateFileEvent(server.el, conn->fd, AE_WRITABLE, conn->type->ae_handler, conn) ==
-             AE_ERR) // 创建可写事件的监听,以及设置回调函数
+    else if (aeCreateFileEvent(server.el, conn->fd, AE_WRITABLE, conn->type->ae_handler, conn) == AE_ERR) // 创建可写事件的监听,以及设置回调函数
         return C_ERR;
     return C_OK;
 }
@@ -173,7 +171,8 @@ static void connSocketEventHandler(struct aeEventLoop *el, int fd, void *clientD
         if (conn_error) {
             conn->last_errno = conn_error;
             conn->state = CONN_STATE_ERROR;
-        } else {
+        }
+        else {
             conn->state = CONN_STATE_CONNECTED;
         }
 
@@ -248,27 +247,27 @@ static ssize_t connSocketSyncReadLine(connection *conn, char *ptr, ssize_t size,
 }
 
 static int connSocketGetType(connection *conn) {
-    (void) conn;
+    (void)conn;
 
     return CONN_TYPE_SOCKET;
 }
 
 ConnectionType CT_Socket = {
-        .ae_handler = connSocketEventHandler,// client可读时触发,会调用 .connect  .read
-        .close = connSocketClose,
-        .write = connSocketWrite,
-        .writev = connSocketWritev,
-        .read = connSocketRead,
-        .accept = connSocketAccept,
-        .connect = connSocketConnect,
-        .set_write_handler = connSocketSetWriteHandler, // conn->write_handler=
-        .set_read_handler = connSocketSetReadHandler,// conn->read_handler=readQueryFromClient
-        .get_last_error = connSocketGetLastError,
-        .blocking_connect = connSocketBlockingConnect,
-        .sync_write = connSocketSyncWrite,
-        .sync_read = connSocketSyncRead,
-        .sync_readline = connSocketSyncReadLine,
-        .get_type = connSocketGetType};
+    .ae_handler = connSocketEventHandler, // client可读时触发,会调用 .connect  .read
+    .close = connSocketClose,
+    .write = connSocketWrite,
+    .writev = connSocketWritev,
+    .read = connSocketRead,
+    .accept = connSocketAccept,
+    .connect = connSocketConnect,
+    .set_write_handler = connSocketSetWriteHandler, // conn->write_handler=
+    .set_read_handler = connSocketSetReadHandler,   // conn->read_handler=readQueryFromClient
+    .get_last_error = connSocketGetLastError,
+    .blocking_connect = connSocketBlockingConnect,
+    .sync_write = connSocketSyncWrite,
+    .sync_read = connSocketSyncRead,
+    .sync_readline = connSocketSyncReadLine,
+    .get_type = connSocketGetType};
 
 int connGetSocketError(connection *conn) {
     int sockerr = 0;

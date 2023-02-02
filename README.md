@@ -861,3 +861,5 @@ addACLLogEntry ACLSelectorCheckCmd
 https://blog.csdn.net/qq_29235677/article/details/121475204
 
 PROPAGATE_AOF与PROPAGATE_REPL的区别
+
+// lua执行时，为什么会接收新的请求 src/networking.c:2510

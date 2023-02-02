@@ -55,12 +55,14 @@ uint8_t *dictGetHashFunctionSeed(void) {
 // 默认使用siphash.c提供的哈希函数
 uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k);
 
+// ok
 uint64_t siphash_nocase(const uint8_t *in, const size_t inlen, const uint8_t *k);
 
 uint64_t dictGenHashFunction(const void *key, size_t len) {
     return siphash(key, len, dict_hash_function_seed);
 }
 
+// ok
 uint64_t dictGenCaseHashFunction(const unsigned char *buf, size_t len) {
     return siphash_nocase(buf, len, dict_hash_function_seed);
 }
@@ -142,8 +144,7 @@ int _dictExpand(dict *d, unsigned long size, int *malloc_failed) {
         if (*malloc_failed) {
             return DICT_ERR;
         }
-    }
-    else {
+    } else {
         new_ht_table = zcalloc(newsize * sizeof(dictEntry *));
     }
 
@@ -194,7 +195,7 @@ int dictRehash(dict *d, int n) {
 
         /* Note that rehashidx can't overflow as we are sure there are more
          * elements because ht[0].used != 0 */
-        assert(DICTHT_SIZE(d->ht_size_exp[0]) > (unsigned long)d->rehashidx);
+        assert(DICTHT_SIZE(d->ht_size_exp[0]) > (unsigned long) d->rehashidx);
         while (d->ht_table[0][d->rehashidx] == NULL) { // 跳到下一个有数据的位置
             d->rehashidx++;
             --empty_visits;
@@ -237,7 +238,7 @@ long long timeInMilliseconds(void) {
     struct timeval tv;
 
     gettimeofday(&tv, NULL);
-    return (((long long)tv.tv_sec) * 1000) + (tv.tv_usec / 1000);
+    return (((long long) tv.tv_sec) * 1000) + (tv.tv_usec / 1000);
 }
 
 // 在给定毫秒数内,以 100步 为单位,对字典进行 rehash .
@@ -384,8 +385,7 @@ static dictEntry *dictGenericDelete(dict *d, const void *key, int nofree) {
                 }
                 d->ht_used[table]--;
                 return he;
-            }
-            else {
+            } else {
                 // 在key不匹配的情况下,后移
                 prevHe = he;
                 he = he->next;
@@ -490,8 +490,8 @@ dictEntry *dictFind(dict *d, const void *key) {
     if (dictIsRehashing(d)) {
         _dictRehashStep(d);
     }
-    // 计算key的哈希值
-    h = dictHashKey(d, key);
+    // 计算key的哈希值,调用dict 对应的hash函数
+    h = dictHashKey(d, key); // dictSdsCaseHash
 
     // old 长度为 8
     // new 长度为 16
@@ -526,6 +526,7 @@ dictEntry *dictFind(dict *d, const void *key) {
 // 获取包含给定键的节点的值; 如果节点不为空,返回节点的值,否则返回 NULL
 void *dictFetchValue(dict *d, const void *key) {
     dictEntry *he;
+//  server.commands=dictCreate(&commandTableDictType);   dictSdsCaseHash
     he = dictFind(d, key);
     return he ? dictGetVal(he) : NULL;
 }
@@ -535,10 +536,10 @@ unsigned long long dictFingerprint(dict *d) {
     unsigned long long integers[6], hash = 0;
     int j;
 
-    integers[0] = (long)d->ht_table[0];
+    integers[0] = (long) d->ht_table[0];
     integers[1] = d->ht_size_exp[0];
     integers[2] = d->ht_used[0];
-    integers[3] = (long)d->ht_table[1];
+    integers[3] = (long) d->ht_table[1];
     integers[4] = d->ht_size_exp[1];
     integers[5] = d->ht_used[1];
 
@@ -596,8 +597,7 @@ dictEntry *dictNext(dictIterator *iter) {
                 // 如果是安全迭代器,那么更新安全迭代器计数器
                 if (iter->safe) {
                     dictPauseRehashing(iter->d);
-                }
-                else {
+                } else {
                     // 如果是不安全迭代器,那么计算ht[0] ht[1]状态
                     iter->fingerprint = dictFingerprint(iter->d);
                 }
@@ -607,15 +607,14 @@ dictEntry *dictNext(dictIterator *iter) {
 
             // 如果迭代器的当前索引大于当前被迭代的哈希表的大小
             // 那么说明这个哈希表已经迭代完毕
-            if (iter->index >= (long)DICTHT_SIZE(iter->d->ht_size_exp[iter->table])) {
+            if (iter->index >= (long) DICTHT_SIZE(iter->d->ht_size_exp[iter->table])) {
                 // 如果正在 rehash 的话,那么说明 1 号哈希表也正在使用中
                 // 那么继续对 1 号哈希表进行迭代
                 if (dictIsRehashing(iter->d) && iter->table == 0) {
                     iter->table++;
                     iter->index = 0;
                     // 如果没有 rehash ,那么说明迭代已经完成
-                }
-                else {
+                } else {
                     break;
                 }
             }
@@ -623,8 +622,7 @@ dictEntry *dictNext(dictIterator *iter) {
             // 如果进行到这里,说明这个哈希表并未迭代完
             // 更新节点指针,指向下个索引链表的表头节点
             iter->entry = iter->d->ht_table[iter->table][iter->index];
-        }
-        else {
+        } else {
             // 执行到这里,说明程序正在迭代某个链表
             // 将节点指针指向链表的下个节点
             iter->entry = iter->nextEntry;
@@ -675,8 +673,7 @@ dictEntry *dictGetRandomKey(dict *d) {
             h = d->rehashidx + (randomULong() % (dictSlots(d) - d->rehashidx));
             he = (h >= s0) ? d->ht_table[1][h - s0] : d->ht_table[0][h];
         } while (he == NULL);
-    }
-    else {
+    } else {
         // 否则,只从 0 号哈希表中查找节点
         unsigned long m = DICTHT_SIZE_MASK(d->ht_size_exp[0]);
         do {
@@ -760,7 +757,7 @@ unsigned int dictGetSomeKeys(dict *d, dictEntry **des, unsigned int count) {
             /* Invariant of the dict.c rehashing: up to the indexes already
              * visited in ht[0] during the rehashing, there are no populated
              * buckets, so we can skip ht[0] for indexes between 0 and idx-1. */
-            if (tables == 2 && j == 0 && i < (unsigned long)d->rehashidx) {
+            if (tables == 2 && j == 0 && i < (unsigned long) d->rehashidx) {
                 /* Moreover, if we are currently out of range in the second
                  * table, there will be no elements in both tables up to
                  * the current rehashing index, so we jump if possible.
@@ -782,8 +779,7 @@ unsigned int dictGetSomeKeys(dict *d, dictEntry **des, unsigned int count) {
                     i = randomULong() & maxsizemask;
                     emptylen = 0;
                 }
-            }
-            else {
+            } else {
                 emptylen = 0;
                 while (he) {
                     /* Collect all the elements of the buckets found non
@@ -891,7 +887,8 @@ static unsigned long rev(unsigned long v) {
  * 2) 为了不错过任何元素,迭代器需要返回给定桶上的所有键,以及因为扩展哈希表而产生出来的新表,所以迭代器必须在一次迭代中返回多个元素.
  * 3) 对游标进行翻转（reverse）的原因初看上去比较难以理解,不过阅读这份注释应该会有所帮助.
  */
-unsigned long dictScan(dict *d, unsigned long v, dictScanFunction *fn, dictScanBucketFunction *bucketfn, void *privdata) {
+unsigned long
+dictScan(dict *d, unsigned long v, dictScanFunction *fn, dictScanBucketFunction *bucketfn, void *privdata) {
     int htidx0, htidx1;
     const dictEntry *de, *next;
     unsigned long m0, m1;
@@ -924,8 +921,7 @@ unsigned long dictScan(dict *d, unsigned long v, dictScanFunction *fn, dictScanB
         v = rev(v);
         v++;
         v = rev(v);
-    }
-    else {
+    } else {
         // 指向两个哈希表
         htidx0 = 0;
         htidx1 = 1;
@@ -991,7 +987,7 @@ static int dictTypeExpandAllowed(dict *d) {
     // 扩容后的大小
     size_t a = DICTHT_SIZE(_dictNextExp(d->ht_used[0] + 1)) * sizeof(dictEntry *);
     // 当前的负载因子
-    double b = (double)d->ht_used[0] / DICTHT_SIZE(d->ht_size_exp[0]);
+    double b = (double) d->ht_used[0] / DICTHT_SIZE(d->ht_size_exp[0]);
     // 扩容后的大小, 当前的负载因子
     return d->type->expandAllowed(a, b);
 }
@@ -1031,7 +1027,7 @@ static signed char _dictNextExp(unsigned long size) {
         return (8 * sizeof(long) - 1); // TODO ? 啥意思
     }
     while (1) {
-        if (((unsigned long)1 << e) >= size) {
+        if (((unsigned long) 1 << e) >= size) {
             return e;
         }
         e++;
@@ -1171,23 +1167,25 @@ size_t _dictGetStatsHt(char *buf, size_t bufsize, dict *d, int htidx) {
 
     /* Generate human readable stats. */
     l += snprintf(
-        buf + l, bufsize - l,
-        "Hash table %d stats (%s):\n"
-        " table size: %lu\n"
-        " number of elements: %lu\n"
-        " different slots: %lu\n"
-        " max chain length: %lu\n"
-        " avg chain length (counted): %.02f\n"
-        " avg chain length (computed): %.02f\n"
-        " Chain length distribution:\n",
-        htidx, (htidx == 0) ? "main hash table" : "rehashing target", DICTHT_SIZE(d->ht_size_exp[htidx]), d->ht_used[htidx], slots, maxchainlen, (float)totchainlen / slots, (float)d->ht_used[htidx] / slots);
+            buf + l, bufsize - l,
+            "Hash table %d stats (%s):\n"
+            " table size: %lu\n"
+            " number of elements: %lu\n"
+            " different slots: %lu\n"
+            " max chain length: %lu\n"
+            " avg chain length (counted): %.02f\n"
+            " avg chain length (computed): %.02f\n"
+            " Chain length distribution:\n",
+            htidx, (htidx == 0) ? "main hash table" : "rehashing target", DICTHT_SIZE(d->ht_size_exp[htidx]),
+            d->ht_used[htidx], slots, maxchainlen, (float) totchainlen / slots, (float) d->ht_used[htidx] / slots);
 
     for (i = 0; i < DICT_STATS_VECTLEN - 1; i++) {
         if (clvector[i] == 0)
             continue;
         if (l >= bufsize)
             break;
-        l += snprintf(buf + l, bufsize - l, "   %ld: %ld (%.02f%%)\n", i, clvector[i], ((float)clvector[i] / DICTHT_SIZE(d->ht_size_exp[htidx])) * 100);
+        l += snprintf(buf + l, bufsize - l, "   %ld: %ld (%.02f%%)\n", i, clvector[i],
+                      ((float) clvector[i] / DICTHT_SIZE(d->ht_size_exp[htidx])) * 100);
     }
 
     /* Unlike snprintf(), return the number of characters actually written. */

@@ -272,6 +272,7 @@ uint64_t dictSdsHash(const void *key) {
     return dictGenHashFunction((unsigned char *) key, sdslen((char *) key));
 }
 
+// ok
 uint64_t dictSdsCaseHash(const void *key) {
     return dictGenCaseHashFunction((unsigned char *) key, sdslen((char *) key));
 }
@@ -3394,7 +3395,7 @@ int commandCheckExistence(client *c, sds *err) {
         sds cmd = sdsnew((char *) c->argv[0]->ptr);
         sdstoupper(cmd);
         *err = sdsnew(NULL);
-        *err = sdscatprintf(*err, "unknown subcommand '%.128s'. Try %s HELP.", (char *) c->argv[1]->ptr, cmd);
+        *err = sdscatprintf(*err, "未知的子命令 '%.128s'. Try %s HELP.", (char *) c->argv[1]->ptr, cmd);
         sdsfree(cmd);
     } else {
         sds args = sdsempty();
@@ -3402,24 +3403,23 @@ int commandCheckExistence(client *c, sds *err) {
         for (i = 1; i < c->argc && sdslen(args) < 128; i++)
             args = sdscatprintf(args, "'%.*s' ", 128 - (int) sdslen(args), (char *) c->argv[i]->ptr);
         *err = sdsnew(NULL);
-        *err = sdscatprintf(*err, "unknown command '%.128s', with args beginning with: %s", (char *) c->argv[0]->ptr,
+        *err = sdscatprintf(*err, "未知的命令 '%.128s', with args beginning with: %s", (char *) c->argv[0]->ptr,
                             args);
         sdsfree(args);
     }
-    /* Make sure there are no newlines in the string, otherwise invalid protocol
-     * is emitted (The args come from the user, they may contain any character). */
+// 确保字符串中没有换行符，否则将发出无效协议(args来自用户，它们可能包含任何字符)。
     sdsmapchars(*err, "\r\n", "  ", 2);
     return 0;
 }
 
 // 参数个数检查
-// todo ,为什么参数个数要用负数存储呢？
+
 int commandCheckArity(client *c, sds *err) {
-    //  arity 命令执行需要的 参数个数 规定好的
+    //  arity 命令执行需要的 参数个数 规定好的  ， 可以用 -N 表示 >= N
     if ((c->cmd->arity > 0 && c->cmd->arity != c->argc) || (c->argc < -c->cmd->arity)) {
         if (err) {
             *err = sdsnew(NULL);
-            *err = sdscatprintf(*err, "wrong number of arguments for '%s' command", c->cmd->fullname);
+            *err = sdscatprintf(*err, "错误的参数个数，命令： '%s'", c->cmd->fullname);
         }
         return 0;
     }
@@ -3428,10 +3428,8 @@ int commandCheckArity(client *c, sds *err) {
 }
 
 // 这个函数执行时,我们已经读入了一个完整的命令到客户端,
-// 这个函数负责执行这个命令,
-// 或者服务器准备从客户端中进行一次读取.
-// 如果这个函数返回 1 ,那么表示客户端在执行命令之后仍然存在,
-// 调用者可以继续执行其他操作.
+// 这个函数负责执行这个命令,或者服务器准备从客户端中进行一次读取.
+// 如果这个函数返回 1 ,那么表示客户端在执行命令之后仍然存在,调用者可以继续执行其他操作.
 // 否则,如果这个函数返回 0 ,那么表示客户端已经被销毁.
 int processCommand(client *c) {
     if (!scriptIsTimedout()) { // 脚本已经超时
@@ -3451,9 +3449,9 @@ int processCommand(client *c) {
         return C_ERR;
     }
 
-    /* 如果我们在一个模块阻塞的上下文中,产生的结果是希望避免处理客户端,则延迟该命令*/
-    if (server.busy_module_yield_flags != BUSY_MODULE_YIELD_NONE &&
-        !(server.busy_module_yield_flags & BUSY_MODULE_YIELD_CLIENTS)) {
+    if (server.busy_module_yield_flags != BUSY_MODULE_YIELD_NONE &&   // 我们是不是在一个繁忙的模块中
+        !(server.busy_module_yield_flags & BUSY_MODULE_YIELD_CLIENTS) // 如果希望避免处理客户端,则延迟该命令
+            ) {
         c->bpop.timeout = 0; // 设置阻塞超时为0,永不超时？
         blockClient(c, BLOCKED_POSTPONE);
         return C_OK;
@@ -3471,7 +3469,7 @@ int processCommand(client *c) {
         return C_OK;
     }
 
-    /* 检查该命令是否被标记为protected并且相关配置允许它*/
+    // 检查该命令是否被标记为protected并且相关配置允许它
     if (c->cmd->flags & CMD_PROTECTED) {
         if ((c->cmd->proc == debugCommand && !allowProtectedAction(server.enable_debug_cmd, c)) ||
             (c->cmd->proc == moduleCommand && !allowProtectedAction(server.enable_module_cmd, c))) {
@@ -4884,14 +4882,14 @@ sds genRedisInfoStringCommandStats(sds info, dict *commands) {
             info = sdscatprintf(
                     info,                                                                                           //
                     "cmdstat_%s:calls=%lld,usec=%lld,usec_per_call=%.2f,rejected_calls=%lld,failed_calls=%lld\r\n", //
-                    getSafeInfoString(c->fullname, sdslen(c->fullname),
-                                      &tmpsafe),                                  // 具体命令
-                    c->calls,                                                                                       // 调用次数
-                    c->microseconds,                                                                                // 耗费CPU时间
-                    (c->calls == 0) ? 0 : ((float) c->microseconds /
-                                           c->calls),                                      // 每个命令平均耗费的CPU(单位为微妙)
-                    c->rejected_calls,                                                                              //
-                    c->failed_calls                                                                                 //
+                    getSafeInfoString(
+                            c->fullname, sdslen(c->fullname),
+                            &tmpsafe),                                             // 具体命令
+                    c->calls,                                                  // 调用次数
+                    c->microseconds,                                           // 耗费CPU时间
+                    (c->calls == 0) ? 0 : ((float) c->microseconds / c->calls), // 每个命令平均耗费的CPU(单位为微妙)
+                    c->rejected_calls,                                         //
+                    c->failed_calls                                            //
             );
             if (tmpsafe != NULL) {
                 zfree(tmpsafe);
@@ -6627,7 +6625,7 @@ int main(int argc, char **argv) {
 #endif
 
     setlocale(LC_COLLATE,
-              "");                                                // 函数既可以用来对当前程序进行地域设置（本地设置、区域设置）,也可以用来获取当前程序的地域设置信息.
+              "");                                                            // 函数既可以用来对当前程序进行地域设置（本地设置、区域设置）,也可以用来获取当前程序的地域设置信息.
     tzset();                                                                  // 设置时间环境变量【
     zmalloc_set_oom_handler(redisOutOfMemoryHandler);                         // 内存溢出的注册回调,redisOutOfMemoryHandler只用来打日志
     srand(time(NULL) ^ getpid());                                             // 随机种子

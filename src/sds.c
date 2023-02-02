@@ -26,6 +26,7 @@ int sdsHdrSize(char type) {
     }
     return 0;
 }
+
 // 根据需要的长度,返回可以满足的最小的sds
 static inline char sdsReqType(size_t string_size) {
     if (string_size < 1 << 5)
@@ -964,12 +965,8 @@ void sdsfreesplitres(sds *tokens, int count) {
     s_free(tokens);
 }
 
-/* Append to the sds string "s" an escaped string representation where
- * all the non-printable characters (tested with isprint()) are turned into
- * escapes in the form "\n\r\a...." or "\x<hex-number>".
- *
- * After the call, the modified sds string is no longer valid and all the
- * references must be substituted with the new pointer returned by the call. */
+// 在sds字符串"s"中添加一个转义字符串表示，其中所有不可打印的字符(用isprint()测试)都转换为转义，形式为"\n\r\a...."或"\x&lt;hex-number&gt;"
+// 调用后，修改后的sds字符串不再有效，所有引用必须用调用返回的新指针代替。
 sds sdscatrepr(sds s, const char *p, size_t len) {
     s = sdscatlen(s, "\"", 1);
     while (len--) {

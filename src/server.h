@@ -299,7 +299,7 @@ extern int configOOMScoreAdjValuesDefaults[CONFIG_OOM_COUNT];
 #define CLIENT_MODULE (1 << 27)          /* Non connected client used by some module. */
 #define CLIENT_PROTECTED (1 << 28)       /* Client should not be freed for now. */
 /* #define CLIENT_... (1<<29) currently unused, feel free to use in the future */
-#define CLIENT_PENDING_COMMAND (1 << 30)          /* 指示客户端已准备好执行已完全解析的命令 */
+#define CLIENT_PENDING_COMMAND (1 << 30)          // 在线程I/O中用于在我们返回单线程后发出信号，表明客户端已经挂起了要执行的命令。
 #define CLIENT_TRACKING (1ULL << 31)              // 客户端启用了key跟踪,以便执行客户端缓存.
 #define CLIENT_TRACKING_BROKEN_REDIR (1ULL << 32) /* Target client is invalid. */
 #define CLIENT_TRACKING_BCAST (1ULL << 33)        // 在BCAST模式下跟踪.
@@ -321,7 +321,7 @@ extern int configOOMScoreAdjValuesDefaults[CONFIG_OOM_COUNT];
 #define BLOCKED_MODULE 3   // 加载模块时阻塞
 #define BLOCKED_STREAM 4   /* XREAD. */
 #define BLOCKED_ZSET 5     /* BZPOP et al. */
-#define BLOCKED_POSTPONE 6 /* 被processCommand函数 阻塞,稍后重试处理*/
+#define BLOCKED_POSTPONE 6 // 被processCommand函数 阻塞,稍后重试处理
 #define BLOCKED_SHUTDOWN 7 // 停止
 #define BLOCKED_NUM 8      // 阻塞状态
 
@@ -577,7 +577,7 @@ typedef enum {
 // 在LATENCY_HISTOGRAM_MIN_VALUE和LATENCY_HISTOGRAM_MAX_VALUE范围内保持2位有效数字的值精度.
 //  因此,该范围内的数值量化将不大于任何值的1/100(或1%).每个直方图的总大小应该在40 KiB字节左右.
 
-// 模块繁忙的标志,busy_module_yield_flags
+// 模块繁忙的标志
 #define BUSY_MODULE_YIELD_NONE (0)         // 0
 #define BUSY_MODULE_YIELD_EVENTS (1 << 0)  // 01
 #define BUSY_MODULE_YIELD_CLIENTS (1 << 1) // 10
@@ -816,9 +816,9 @@ typedef struct RedisModuleDigest {
 #define OBJ_FIRST_SPECIAL_REFCOUNT OBJ_STATIC_REFCOUNT
 // unsigned  4字节
 typedef struct redisObject { // 16个字节
-    unsigned type : 4;       // 类型 4bits  表示值的类型,涵盖了我们前面学习的五大基本类型;
-    unsigned encoding : 4;   // 编码 4bits  基本类型的底层数据结构,例如 SDS、压缩列表、哈希表、跳表等;
-    unsigned lru : LRU_BITS; // 24bits      对象最后一次被访问的时间,在服务器启用了maxmemory时 空转时间较大的哪些键可能会优先被服务器删除
+    unsigned type: 4;       // 类型 4bits  表示值的类型,涵盖了我们前面学习的五大基本类型;
+    unsigned encoding: 4;   // 编码 4bits  基本类型的底层数据结构,例如 SDS、压缩列表、哈希表、跳表等;
+    unsigned lru: LRU_BITS; // 24bits      对象最后一次被访问的时间,在服务器启用了maxmemory时 空转时间较大的哪些键可能会优先被服务器删除
     // 前16位 存储数据的访问时间戳、后8位 表示数据的访问次数
 
     int refcount; // 引用计数 4bytes
@@ -1040,7 +1040,7 @@ typedef struct client {
     long bulklen;                             // 命令内容的长度 在一个批量请求中
     list *reply;                              // 回复链表  可变大小缓冲区由reply链表和一个或多个字符串对象组成
     unsigned long long reply_bytes;           // 回复链表中对象的总大小
-    list *deferred_reply_errors;              /* Used for module thread safe contexts. */
+    list *deferred_reply_errors;              // 用于模块线程安全上下文。
     size_t sentlen;                           // 已发送字节,处理 short write 用
     time_t ctime;                             // 记录了创建客户端的时间
     time_t lastinteraction;                   // 记录了客户端与服务器最后一次进行互动的时间
@@ -1338,7 +1338,9 @@ struct redisMemOverhead {
 /* Replication error behavior determines the replica behavior
  * when it receives an error over the replication stream. In
  * either case the error is logged. */
-typedef enum { PROPAGATION_ERR_BEHAVIOR_IGNORE = 0, PROPAGATION_ERR_BEHAVIOR_PANIC, PROPAGATION_ERR_BEHAVIOR_PANIC_ON_REPLICAS } replicationErrorBehavior;
+typedef enum {
+    PROPAGATION_ERR_BEHAVIOR_IGNORE = 0, PROPAGATION_ERR_BEHAVIOR_PANIC, PROPAGATION_ERR_BEHAVIOR_PANIC_ON_REPLICAS
+} replicationErrorBehavior;
 
 /* This structure can be optionally passed to RDB save/load functions in
  * order to implement additional functionalities, by storing and loading
@@ -1441,7 +1443,12 @@ typedef struct {
 #define CHILD_TYPE_LDB 3
 #define CHILD_TYPE_MODULE 4
 
-typedef enum childInfoType { CHILD_INFO_TYPE_CURRENT_INFO, CHILD_INFO_TYPE_AOF_COW_SIZE, CHILD_INFO_TYPE_RDB_COW_SIZE, CHILD_INFO_TYPE_MODULE_COW_SIZE } childInfoType;
+typedef enum childInfoType {
+    CHILD_INFO_TYPE_CURRENT_INFO,
+    CHILD_INFO_TYPE_AOF_COW_SIZE,
+    CHILD_INFO_TYPE_RDB_COW_SIZE,
+    CHILD_INFO_TYPE_MODULE_COW_SIZE
+} childInfoType;
 
 struct redisServer {
     /* General */
@@ -1476,7 +1483,7 @@ struct redisServer {
     int always_show_logo;                                                    // 即使是非stdout日志也要显示logo
     int in_script;                                                           // 在使用EVAL执行脚本中
     int in_exec;                                                             // 在使用EXEC执行脚本中
-    int busy_module_yield_flags;                                             /* 我们在一个繁忙的模块中吗?(由RM_Yield触发).看到BUSY_MODULE_YIELD_ 标志.*/
+    int busy_module_yield_flags;                                             // 我们在一个繁忙的模块中吗?(由RM_Yield触发).看到BUSY_MODULE_YIELD_flag
     const char *busy_module_yield_reply;                                     // 非空,意味着处于RM_Yield状态  ,等会回复消息
     int core_propagates;                                                     // 是核心(相对于模块子系统)负责调用 propagatePendingCommands 吗?
     int propagate_no_multi;                                                  /* True if propagatePendingCommands should avoid wrapping command in MULTI/EXEC */
@@ -1511,7 +1518,7 @@ struct redisServer {
     list *clients_pending_read;                                              // 连接加入到等待读处理队列.
     list *slaves;                                                            // 保存了所有从服务器
     list *monitors;                                                          // 保存了所有监视器
-    client *current_client;                                                  // 服务器的当前客户端,仅用于崩溃报告
+    client *current_client;                                                  // 服务器处理中的客户端,仅用于崩溃报告
     int clients_paused;                                                      // 如果客户端当前处于暂停状态,则为True
     clientMemUsageBucket client_mem_usage_buckets[CLIENT_MEM_USAGE_BUCKETS]; // 19  客户端使用的内存 进行存储
     rax *clients_timeout_table;                                              // 存放 超时的 阻塞客户端 的 前缀树.
@@ -1519,7 +1526,7 @@ struct redisServer {
     int in_nested_call;                                                      // If > 0, 嵌套调用中
     rax *clients_index;                                                      // 按客户端ID存储的前缀树
     pause_type client_pause_type;                                            // 如果客户端当前处于暂停状态,则为True
-    list *postponed_clients;                                                 /* List of postponed clients */
+    list *postponed_clients;                                       // 系统繁忙，而被延迟处理的client
     mstime_t client_pause_end_time;                                          // 撤销暂停的时间
     pause_event *client_pause_per_purpose[NUM_PAUSE_PURPOSES];               //
     char neterr[ANET_ERR_LEN];                                               // 网络错误
@@ -1582,7 +1589,7 @@ struct redisServer {
     long long slowlog_log_slower_than;                  // 慢日志事件判断 slowlog-log-slower-than 选项的值
     unsigned long slowlog_max_len;                      // 慢日志数量 slowlog-max-len 选项的值
     struct malloc_stats cron_malloc_stats;              /* sampled in serverCron(). */
-    redisAtomic long long stat_net_input_bytes;         /* 从网络读取到的字节数 */
+    redisAtomic long long stat_net_input_bytes;         // 从网络读取到的字节数
     redisAtomic long long stat_net_output_bytes;        /* 写到网络的字节数 */
     size_t stat_current_cow_peak;                       /* Peak size of copy on write bytes. */
     size_t stat_current_cow_bytes;                      /* Copy on write bytes while child is active. */
@@ -1807,7 +1814,7 @@ struct redisServer {
     int disable_thp;                            // If true, disable THP by syscall */
     // 阻塞的客户端
     unsigned int blocked_clients;                      // 执行阻塞cmd的客户端
-    unsigned int blocked_clients_by_type[BLOCKED_NUM]; //
+    unsigned int blocked_clients_by_type[BLOCKED_NUM]; // 每种阻塞类型的计数
     list *unblocked_clients;                           // 在下一个循环之前要解除阻塞的客户端列表
     list *ready_keys;                                  // BLPOP & co的readyList结构的列表
     // 客户端缓存
@@ -1977,8 +1984,7 @@ typedef struct {
     const char *notes;
     uint64_t flags;
     kspec_bs_type begin_search_type;
-    union
-    {
+    union {
         struct {
             /* The index from which we start the search for keys */
             int pos;
@@ -1993,8 +1999,7 @@ typedef struct {
         } keyword;
     } bs;
     kspec_fk_type find_keys_type;
-    union
-    {
+    union {
         /* NOTE: Indices in this struct are relative to the result of the begin_search step!
          * These are: range.lastkey, keynum.keynumidx, keynum.firstkey */
         struct {
@@ -3127,7 +3132,8 @@ int zsetDel(robj *zobj, sds ele);
 
 robj *zsetDup(robj *o);
 
-void genericZpopCommand(client *c, robj **keyv, int keyc, int where, int emitkey, long count, int use_nested_array, int reply_nil_when_empty, int *deleted);
+void genericZpopCommand(client *c, robj **keyv, int keyc, int where, int emitkey, long count, int use_nested_array,
+                        int reply_nil_when_empty, int *deleted);
 
 sds lpGetObject(unsigned char *sptr);
 
@@ -3346,7 +3352,8 @@ void hashTypeReleaseIterator(hashTypeIterator *hi);
 
 int hashTypeNext(hashTypeIterator *hi);
 
-void hashTypeCurrentFromListpack(hashTypeIterator *hi, int what, unsigned char **vstr, unsigned int *vlen, long long *vll);
+void
+hashTypeCurrentFromListpack(hashTypeIterator *hi, int what, unsigned char **vstr, unsigned int *vlen, long long *vll);
 
 sds hashTypeCurrentFromHashTable(hashTypeIterator *hi, int what);
 
@@ -3454,9 +3461,11 @@ void addModuleBoolConfig(const char *module_name, const char *name, int flags, v
 
 void addModuleStringConfig(const char *module_name, const char *name, int flags, void *privdata, sds default_val);
 
-void addModuleEnumConfig(const char *module_name, const char *name, int flags, void *privdata, int default_val, configEnum *enum_vals);
+void addModuleEnumConfig(const char *module_name, const char *name, int flags, void *privdata, int default_val,
+                         configEnum *enum_vals);
 
-void addModuleNumericConfig(const char *module_name, const char *name, int flags, void *privdata, long long default_val, int conf_flags, long long lower, long long upper);
+void addModuleNumericConfig(const char *module_name, const char *name, int flags, void *privdata, long long default_val,
+                            int conf_flags, long long lower, long long upper);
 
 void addModuleConfigApply(list *module_configs, ModuleConfig *module_config);
 
@@ -3583,7 +3592,8 @@ void freeReplicationBacklogRefMemAsync(list *blocks, rax *index);
 #define GET_KEYSPEC_INCLUDE_NOT_KEYS (1 << 0) /* Consider 'fake' keys as keys */
 #define GET_KEYSPEC_RETURN_PARTIAL (1 << 1)   /* Return all keys that can be found */
 
-int getKeysFromCommandWithSpecs(struct redisCommand *cmd, robj **argv, int argc, int search_flags, getKeysResult *result);
+int
+getKeysFromCommandWithSpecs(struct redisCommand *cmd, robj **argv, int argc, int search_flags, getKeysResult *result);
 
 keyReference *getKeysPrepareResult(getKeysResult *result, int numkeys);
 
@@ -3718,7 +3728,8 @@ void handleClientsBlockedOnKeys(void);
 
 void signalKeyAsReady(redisDb *db, robj *key, int type);
 
-void blockForKeys(client *c, int btype, robj **keys, int numkeys, long count, mstime_t timeout, robj *target, struct blockPos *blockpos, streamID *ids);
+void blockForKeys(client *c, int btype, robj **keys, int numkeys, long count, mstime_t timeout, robj *target,
+                  struct blockPos *blockpos, streamID *ids);
 
 void updateStatsOnUnblock(client *c, long blocked_us, long reply_us, int had_errors);
 

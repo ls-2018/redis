@@ -10000,6 +10000,7 @@ int RM_UnregisterCommandFilter(RedisModuleCtx *ctx, RedisModuleCommandFilter *fi
     return REDISMODULE_OK;
 }
 
+// 过滤命令
 void moduleCallCommandFilters(client *c) {
     if (listLength(moduleCommandFilters) == 0)
         return;

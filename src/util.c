@@ -45,7 +45,7 @@
 #include <fcntl.h>
 
 #include "util.h"
-#include "sha256.h"
+#include "over-sha256.h"
 #include "config.h"
 
 /* Glob-style pattern matching. */

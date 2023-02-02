@@ -35,7 +35,7 @@ scriptFlag scripts_flags_def[] = {
     {.flag = SCRIPT_FLAG_NO_WRITES, .str = "no-writes"}, {.flag = SCRIPT_FLAG_ALLOW_OOM, .str = "allow-oom"}, {.flag = SCRIPT_FLAG_ALLOW_STALE, .str = "allow-stale"}, {.flag = SCRIPT_FLAG_NO_CLUSTER, .str = "no-cluster"}, {.flag = SCRIPT_FLAG_ALLOW_CROSS_SLOT, .str = "allow-cross-slot-keys"}, {.flag = 0, .str = NULL}, /* flags array end */
 };
 
-/* 在脚本调用时,保存当前运行上下文 */
+// 在脚本调用时,保存当前运行上下文
 static scriptRunCtx *curr_run_ctx = NULL;
 
 static void exitScriptTimedoutMode(scriptRunCtx *run_ctx) {
@@ -55,6 +55,7 @@ static void enterScriptTimedoutMode(scriptRunCtx *run_ctx) {
     run_ctx->flags |= SCRIPT_TIMEDOUT;
     blockingOperationStarts();
 }
+
 // 脚本是否运行超时
 int scriptIsTimedout() {
     return scriptIsRunning() && (curr_run_ctx->flags & SCRIPT_TIMEDOUT);

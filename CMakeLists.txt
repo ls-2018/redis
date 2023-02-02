@@ -96,7 +96,7 @@ set(SRC_SERVER_TMP
         src/acl.c
         src/tls.c
         src/geohash.c
-        src/sha256.c
+        src/over-sha256.c
         src/siphash.c
         src/crc64.c
         src/resp_parser.c

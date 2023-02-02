@@ -2033,7 +2033,6 @@ int handleClientsWithPendingWrites(void) {
     return processed;
 }
 
-/* resetClient prepare the client to process the next command */
 // 在客户端执行完命令之后执行：重置客户端以准备执行下个命令
 void resetClient(client *c) {
     redisCommandProc *prevcmd = c->cmd ? c->cmd->proc : NULL;
@@ -2044,12 +2043,12 @@ void resetClient(client *c) {
     c->bulklen = -1;
     c->slot = -1;
 
-    if (c->deferred_reply_errors)
+    if (c->deferred_reply_errors) {
         listRelease(c->deferred_reply_errors);
+    }
     c->deferred_reply_errors = NULL;
 
-    /* We clear the ASKING flag as well if we are not inside a MULTI, and
-     * if what we just executed is not the ASKING command itself. */
+    // 如果我们不在MULTI中，如果我们刚刚执行的不是ask命令本身，我们也会清除ask标志。
     if (!(c->flags & CLIENT_MULTI) && prevcmd != askingCommand)
         c->flags &= ~CLIENT_ASKING;
 
@@ -2452,8 +2451,7 @@ void commandProcessed(client *c) {
 }
 
 // 这个函数执行时,我们已经读入了一个完整的命令到客户端,
-// 这个函数负责执行这个命令,
-// 或者服务器准备从客户端中进行一次读取.
+// 这个函数负责执行这个命令,或者服务器准备从客户端中进行一次读取.
 int processCommandAndResetClient(client *c) {
     int deadclient = 0;
     client *old_client = server.current_client;
@@ -2514,13 +2512,13 @@ int processInputBuffer(client *c) {
         if (c->flags & CLIENT_BLOCKED)
             break;
 
-        /* 不要处理来自客户端的更多缓冲区,这些缓冲区已经在c-argv中执行了挂起的命令.*/
+        // 不要处理来自客户端的更多缓冲区,这些缓冲区已经在c-argv中执行了挂起的命令
         if (c->flags & CLIENT_PENDING_COMMAND) {
             break;
         }
 
-        /* 当slave机器上有繁忙的脚本运行时,不要处理master节点上的输入.
-         * 我们只希望积累复制流(而不是像我们对其他客户端所做的那样回复-BUSY),然后恢复处理. */
+        // 当slave机器上有繁忙的脚本运行时,不要处理master节点上的输入.
+        // 我们只希望积累复制流(而不是像我们对其他客户端所做的那样回复-BUSY),然后恢复处理.
         if (scriptIsTimedout() && c->flags & CLIENT_MASTER) {
             break;
         }
@@ -2556,13 +2554,14 @@ int processInputBuffer(client *c) {
         else {
             serverPanic("未知的请求类型");
         }
-
+        sds bytes = sdsempty();
+        serverLog(LL_DEBUG, "请求参数长度%d:%s", c->argc, sdscatrepr(bytes, c->querybuf, sdslen(c->querybuf)));
         // Multibulk 处理可能看到a<=0   // 例如通过 nc 直接敲空格
         if (c->argc == 0) {
-            resetClient(c);
+            resetClient(c); // ✅
         }
         else {
-            /* 如果我们在一个I/O线程的上下文中,我们不能真正执行这里的命令.我们所能做的就是将客户端标记为需要处理命令的客户端.*/
+            // 如果我们在一个I/O线程的上下文中,我们不能真正执行这里的命令.我们所能做的就是将客户端标记为需要处理命令的客户端.
             if (io_threads_op != IO_THREADS_OP_IDLE) {
                 serverAssert(io_threads_op == IO_THREADS_OP_READ);
                 c->flags |= CLIENT_PENDING_COMMAND;
@@ -2704,9 +2703,7 @@ void readQueryFromClient(connection *conn) {
     if (c->querybuf_peak < qblen) { // 如果有需要,更新缓冲区内容长度的峰值（peak）
         c->querybuf_peak = qblen;
     }
-
-    printf("c->querybuf --> %zu  %zu\n", sdslen(c->querybuf) - old_qblen, readlen);
-    //    printf("c->querybuf --> %s\n", print_str(c->querybuf));
+    serverLog(LL_DEBUG, "c->querybuf --> %zu  %zu\n", sdslen(c->querybuf) - old_qblen, readlen);
     c->lastinteraction = server.unixtime; // 记录服务器和客户端最后一次互动的时间
 
     if (c->flags & CLIENT_MASTER) {
