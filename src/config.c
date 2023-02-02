@@ -2774,6 +2774,7 @@ static sds getConfigReplicaOfOption(standardConfig *config) {
     return sdsnew(buf);
 }
 
+// 是否允许启用Protected命令
 int allowProtectedAction(int config, client *c) {
     return (config == PROTECTED_ACTION_ALLOWED_YES) || (config == PROTECTED_ACTION_ALLOWED_LOCAL && islocalClient(c));
 }

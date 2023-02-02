@@ -114,7 +114,10 @@ static void clientSetDefaultAuth(client *c) {
 
 // 检查是否需要认证
 int authRequired(client *c) {
-    int auth_required = (!(DefaultUser->flags & USER_FLAG_NOPASS) || (DefaultUser->flags & USER_FLAG_DISABLED)) && !c->authenticated;
+    int auth_required = (!(DefaultUser->flags & USER_FLAG_NOPASS) || // 需要密码
+                         (DefaultUser->flags & USER_FLAG_DISABLED)   // 用户已禁用
+                         ) &&
+                        !c->authenticated; // 没有认证过
     return auth_required;
 }
 

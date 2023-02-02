@@ -21,14 +21,14 @@
 #define CLUSTER_SLAVE_MIGRATION_DELAY 5000  /* Delay for slave migration. */
 
 /* Redirection errors returned by getNodeByQuery(). */
-#define CLUSTER_REDIR_NONE 0          /* Node can serve the request. */
+#define CLUSTER_REDIR_NONE 0          // 节点可以为请求提供服务
 #define CLUSTER_REDIR_CROSS_SLOT 1    // 表示客户端请求的 keys 并没有在同一个哈希 slot 中.../* -CROSSSLOT request. */
 #define CLUSTER_REDIR_UNSTABLE 2      /* -TRYAGAIN redirection required */
 #define CLUSTER_REDIR_ASK 3           // 此时表示客户端请求的 key 正在迁移中   /* -ASK redirection required. */
 #define CLUSTER_REDIR_MOVED 4         // 此时表示客户端请求的 key 已经迁移到其他集群节点./* -MOVED redirection required. */
 #define CLUSTER_REDIR_DOWN_STATE 5    /* -CLUSTERDOWN, global state. */
-#define CLUSTER_REDIR_DOWN_UNBOUND 6  /* -CLUSTERDOWN, unbound slot. */
-#define CLUSTER_REDIR_DOWN_RO_STATE 7 /* -CLUSTERDOWN, allow reads. */
+#define CLUSTER_REDIR_DOWN_UNBOUND 6  /* -CLUSTERDOWN, 没绑定 slot. */
+#define CLUSTER_REDIR_DOWN_RO_STATE 7 /* -CLUSTERDOWN, 允许读 */
 
 struct clusterNode;
 
@@ -101,7 +101,7 @@ typedef struct clusterLink {
 // 模块可以设置的标志,以防止某些Redis Cluster功能被启用.当使用模块在Redis Cluster消息总线上实现不同的分布式系统时,是非常有用的.
 #define CLUSTER_MODULE_FLAG_NONE 0
 #define CLUSTER_MODULE_FLAG_NO_FAILOVER (1 << 1)
-#define CLUSTER_MODULE_FLAG_NO_REDIRECTION (1 << 2)
+#define CLUSTER_MODULE_FLAG_NO_REDIRECTION (1 << 2) // 集群key重定向功能被禁止
 
 /* This structure represent elements of node->fail_reports. */
 typedef struct clusterNodeFailReport {

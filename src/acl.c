@@ -1817,7 +1817,7 @@ int ACLCheckAllUserCommandPerm(user *u, struct redisCommand *cmd, robj **argv, i
     listIter li;
     listNode *ln;
 
-    /* 如果没有关联的用户,连接可以运行任何东西. */
+    // 如果没有关联的用户,连接可以运行任何东西.
     if (u == NULL) {
         return ACL_OK;
     }
@@ -1851,7 +1851,7 @@ int ACLCheckAllUserCommandPerm(user *u, struct redisCommand *cmd, robj **argv, i
     return relevant_error;
 }
 
-// 检查客户端是否可以执行排队命令
+// 检查客户端是否可以执行排队中的命令
 int ACLCheckAllPerm(client *c, int *idxptr) {
     return ACLCheckAllUserCommandPerm(c->user, c->cmd, c->argv, c->argc, idxptr);
 }

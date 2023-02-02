@@ -6515,72 +6515,47 @@ void readwriteCommand(client *c) {
     addReply(c, shared.ok);
 }
 
-/* Return the pointer to the cluster node that is able to serve the command.
- * For the function to succeed the command should only target either:
+/* 返回指向能够执行该命令的集群节点的指针。
+ * 1、单个键
+ * 2、在同一个哈希槽中有多个键，而该槽是稳定的(没有正在重新分片)。
  *
- * 1) A single key (even multiple times like LPOPRPUSH mylist mylist).
- * 2) Multiple keys in the same hash slot, while the slot is stable (no
- *    resharding in progress).
- *
- * On success the function returns the node that is able to serve the request.
- * If the node is not 'myself' a redirection must be performed. The kind of
- * redirection is specified setting the integer passed by reference
- * 'error_code', which will be set to CLUSTER_REDIR_ASK or
- * CLUSTER_REDIR_MOVED.
- *
- * When the node is 'myself' 'error_code' is set to CLUSTER_REDIR_NONE.
- *
- * If the command fails NULL is returned, and the reason of the failure is
- * provided via 'error_code', which will be set to:
- *
- * CLUSTER_REDIR_CROSS_SLOT if the request contains multiple keys that
- * don't belong to the same hash slot.
- *
- * CLUSTER_REDIR_UNSTABLE if the request contains multiple keys
- * belonging to the same slot, but the slot is not stable (in migration or
- * importing state, likely because a resharding is in progress).
- *
- * CLUSTER_REDIR_DOWN_UNBOUND if the request addresses a slot which is
- * not bound to any node. In this case the cluster global state should be
- * already "down" but it is fragile to rely on the update of the global state,
- * so we also handle it here.
- *
- * CLUSTER_REDIR_DOWN_STATE and CLUSTER_REDIR_DOWN_RO_STATE if the cluster is
- * down but the user attempts to execute a command that addresses one or more keys. */
-// getNodeByQuery 函数返回 null 结果,通常是表示集群不可用、key 找不到对应的 slot、操作的 key 不在同一个 slot 中、key 正在迁移等这些情况.
+ * 如果成功，函数返回能够服务请求的节点。
+ * 如果节点不是“myself”，则必须执行重定向。重定向的类型是通过设置引用'error_code'传递的整数来指定的，它将被设置为CLUSTER_REDIR_ASK或CLUSTER_REDIR_MOVED。
+ * CLUSTER_REDIR_NONE myself
+ * CLUSTER_REDIR_UNSTABLE 包含多个key,但slot正在迁移
+ * CLUSTER_REDIR_DOWN_UNBOUND 对应节点已经下线(依赖全局状态)
+ * CLUSTER_REDIR_DOWN_STATE和CLUSTER_REDIR_DOWN_RO_STATE如果集群处于关闭状态，但用户试图执行一个或多个键的命令
+ */
 clusterNode *getNodeByQuery(client *c, struct redisCommand *cmd, robj **argv, int argc, int *hashslot, int *error_code) {
     clusterNode *n = NULL;
     robj *firstkey = NULL;
     int multiple_keys = 0;
-    multiState *ms, _ms;
+    multiState *ms; // 当前客户端的事务状态
+    multiState _ms;
     multiCmd mc;
     int i, slot = 0, migrating_slot = 0, importing_slot = 0, missing_keys = 0;
 
-    /* Allow any key to be set if a module disabled cluster redirections. */
-    if (server.cluster_module_flags & CLUSTER_MODULE_FLAG_NO_REDIRECTION)
+    // 如果模块禁用集群重定向，则允许设置任何键。
+    if (server.cluster_module_flags & CLUSTER_MODULE_FLAG_NO_REDIRECTION) {
         return myself;
+    }
 
-    /* Set error code optimistically for the base case. */
-    if (error_code)
+    // 默认错误代码。
+    if (error_code) {
         *error_code = CLUSTER_REDIR_NONE;
+    }
 
-    /* Modules can turn off Redis Cluster redirection: this is useful
-     * when writing a module that implements a completely different
-     * distributed system. */
-
-    /* We handle all the cases as if they were EXEC commands, so we have
-     * a common code path for everything */
+    // 模块可以关闭Redis集群重定向:这在编写实现完全不同的分布式系统的模块时很有用。
+    // 我们处理所有的情况，就好像它们是EXEC命令一样，所以我们有一个通用的代码路径
     if (cmd->proc == execCommand) {
-        /* If CLIENT_MULTI flag is not set EXEC is just going to return an
-         * error. */
-        if (!(c->flags & CLIENT_MULTI))
+        // 如果没有设置CLIENT_MULTI标志，EXEC就会返回一个错误。
+        if (!(c->flags & CLIENT_MULTI)) {
             return myself;
+        }
         ms = &c->mstate;
     }
     else {
-        /* In order to have a single codepath create a fake Multi State
-         * structure if the client is not in MULTI/EXEC state, this way
-         * we have a single codepath below. */
+        // 如果客户端不在Multi/EXEC状态，为了有一个单独的代码路径来创建一个伪多态结构，我们在下面有一个单独的代码路径。
         ms = &_ms;
         _ms.commands = &mc;
         _ms.count = 1;
