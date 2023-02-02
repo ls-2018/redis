@@ -1479,7 +1479,7 @@ struct redisServer {
     int busy_module_yield_flags;                                             // 我们在一个繁忙的模块中吗?(由RM_Yield触发).看到BUSY_MODULE_YIELD_flag
     const char *busy_module_yield_reply;                                     // 非空,意味着处于RM_Yield状态  ,等会回复消息
     int core_propagates;                                                     // 是核心(相对于模块子系统)负责调用 propagatePendingCommands 吗?
-    int propagate_no_multi;                                                  /* True if propagatePendingCommands should avoid wrapping command in MULTI/EXEC */
+    int propagate_no_multi;                                                  // 是否避免在MULTI/EXEC中传播命令
     int module_ctx_nesting;                                                  /* moduleCreateContext() nesting level */
     char *ignore_warnings;                                                   /* Config: warnings that should be ignored. */
     int client_pause_in_transaction;                                         // 在执行期间是否执行了客户端暂停?
@@ -1794,7 +1794,7 @@ struct redisServer {
     int get_ack_from_slaves;    // 如果为真,我们发送REPLCONF GETACK.
     // 限流
     unsigned int maxclients;                    // 最大并发客户端数  【集群使用的链接数、以及client使用的链接】
-    unsigned long long maxmemory;               // 内存使用的最大字节数 */
+    unsigned long long maxmemory;               // 内存使用的最大字节数
     ssize_t maxmemory_clients;                  // 客户端总缓冲区的内存限制 */
     int maxmemory_policy;                       // key驱逐策略 */
     int maxmemory_samples;                      // 缓存淘汰时, 随机抽样的个数
@@ -1811,7 +1811,7 @@ struct redisServer {
     list *unblocked_clients;                           // 在下一个循环之前要解除阻塞的客户端列表
     list *ready_keys;                                  // BLPOP & co的readyList结构的列表
     // 客户端缓存
-    unsigned int tracking_clients;  // 启用跟踪的客户端.
+    unsigned int tracking_clients;  // 正在等待阻塞命令(BLPOP、BRPOP、BRPOPLPUSH)的客户端的数量.
     size_t tracking_table_max_keys; // 跟踪表中的最大key数
     list *tracking_pending_keys;    // tracking invalidation keys pending to flush */
     /* Sort parameters - qsort_r() is only available under BSD so we
@@ -2797,6 +2797,7 @@ unsigned long long estimateObjectIdleTime(robj *o);
 
 void trimStringObjectIfNeeded(robj *o);
 
+// ok
 #define sdsEncodedObject(objptr) (objptr->encoding == OBJ_ENCODING_RAW || objptr->encoding == OBJ_ENCODING_EMBSTR)
 
 /* Synchronous I/O with timeout */

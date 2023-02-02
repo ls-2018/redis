@@ -3080,19 +3080,12 @@ int incrCommandStatsOnError(struct redisCommand *cmd, int flags) {
 // 调用命令的实现函数,执行命令
 void call(client *c, int flags) {
     // 调用函数
-    // processCommand
-    // RM_Call
-    // execCommand
-    // scriptCall
     long long dirty;
     uint64_t client_old_flags = c->flags; // 记录命令开始执行前的 FLAG
     struct redisCommand *real_cmd = c->realcmd;
     // 重置 AOF、REPL 传播标志; AOF、REPL 禁止传播标志
     c->flags &= ~(CLIENT_FORCE_AOF | CLIENT_FORCE_REPL | CLIENT_PREVENT_PROP);
 
-    //    当call()的第一个入口点是processCommand()时,Redis的核心是负责传播.
-    //    在没有processCommand作为入口点的情况下调用()的唯一其他选项是,如果模块在call()上下文之外触发RM_Call(例如,在计时器中).
-    //    在这种情况下,模块负责传播.因为call()是可重入的,我们必须缓存和恢复server.core_propagates.
     int prev_core_propagates = server.core_propagates;
     if (!server.core_propagates && !(flags & CMD_CALL_FROM_MODULE)) {
         // core_propagates 为0,且不是从module调用的
@@ -3106,18 +3099,17 @@ void call(client *c, int flags) {
     const long long call_timer = ustime(); // 计算命令开始执行的时间
 
     // 更新缓存时间,如果我们有嵌套调用,我们希望只在第一次调用时更新
-
     if (server.fixed_time_expire == 0) {
         server.fixed_time_expire++;
-        updateCachedTimeWithUs(0, call_timer);
+        updateCachedTimeWithUs(0, call_timer); // 更新server缓存的时间
     }
 
     monotime monotonic_start = 0;
-    if (monotonicGetType() == MONOTONIC_CLOCK_HW) {
+    if (monotonicGetType() == MONOTONIC_CLOCK_HW) { // 单调时钟类型
         monotonic_start = getMonotonicUs();
     }
 
-    server.in_nested_call++;
+    server.in_nested_call++; // 表示嵌套层级
     // 执行实现函数
     c->cmd->proc(c);
     server.in_nested_call--;
@@ -3551,7 +3543,7 @@ int processCommand(client *c) {
         // 或者客户端执行的是无参数命令
     }
 
-    /* 如果客户端总内存过高,则断开一些客户端.我们在删除键之前、在执行最后一个命令并消耗了一些客户端输出缓冲区内存之后执行此操作.*/
+    // 如果客户端总内存过高,则断开一些客户端.我们在删除键之前、在执行最后一个命令并消耗了一些客户端输出缓冲区内存之后执行此操作.
     evictClients(); // 驱逐客户端
     if (server.current_client == NULL) {
         // 如果我们驱逐自己,那么就中止处理命令
@@ -3597,12 +3589,12 @@ int processCommand(client *c) {
         }
     }
 
-    /* 确保为客户端缓存元数据使用合理的内存量. */
+    // 确保为客户端缓存元数据使用合理的内存量
     if (server.tracking_clients) {
         trackingLimitUsedSlots();
     }
 
-    /* 不要接受写命令,如果有问题持续在磁盘上,除非来自我们的主机,在这种情况下,检查副本忽略磁盘写错误配置,要么日志或崩溃.*/
+    // 检查磁盘是否有问题
     int deny_write_type = writeCommandsDeniedByDiskError();
     if (deny_write_type != DISK_ERROR_TYPE_NONE && (is_write_command || c->cmd->proc == pingCommand)) {
         // 磁盘有问题, 写命令|| ping命令
@@ -3628,8 +3620,7 @@ int processCommand(client *c) {
 
     // 如果一定数量的好的slave, 不接受写命令
     // 通过min-slaves-to-write配置
-    if (is_write_command && !checkGoodReplicasStatus()) {
-        //    if (!checkGoodReplicasStatus() && is_write_command) {
+    if (is_write_command && !checkGoodReplicasStatus()) { // 没有 有效的副本
         rejectCommand(c, shared.noreplicaserr);
         return C_OK;
     }
@@ -3641,17 +3632,18 @@ int processCommand(client *c) {
     }
 
     // 订阅发布, 在RESP2中只允许一部分命令, RESP3没有限制
-    if ((c->flags & CLIENT_PUBSUB && c->resp == 2) && c->cmd->proc != pingCommand && c->cmd->proc != subscribeCommand && c->cmd->proc != ssubscribeCommand && c->cmd->proc != unsubscribeCommand && c->cmd->proc != sunsubscribeCommand && c->cmd->proc != psubscribeCommand && c->cmd->proc != punsubscribeCommand && c->cmd->proc != quitCommand &&
-        c->cmd->proc != resetCommand) {
-        // pingCommand
-        // subscribeCommand
-        // ssubscribeCommand
-        // unsubscribeCommand
-        // sunsubscribeCommand
-        // psubscribeCommand
-        // punsubscribeCommand
-        // quitCommand
-        // resetCommand
+    if (                                              //
+        (c->flags & CLIENT_PUBSUB && c->resp == 2) && //
+        c->cmd->proc != pingCommand &&                //
+        c->cmd->proc != subscribeCommand &&           //
+        c->cmd->proc != ssubscribeCommand &&          //
+        c->cmd->proc != unsubscribeCommand &&         //
+        c->cmd->proc != sunsubscribeCommand &&        //
+        c->cmd->proc != psubscribeCommand &&          //
+        c->cmd->proc != punsubscribeCommand &&        //
+        c->cmd->proc != quitCommand &&                //
+        c->cmd->proc != resetCommand                  //
+    ) {
         // 这些命令, 只能在RESP3协议中使用
         rejectCommandFormat(c, "不能执行'%s': 在当前上下文中只允许 (P|S)SUBSCRIBE / (P|S)UNSUBSCRIBE / PING / QUIT / RESET 命令的执行", c->cmd->fullname);
         return C_OK;
@@ -3717,9 +3709,8 @@ int processCommand(client *c) {
     }
     else {
         // 执行命令
-        call(c, CMD_CALL_FULL); // 调用call函数执行命令
+        call(c, CMD_CALL_FULL); // 调用call函数执行命令  processCommand
         c->woff = server.master_repl_offset;
-
         if (listLength(server.ready_keys)) {
             // 处理那些解除了阻塞的键
             handleClientsBlockedOnKeys();
@@ -4042,7 +4033,7 @@ sds writeCommandsGetDiskErrorMessage(int error_code) {
         ret = sdsdup(shared.bgsaveerr->ptr);
     }
     else {
-        ret = sdscatfmt(sdsempty(), "-MISCONF Errors writing to the AOF file: %s", strerror(server.aof_last_write_errno));
+        ret = sdscatfmt(sdsempty(), "-MISCONF 写AOF文件出现错误: %s", strerror(server.aof_last_write_errno));
     }
     return ret;
 }

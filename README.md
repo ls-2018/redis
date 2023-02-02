@@ -843,6 +843,10 @@ https://blog.csdn.net/u012422440/article/details/103536687
 
     当集群不可用、key 找不到对应的 slot、key 不在当前实例中、操作的 key 不在同一个 slot 中,或者 key 正在迁移等这几种情况发生时,事务的执行都会被放弃
 
+
+## 
+- 解析客户端命令 processInlineBuffer、processMultibulkBuffer
+
 # todo
 
 server.clients_to_close 操作 为啥要加锁？

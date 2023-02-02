@@ -25,19 +25,17 @@ void freeClientMultiState(client *c) {
     zfree(c->mstate.commands);
 }
 
-/* Add a new command into the MULTI commands queue */
+// 向MULTI命令队列中添加一个新命令
 void queueMultiCommand(client *c) {
     multiCmd *mc;
 
-    /* No sense to waste memory if the transaction is already aborted.
-     * this is useful in case client sends these in a pipeline, or doesn't
-     * bother to read previous responses and didn't notice the multi was already
-     * aborted. */
-    if (c->flags & (CLIENT_DIRTY_CAS | CLIENT_DIRTY_EXEC))
+    // 如果事务已经中止，则没有必要浪费内存。这是有用的情况下客户端发送这些在管道，或不麻烦阅读以前的响应，没有注意到多已经中止。
+    if (c->flags & (CLIENT_DIRTY_CAS | CLIENT_DIRTY_EXEC)) {
         return;
+    }
 
     c->mstate.commands = zrealloc(c->mstate.commands, sizeof(multiCmd) * (c->mstate.count + 1));
-    mc = c->mstate.commands + c->mstate.count;
+    mc = c->mstate.commands + c->mstate.count; // 跳转到新添加的这个命令的地址
     mc->cmd = c->cmd;
     mc->argc = c->argc;
     mc->argv = c->argv;
@@ -48,8 +46,7 @@ void queueMultiCommand(client *c) {
     c->mstate.cmd_inv_flags |= ~c->cmd->flags;
     c->mstate.argv_len_sums += c->argv_len_sum + sizeof(robj *) * c->argc;
 
-    /* Reset the client's args since we copied them into the mstate and shouldn't
-     * reference them from c anymore. */
+    // 重置客户端的参数，因为我们将它们复制到mstate，不应该再从c引用它们。
     c->argv = NULL;
     c->argc = 0;
     c->argv_len_sum = 0;
@@ -179,8 +176,7 @@ void execCommand(client *c) {
                     break;
                 case ACL_DENIED_CHANNEL:
                     reason =
-                        "no permission to access one of the channels used "
-                        "as arguments";
+                        "no permission to access one of the channels used as arguments";
                     break;
                 default:
                     reason = "no permission";
@@ -189,17 +185,14 @@ void execCommand(client *c) {
             addACLLogEntry(c, acl_retval, ACL_LOG_CTX_MULTI, acl_errpos, NULL, NULL);
             addReplyErrorFormat(
                 c,
-                "-NOPERM ACLs rules changed between the moment the "
-                "transaction was accumulated and the EXEC call. "
-                "This command is no longer allowed for the "
-                "following reason: %s",
+                "-NOPERM ACLs rules changed between the moment the transaction was accumulated and the EXEC call. This command is no longer allowed for the following reason: %s",
                 reason);
         }
         else {
             if (c->id == CLIENT_ID_AOF)
-                call(c, CMD_CALL_NONE);
+                call(c, CMD_CALL_NONE); // execCommand
             else
-                call(c, CMD_CALL_FULL);
+                call(c, CMD_CALL_FULL); // execCommand
 
             serverAssert((c->flags & CLIENT_BLOCKED) == 0);
         }

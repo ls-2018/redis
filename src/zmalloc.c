@@ -255,7 +255,7 @@ void *ztryrealloc_usable(void *ptr, size_t size, size_t *usable) {
 #endif
 }
 
-/* Reallocate memory and zero it or panic */
+// 重新分配内存,  有可能panic
 void *zrealloc(void *ptr, size_t size) {
     ptr = ztryrealloc_usable(ptr, size, NULL);
     if (!ptr && size != 0)

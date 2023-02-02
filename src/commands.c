@@ -4248,7 +4248,7 @@ struct redisCommandArg ACL_DELUSER_Args[] = {{.name = "username", .type = ARG_TY
 /* ACL DRYRUN tips */
 #define ACL_DRYRUN_tips NULL
 
-/* ACL DRYRUN argument table */
+// ACL DRYRUN 参数表
 struct redisCommandArg ACL_DRYRUN_Args[] = {
     {.name = "username", .type = ARG_TYPE_STRING, .key_spec_index = -1, .token = NULL, .summary = NULL, .since = NULL, .flags = CMD_ARG_NONE},
     {.name = "command", .type = ARG_TYPE_STRING, .key_spec_index = -1, .token = NULL, .summary = NULL, .since = NULL, .flags = CMD_ARG_NONE},
@@ -5011,7 +5011,7 @@ struct redisCommandArg LATENCY_GRAPH_Args[] = {{.name = "event", .type = ARG_TYP
 /* LATENCY HISTOGRAM tips */
 const char *LATENCY_HISTOGRAM_tips[] = {"nondeterministic_output", "request_policy:all_nodes", "response_policy:special", NULL};
 
-/* LATENCY HISTOGRAM argument table */
+// 延迟直方图参数表
 struct redisCommandArg LATENCY_HISTOGRAM_Args[] = {{.name = "command", .type = ARG_TYPE_STRING, .key_spec_index = -1, .token = NULL, .summary = NULL, .since = NULL, .flags = CMD_ARG_OPTIONAL | CMD_ARG_MULTIPLE}, {0}};
 
 /********** LATENCY HISTORY ********************/
@@ -5042,9 +5042,14 @@ const char *LATENCY_LATEST_tips[] = {"nondeterministic_output", "request_policy:
 const char *LATENCY_RESET_tips[] = {"request_policy:all_nodes", "response_policy:all_succeeded", NULL};
 
 /* LATENCY RESET argument table */
-struct redisCommandArg LATENCY_RESET_Args[] = {{.name = "event", .type = ARG_TYPE_STRING, .key_spec_index = -1, .token = NULL, .summary = NULL, .since = NULL, .flags = CMD_ARG_OPTIONAL | CMD_ARG_MULTIPLE}, {0}};
+struct redisCommandArg LATENCY_RESET_Args[] = {
+    {
+        .name = "event",
+     .type = ARG_TYPE_STRING, .key_spec_index = -1, .token = NULL,
+        .summary = NULL, .since = NULL,
+        .flags = CMD_ARG_OPTIONAL | CMD_ARG_MULTIPLE}, {0}};
 
-/* LATENCY command table */
+// 命令表
 struct redisCommand LATENCY_Subcommands[] = {
     {.declared_name = "doctor",
      .summary = "Return a human readable latency analysis report.",

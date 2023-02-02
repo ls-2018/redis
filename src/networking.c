@@ -418,20 +418,18 @@ void addReply(client *c, robj *obj) {
     if (prepareClientToWrite(c) != C_OK)
         return;
 
-    if (sdsEncodedObject(obj)) {
+    if (sdsEncodedObject(obj)) { // OBJ_ENCODING_RAW  || OBJ_ENCODING_EMBSTR
         // 把数据添加到buf缓冲区
         _addReplyToBufferOrList(c, obj->ptr, sdslen(obj->ptr));
     }
     else if (obj->encoding == OBJ_ENCODING_INT) {
-        /* For integer encoded strings we just convert it into a string
-         * using our optimized function, and attach the resulting string
-         * to the output buffer. */
+        // 对于整数编码的字符串，我们只需使用优化的函数将其转换为字符串，并将生成的字符串附加到输出缓冲区。
         char buf[32];
         size_t len = ll2string(buf, sizeof(buf), (long)obj->ptr);
         _addReplyToBufferOrList(c, buf, len);
     }
     else {
-        serverPanic("Wrong obj->encoding in addReply()");
+        serverPanic("obj->encoding 类型错误 in addReply()");
     }
 }
 
