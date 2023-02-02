@@ -3,9 +3,7 @@
 #include "latency.h"
 #include "over-monotonic.h"
 
-void
-serveClientBlockedOnList(client *receiver, robj *o, robj *key, robj *dstkey, redisDb *db, int wherefrom, int whereto,
-                         int *deleted);
+void serveClientBlockedOnList(client *receiver, robj *o, robj *key, robj *dstkey, redisDb *db, int wherefrom, int whereto, int *deleted);
 
 int getListPositionFromObjectOrReply(client *c, robj *arg, int *position);
 
@@ -117,17 +115,22 @@ void queueClientForReprocessing(client *c) {
 void unblockClient(client *c) {
     if (c->btype == BLOCKED_LIST || c->btype == BLOCKED_ZSET || c->btype == BLOCKED_STREAM) {
         unblockClientWaitingData(c);
-    } else if (c->btype == BLOCKED_WAIT) {
+    }
+    else if (c->btype == BLOCKED_WAIT) {
         unblockClientWaitingReplicas(c);
-    } else if (c->btype == BLOCKED_MODULE) {
+    }
+    else if (c->btype == BLOCKED_MODULE) {
         if (moduleClientIsBlockedOnKeys(c))
             unblockClientWaitingData(c);
         unblockClientFromModule(c);
-    } else if (c->btype == BLOCKED_POSTPONE) {
+    }
+    else if (c->btype == BLOCKED_POSTPONE) {
         listDelNode(server.postponed_clients, c->postponed_list_node);
         c->postponed_list_node = NULL;
-    } else if (c->btype == BLOCKED_SHUTDOWN) { /* No special cleanup. */
-    } else {
+    }
+    else if (c->btype == BLOCKED_SHUTDOWN) { /* No special cleanup. */
+    }
+    else {
         serverPanic("Unknown btype in unblockClient().");
     }
 
@@ -157,11 +160,14 @@ void unblockClient(client *c) {
 void replyToBlockedClientTimedOut(client *c) {
     if (c->btype == BLOCKED_LIST || c->btype == BLOCKED_ZSET || c->btype == BLOCKED_STREAM) {
         addReplyNullArray(c);
-    } else if (c->btype == BLOCKED_WAIT) {
+    }
+    else if (c->btype == BLOCKED_WAIT) {
         addReplyLongLong(c, replicationCountAcksByOffset(c->bpop.reploffset));
-    } else if (c->btype == BLOCKED_MODULE) {
+    }
+    else if (c->btype == BLOCKED_MODULE) {
         moduleBlockedClientTimedOut(c);
-    } else {
+    }
+    else {
         serverPanic("Unknown btype in replyToBlockedClientTimedOut().");
     }
 }
@@ -207,9 +213,9 @@ void disconnectAllBlockedClients(void) {
                 continue;
 
             addReplyError(
-                    c,
-                    "-UNBLOCKED force unblock from blocking operation, "
-                    "instance state changed (master -> replica?)");
+                c,
+                "-UNBLOCKED force unblock from blocking operation, "
+                "instance state changed (master -> replica?)");
             unblockClient(c);
             c->flags |= CLIENT_CLOSE_AFTER_REPLY;
         }
@@ -256,8 +262,7 @@ void serveClientsBlockedOnListKey(robj *o, readyList *rl) {
             monotime replyTimer;
             elapsedStart(&replyTimer);
             serveClientBlockedOnList(receiver, o, rl->key, dstkey, rl->db, wherefrom, whereto, &deleted);
-            updateStatsOnUnblock(receiver, 0, elapsedUs(replyTimer),
-                                 server.stat_total_error_replies != prev_error_replies);
+            updateStatsOnUnblock(receiver, 0, elapsedUs(replyTimer), server.stat_total_error_replies != prev_error_replies);
             unblockClient(receiver);
             afterCommand(receiver);
             server.current_client = old_client;
@@ -307,8 +312,7 @@ void serveClientsBlockedOnSortedSetKey(robj *o, readyList *rl) {
             server.current_client = receiver;
             monotime replyTimer;
             elapsedStart(&replyTimer);
-            genericZpopCommand(receiver, &rl->key, 1, where, 1, count, use_nested_array, reply_nil_when_empty,
-                               &deleted);
+            genericZpopCommand(receiver, &rl->key, 1, where, 1, count, use_nested_array, reply_nil_when_empty, &deleted);
 
             /* Replicate the command. */
             int argc = 2;
@@ -327,8 +331,7 @@ void serveClientsBlockedOnSortedSetKey(robj *o, readyList *rl) {
             if (count != -1)
                 decrRefCount(argv[2]);
 
-            updateStatsOnUnblock(receiver, 0, elapsedUs(replyTimer),
-                                 server.stat_total_error_replies != prev_error_replies);
+            updateStatsOnUnblock(receiver, 0, elapsedUs(replyTimer), server.stat_total_error_replies != prev_error_replies);
             unblockClient(receiver);
             afterCommand(receiver);
             server.current_client = old_client;
@@ -390,11 +393,12 @@ void serveClientsBlockedOnStreamKey(robj *o, readyList *rl) {
                  * to the consumer. */
                 if (!group) {
                     addReplyError(
-                            receiver,
-                            "-NOGROUP the consumer group this client "
-                            "was blocked on no longer exists");
+                        receiver,
+                        "-NOGROUP the consumer group this client "
+                        "was blocked on no longer exists");
                     goto unblock_receiver;
-                } else {
+                }
+                else {
                     *gt = group->last_id;
                 }
             }
@@ -414,8 +418,7 @@ void serveClientsBlockedOnStreamKey(robj *o, readyList *rl) {
                     if (consumer == NULL) {
                         consumer = streamCreateConsumer(group, name, rl->key, rl->db->id, SCC_DEFAULT);
                         if (noack) {
-                            streamPropagateConsumerCreation(receiver, rl->key, receiver->bpop.xread_group,
-                                                            consumer->name);
+                            streamPropagateConsumerCreation(receiver, rl->key, receiver->bpop.xread_group, consumer->name);
                         }
                     }
                 }
@@ -427,22 +430,21 @@ void serveClientsBlockedOnStreamKey(robj *o, readyList *rl) {
                 if (receiver->resp == 2) {
                     addReplyArrayLen(receiver, 1);
                     addReplyArrayLen(receiver, 2);
-                } else {
+                }
+                else {
                     addReplyMapLen(receiver, 1);
                 }
                 addReplyBulk(receiver, rl->key);
 
                 streamPropInfo pi = {rl->key, receiver->bpop.xread_group};
-                streamReplyWithRange(receiver, s, &start, NULL, receiver->bpop.xread_count, 0, group, consumer, noack,
-                                     &pi);
+                streamReplyWithRange(receiver, s, &start, NULL, receiver->bpop.xread_count, 0, group, consumer, noack, &pi);
                 /* Note that after we unblock the client, 'gt'
                  * and other receiver->bpop stuff are no longer
                  * valid, so we must do the setup above before
                  * the unblockClient call. */
 
-                unblock_receiver:
-                updateStatsOnUnblock(receiver, 0, elapsedUs(replyTimer),
-                                     server.stat_total_error_replies != prev_error_replies);
+            unblock_receiver:
+                updateStatsOnUnblock(receiver, 0, elapsedUs(replyTimer), server.stat_total_error_replies != prev_error_replies);
                 unblockClient(receiver);
                 afterCommand(receiver);
                 server.current_client = old_client;
@@ -490,8 +492,7 @@ void serveClientsBlockedOnKeyByModule(readyList *rl) {
             elapsedStart(&replyTimer);
             if (!moduleTryServeClientBlockedOnKey(receiver, rl->key))
                 continue;
-            updateStatsOnUnblock(receiver, 0, elapsedUs(replyTimer),
-                                 server.stat_total_error_replies != prev_error_replies);
+            updateStatsOnUnblock(receiver, 0, elapsedUs(replyTimer), server.stat_total_error_replies != prev_error_replies);
             moduleUnblockClient(receiver);
             afterCommand(receiver);
             server.current_client = old_client;
@@ -535,8 +536,7 @@ void unblockDeletedStreamReadgroupClients(readyList *rl) {
             monotime replyTimer;
             elapsedStart(&replyTimer);
             addReplyError(receiver, "-UNBLOCKED the stream key no longer exists");
-            updateStatsOnUnblock(receiver, 0, elapsedUs(replyTimer),
-                                 server.stat_total_error_replies != prev_error_replies);
+            updateStatsOnUnblock(receiver, 0, elapsedUs(replyTimer), server.stat_total_error_replies != prev_error_replies);
             unblockClient(receiver);
             afterCommand(receiver);
             server.current_client = old_client;
@@ -629,7 +629,8 @@ void handleClientsBlockedOnKeys(void) {
                  * In this case we need to unblock all these clients. */
                 if (objtype != OBJ_STREAM)
                     unblockDeletedStreamReadgroupClients(rl);
-            } else {
+            }
+            else {
                 /* Unblock all XREADGROUP clients of this deleted key */
                 unblockDeletedStreamReadgroupClients(rl);
                 /* Edge case: If lookupKeyReadWithFlags decides to expire the key we have to
@@ -682,8 +683,7 @@ void handleClientsBlockedOnKeys(void) {
  *
  * 'count' for those commands that support the optional count argument.
  * Otherwise the value is 0. */
-void blockForKeys(client *c, int btype, robj **keys, int numkeys, long count, mstime_t timeout, robj *target,
-                  struct blockPos *blockpos, streamID *ids) {
+void blockForKeys(client *c, int btype, robj **keys, int numkeys, long count, mstime_t timeout, robj *target, struct blockPos *blockpos, streamID *ids) {
     dictEntry *de;
     list *l;
     int j;
@@ -722,7 +722,8 @@ void blockForKeys(client *c, int btype, robj **keys, int numkeys, long count, ms
             retval = dictAdd(c->db->blocking_keys, keys[j], l);
             incrRefCount(keys[j]);
             serverAssertWithInfo(c, keys[j], retval == DICT_OK);
-        } else {
+        }
+        else {
             l = dictGetVal(de);
         }
         listAddNodeTail(l, c);

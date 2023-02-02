@@ -2578,18 +2578,14 @@ int processInputBuffer(client *c) {
     }
     //  客户端有 CLIENT_MASTER 标记
     if (c->flags & CLIENT_MASTER) {
-        /* If the client is a master, trim the querybuf to repl_applied,
-         * since master client is very special, its querybuf not only
-         * used to parse command, but also proxy to sub-replicas.
-         *
-         * Here are some scenarios we cannot trim to qb_pos:
-         * 1. we don't receive complete command from master
-         * 2. master client blocked cause of client pause
-         * 3. io threads operate read, master client flagged with CLIENT_PENDING_COMMAND
-         *
-         * In these scenarios, qb_pos points to the part of the current command
-         * or the beginning of next command, and the current command is not applied yet,
-         * so the repl_applied is not equal to qb_pos. */
+        // 如果客户端是主客户端，则将querybuf修剪为repl_applied，因为主客户端非常特殊，它的querybuf不仅用于解析命令，还可以代理到子副本。
+        // 下面是一些我们不能修剪到qb_pos的场景:
+        //* 1。我们没有收到主人的完整命令
+        //* 2。主客户端被阻塞导致客户端暂停
+        //* 3。io线程操作读，主客户端标记为CLIENT_PENDING_COMMAND
+        //         在这些场景中，qb_pos指向当前命令的部分
+        //*或下一个命令的开头，当前命令还没有应用，
+        //*因此repl_applied不等于qb_pos。
         if (c->repl_applied) {
             sdsrange(c->querybuf, c->repl_applied, -1);
             c->qb_pos -= c->repl_applied;
@@ -2597,7 +2593,7 @@ int processInputBuffer(client *c) {
         }
     }
     else if (c->qb_pos) {
-        /* Trim to pos */
+        // 修建c->querybuf
         sdsrange(c->querybuf, c->qb_pos, -1);
         c->qb_pos = 0;
     }

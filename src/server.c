@@ -724,11 +724,7 @@ static inline clientMemUsageBucket *getMemUsageBucket(size_t mem) {
     return &server.client_mem_usage_buckets[bucket_idx];
 }
 
-/* This is called both on explicit clients when something changed their buffers,
- * so we can track clients' memory and enforce clients' maxmemory in real time,
- * and also from the clientsCron. We call it from the cron so we have updated
- * stats for non CLIENT_TYPE_NORMAL/PUBSUB clients and in case a configuration
- * change requires us to evict a non-active client.
+/*
  *
  * This also adds the client to the correct memory usage bucket. Each bucket contains
  * all clients with roughly the same amount of memory. This way we group
@@ -3536,7 +3532,7 @@ int processCommand(client *c) {
             // keys 可以移动 ,
             (c->cmd->flags & CMD_MOVABLE_KEYS) || c->cmd->key_specs_num != 0 || c->cmd->proc == execCommand)) {
         int error_code;
-        clusterNode *n = getNodeByQuery(c, c->cmd, c->argv, c->argc, &c->slot, &error_code);// 返回指向能够执行该命令的集群节点的指针
+        clusterNode *n = getNodeByQuery(c, c->cmd, c->argv, c->argc, &c->slot, &error_code); // 返回指向能够执行该命令的集群节点的指针
         if (n == NULL || n != server.cluster->myself) {
             // 不能执行多键处理命令
             // 命令针对的槽和键不是本节点处理的,进行转向
