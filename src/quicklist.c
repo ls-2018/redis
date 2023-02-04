@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <string.h> /* for memcpy */
 #include "quicklist.h"
-#include "zmalloc.h"
+#include "over-zmalloc.h"
 #include "config.h"
 #include "listpack.h"
 #include "util.h" /* for ll2string */

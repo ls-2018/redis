@@ -109,8 +109,6 @@ void queueClientForReprocessing(client *c) {
     }
 }
 
-/* Unblock a client calling the right function depending on the kind
- * of operation the client is blocking for. */
 // 取消给定的客户端的阻塞状态
 void unblockClient(client *c) {
     if (c->btype == BLOCKED_LIST || c->btype == BLOCKED_ZSET || c->btype == BLOCKED_STREAM) {
@@ -172,10 +170,9 @@ void replyToBlockedClientTimedOut(client *c) {
     }
 }
 
-/* If one or more clients are blocked on the SHUTDOWN command, this function
- * sends them an error reply and unblocks them. */
+// 如果一个或多个客户端在SHUTDOWN命令上被阻塞，该函数将向它们发送错误应答并解除阻塞。
 void replyToClientsBlockedOnShutdown(void) {
-    if (server.blocked_clients_by_type[BLOCKED_SHUTDOWN] == 0)
+    if (server.blocked_clients_by_type[BLOCKED_SHUTDOWN] == 0) // shutdown次数
         return;
     listNode *ln;
     listIter li;
@@ -183,7 +180,7 @@ void replyToClientsBlockedOnShutdown(void) {
     while ((ln = listNext(&li))) {
         client *c = listNodeValue(ln);
         if (c->flags & CLIENT_BLOCKED && c->btype == BLOCKED_SHUTDOWN) {
-            addReplyError(c, "Errors trying to SHUTDOWN. Check logs.");
+            addReplyError(c, "试图关闭错误。检查日志。");
             unblockClient(c);
         }
     }

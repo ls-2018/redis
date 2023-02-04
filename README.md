@@ -98,6 +98,7 @@ strlen字符串长度
 strdup字符串拷贝库函数
 isatty判断文件描述词是否是为终端机
 strchr(const char *str, int c),即在参数 str 所指向的字符串中搜索第一次出现字符 c（一个无符号字符）的位置
+int memcmp(const void *str1, const void *str2, size_t n);比较内存区域buf1和buf2的前count个字节。
 memcpy(void *destin, void *source, unsigned n) 内存拷贝函数,函数的功能是从源内存地址的起始位置开始拷贝若干个字节到目标内存地址中
 strrchr(const char *str, int c) 在参数 str 所指向的字符串中搜索最后一次出现字符 c（一个无符号字符）的位置.
 strstr(const char *haystack, const char *needle) 在字符串 haystack 中查找第一次出现字符串 needle 的位置,不包含终止符 '\0'.

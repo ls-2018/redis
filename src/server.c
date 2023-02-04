@@ -57,29 +57,208 @@ double R_Zero, R_PosInf, R_NegInf, R_Nan;
 
 /*================================= Globals ================================= */
 
-/* Global vars */
-struct redisServer server; /* Server global state */
+struct redisServer server;
 
-/*============================ Internal prototypes ========================== */
+/*============================ 内部的原型 ========================== */
+
+// 取消关闭服务器
+static void cancelShutdown(void) {
+    server.shutdown_asap = 0;          // 关闭服务器的标识
+    server.shutdown_flags = 0;         //  传递给prepareForShutdown()的标志.
+    server.shutdown_mstime = 0;        // 优雅关闭限制的时间
+    server.last_sig_received = 0;      // 最近一次收到的信号
+    replyToClientsBlockedOnShutdown(); // 如果一个或多个客户端在SHUTDOWN命令上被阻塞，该函数将向它们发送错误应答并解除阻塞。
+    unpauseClients(PAUSE_DURING_SHUTDOWN);
+}
 
 static inline int isShutdownInitiated(void);
 
+static inline int isShutdownInitiated(void) {
+    return server.shutdown_mstime != 0;
+}
 int isReadyToShutdown(void);
 
-int finishShutdown(void);
+// 如果有任何副本在复制中滞后，我们需要在关闭之前等待，则返回0。如果现在准备关闭，则返回1。
+int isReadyToShutdown(void) {
+    if (listLength(server.slaves) == 0)
+        return 1; /* No replicas. */
 
+    listIter li;
+    listNode *ln;
+    listRewind(server.slaves, &li);
+    while ((ln = listNext(&li)) != NULL) {
+        client *replica = listNodeValue(ln);
+        if (replica->repl_ack_off != server.master_repl_offset)
+            return 0;
+    }
+    return 1;
+}
 const char *replstateToString(int replstate);
 
-/*============================ Utility functions ============================ */
-
-/* We use a private localtime implementation which is fork-safe. The logging
- * function of Redis may be called from other threads. */
-void nolocks_localtime(struct tm *tmp, time_t t, time_t tz, int dst);
-
-// 监听tcp端口
-int mylistenToPort() {
-    return anetTcpServer(server.neterr, 6479, "*", server.tcp_backlog);
+const char *replstateToString(int replstate) {
+    switch (replstate) {
+        case SLAVE_STATE_WAIT_BGSAVE_START:
+        case SLAVE_STATE_WAIT_BGSAVE_END:
+            return "wait_bgsave";
+        case SLAVE_STATE_SEND_BULK:
+            return "send_bulk";
+        case SLAVE_STATE_ONLINE:
+            return "online";
+        default:
+            return "";
+    }
 }
+
+// 关闭序列的最后一步。
+// 如果关闭序列成功并且可以调用exit()，则返回C_OK。如果返回C_ERR，调用exit()是不安全的。
+int finishShutdown(void);
+int finishShutdown(void) {
+    int save = server.shutdown_flags & SHUTDOWN_SAVE;
+    int nosave = server.shutdown_flags & SHUTDOWN_NOSAVE;
+    int force = server.shutdown_flags & SHUTDOWN_FORCE;
+
+    // 为每个滞后的副本记录一个警告。
+    listIter replicas_iter;
+    listNode *replicas_list_node;
+    int num_replicas = 0;
+    int num_lagging_replicas = 0; // 滞后的副本数
+    listRewind(server.slaves, &replicas_iter);
+    while ((replicas_list_node = listNext(&replicas_iter)) != NULL) {
+        client *replica = listNodeValue(replicas_list_node);
+        num_replicas++;
+        if (replica->repl_ack_off != server.master_repl_offset) {
+            num_lagging_replicas++;
+            long lag = replica->replstate == SLAVE_STATE_ONLINE ? time(NULL) - replica->repl_ack_time : 0;
+            serverLog(
+                LL_WARNING, "滞后副本:%s,报告偏移量%lld落后于主副本，滞后=%ld，状态=%s。", //
+                replicationGetSlaveName(replica),                                          //
+                server.master_repl_offset - replica->repl_ack_off,                         //
+                lag,                                                                       //
+                replstateToString(replica->replstate)                                      //
+            );
+        }
+    }
+    if (num_replicas > 0) {
+        serverLog(LL_NOTICE, "%d of %d 副本正在同步 在shutdown时", num_replicas - num_lagging_replicas, num_replicas);
+    }
+    // 杀死所有Lua调试器会话
+    ldbKillForkedSessions();
+
+    /* Kill the saving child if there is a background saving in progress.
+       We want to avoid race conditions, for instance our saving child may
+       overwrite the synchronous saving did by SHUTDOWN. */
+    // 如果有 BGSAVE 正在执行,那么杀死子进程,避免竞争条件
+    if (server.child_type == CHILD_TYPE_RDB) {
+        serverLog(LL_WARNING, "There is a child saving an .rdb. Killing it!");
+        killRDBChild();
+        /* Note that, in killRDBChild normally has backgroundSaveDoneHandler
+         * doing it's cleanup, but in this case this code will not be reached,
+         * so we need to call rdbRemoveTempFile which will close fd(in order
+         * to unlink file actually) in background thread.
+         * The temp rdb file fd may won't be closed when redis exits quickly,
+         * but OS will close this fd when process exits. */
+        rdbRemoveTempFile(server.child_pid, 0);
+    }
+
+    /* Kill module child if there is one. */
+    if (server.child_type == CHILD_TYPE_MODULE) {
+        serverLog(LL_WARNING, "There is a module fork child. Killing it!");
+        TerminateModuleForkChild(server.child_pid, 0);
+    }
+
+    /* Kill the AOF saving child as the AOF we already have may be longer
+     * but contains the full dataset anyway. */
+    if (server.child_type == CHILD_TYPE_AOF) {
+        /* If we have AOF enabled but haven't written the AOF yet, don't
+         * shutdown or else the dataset will be lost. */
+        if (server.aof_state == AOF_WAIT_REWRITE) {
+            if (force) {
+                serverLog(LL_WARNING, "Writing initial AOF. Exit anyway.");
+            }
+            else {
+                serverLog(LL_WARNING, "Writing initial AOF, can't exit.");
+                goto error;
+            }
+        }
+        serverLog(LL_WARNING, "There is a child rewriting the AOF. Killing it!");
+        killAppendOnlyChild();
+    }
+    // 同理,杀死正在执行 BGREWRITEAOF 的子进程
+
+    if (server.aof_state != AOF_OFF) {
+        /* Append only file: flush buffers and fsync() the AOF at exit */
+        serverLog(LL_NOTICE, "Calling fsync() on the AOF file.");
+        flushAppendOnlyFile(1); // 将缓冲区的内容写入到硬盘里面
+
+        if (redis_fsync(server.aof_fd) == -1) {
+            serverLog(LL_WARNING, "Fail to fsync the AOF file: %s.", strerror(errno));
+        }
+    }
+
+    /* Create a new RDB file before exiting. */
+    // 如果客户端执行的是 SHUTDOWN save ,或者 SAVE 功能被打开
+    // 那么执行 SAVE 操作
+    if ((server.saveparamslen > 0 && !nosave) || save) {
+        serverLog(LL_NOTICE, "Saving the final RDB snapshot before exiting.");
+        if (server.supervised_mode == SUPERVISED_SYSTEMD)
+            redisCommunicateSystemd("STATUS=Saving the final RDB snapshot\n");
+        /* Snapshotting. Perform a SYNC SAVE and exit */
+        rdbSaveInfo rsi, *rsiptr;
+        rsiptr = rdbPopulateSaveInfo(&rsi);
+        if (rdbSave(SLAVE_REQ_NONE, server.rdb_filename, rsiptr) != C_OK) {
+            /* Ooops.. error saving! The best we can do is to continue
+             * operating. Note that if there was a background saving process,
+             * in the next cron() Redis will be notified that the background
+             * saving aborted, handling special stuff like slaves pending for
+             * synchronization... */
+            if (force) {
+                serverLog(LL_WARNING, "Error trying to save the DB. Exit anyway.");
+            }
+            else {
+                serverLog(LL_WARNING, "Error trying to save the DB, can't exit.");
+                if (server.supervised_mode == SUPERVISED_SYSTEMD)
+                    redisCommunicateSystemd("STATUS=Error trying to save the DB, can't exit.\n");
+                goto error;
+            }
+        }
+    }
+
+    /* Free the AOF manifest. */
+    if (server.aof_manifest)
+        aofManifestFree(server.aof_manifest);
+
+    /* Fire the shutdown modules event. */
+    moduleFireServerEvent(REDISMODULE_EVENT_SHUTDOWN, 0, NULL);
+
+    /* Remove the pid file if possible and needed. */
+    // 移除 pidfile 文件
+
+    if (server.daemonize || server.pid_file) {
+        serverLog(LL_NOTICE, "Removing the pid file.");
+        unlink(server.pid_file);
+    }
+
+    /* Best effort flush of slave output buffers, so that we hopefully
+     * send them pending writes. */
+    flushSlavesOutputBuffers();
+
+    /* Close the listening sockets. Apparently this allows faster restarts. */
+    // 关闭监听套接字,这样在重启的时候会快一点
+
+    closeListeningSockets(1);
+    serverLog(LL_WARNING, "%s is now ready to exit, bye bye...", server.sentinel_mode ? "Sentinel" : "Redis");
+    return C_OK;
+
+error:
+    serverLog(LL_WARNING, "Errors trying to shut down the server. Check the logs for more information.");
+    cancelShutdown();
+    return C_ERR;
+}
+
+/*============================ 效用函数 ============================ */
+
+// 我们使用一个私有的本地时间实现，它是fork-safe的。Redis的日志功能可以从其他线程调用。
+void nolocks_localtime(struct tm *tmp, time_t t, time_t tz, int dst);
 
 // 低水平日志记录.只用于非常大的消息,否则最好使用serverLog().
 void serverLogRaw(int level, const char *msg) {
@@ -132,9 +311,6 @@ void serverLogRaw(int level, const char *msg) {
         syslog(syslogLevelMap[level], "%s", msg);
 }
 
-/* Like serverLogRaw() but with printf-alike support. This is the function that
- * is used across the code. The raw version is only used in order to dump
- * the INFO output on crash. */
 void _serverLog(int level, const char *fmt, ...) {
     va_list ap;
     char msg[LOG_MAX_LEN];
@@ -146,12 +322,6 @@ void _serverLog(int level, const char *fmt, ...) {
     serverLogRaw(level, msg);
 }
 
-/* Log a fixed message without printf-alike capabilities, in a way that is
- * safe to call from a signal handler.
- *
- * We actually use this only for signals that are not fatal from the point
- * of view of Redis. Signals that are going to kill the server anyway and
- * where we need printf-alike features are served by serverLog(). */
 void serverLogFromHandler(int level, const char *msg) {
     int fd;
     int log_to_stdout = server.logfile[0] == '\0';
@@ -198,10 +368,7 @@ mstime_t mstime(void) {
     return ustime() / 1000;
 }
 
-/* After an RDB dump or AOF rewrite we exit from children using _exit() instead of
- * exit(), because the latter may interact with the same file objects used by
- * the parent process. However if we are testing the coverage normal exit() is
- * used in order to obtain the right coverage information. */
+// 在RDB转储或AOF重写之后，我们使用_exit()而不是exit()退出子进程，因为后者可能与父进程使用的相同文件对象交互。但是，如果我们正在测试覆盖率，则使用正常的exit()来获得正确的覆盖率信息。
 void exitFromChild(int retcode) {
 #ifdef COVERAGE_TEST
     exit(retcode);
@@ -210,11 +377,8 @@ void exitFromChild(int retcode) {
 #endif
 }
 
-/*====================== Hash table type implementation  ==================== */
-
-/* This is a hash table type that uses the SDS dynamic strings library as
- * keys and redis objects as values (objects can hold SDS strings,
- * lists, sets). */
+/*====================== 哈希表类型实现 ==================== */
+// 这是一个哈希表类型，使用SDS动态字符串库作为键，redis对象作为值(对象可以保存SDS字符串，列表，集)。
 
 void dictVanillaFree(dict *d, void *val) {
     UNUSED(d);
@@ -226,28 +390,10 @@ void dictListDestructor(dict *d, void *val) {
     listRelease((list *)val);
 }
 
-int dictSdsKeyCompare(dict *d, const void *key1, const void *key2) {
-    int l1, l2;
-    UNUSED(d);
-
-    l1 = sdslen((sds)key1);
-    l2 = sdslen((sds)key2);
-    if (l1 != l2)
-        return 0;
-    return memcmp(key1, key2, l1) == 0;
-}
-
-/* A case insensitive version used for the command lookup table and other
- * places where case insensitive non binary-safe comparison is needed. */
-int dictSdsKeyCaseCompare(dict *d, const void *key1, const void *key2) {
-    UNUSED(d);
-    return strcasecmp(key1, key2) == 0;
-}
-
 void dictObjectDestructor(dict *d, void *val) {
     UNUSED(d);
     if (val == NULL)
-        return; /* Lazy freeing will set value to NULL. */
+        return; // 惰性释放会将值设置为NULL。
     decrRefCount(val);
 }
 
@@ -260,77 +406,22 @@ void *dictSdsDup(dict *d, const void *key) {
     UNUSED(d);
     return sdsdup((const sds)key);
 }
-
-int dictObjKeyCompare(dict *d, const void *key1, const void *key2) {
-    const robj *o1 = key1, *o2 = key2;
-    return dictSdsKeyCompare(d, o1->ptr, o2->ptr);
+/*====================== hash函数 ==================== */
+// dictSdsHash、dictSdsCaseHash、dictObjHash、dictEncObjHash
+// 大小写敏感,key是char*
+uint64_t dictSdsHash(const void *key) {
+    return dictGenHashFunction((unsigned char *)key, sdslen((char *)key));
 }
-
+// 大小写不敏感
+uint64_t dictSdsCaseHash(const void *key) {
+    return dictGenCaseHashFunction((unsigned char *)key, sdslen((char *)key));
+}
+// 大小写敏感,key是robj*
 uint64_t dictObjHash(const void *key) {
     const robj *o = key;
     return dictGenHashFunction(o->ptr, sdslen((sds)o->ptr));
 }
-
-uint64_t dictSdsHash(const void *key) {
-    return dictGenHashFunction((unsigned char *)key, sdslen((char *)key));
-}
-
-// ok
-uint64_t dictSdsCaseHash(const void *key) {
-    return dictGenCaseHashFunction((unsigned char *)key, sdslen((char *)key));
-}
-
-/* Dict hash function for null terminated string */
-uint64_t distCStrHash(const void *key) {
-    return dictGenHashFunction((unsigned char *)key, strlen((char *)key));
-}
-
-/* Dict hash function for null terminated string */
-uint64_t distCStrCaseHash(const void *key) {
-    return dictGenCaseHashFunction((unsigned char *)key, strlen((char *)key));
-}
-
-/* Dict compare function for null terminated string */
-int distCStrKeyCompare(dict *d, const void *key1, const void *key2) {
-    int l1, l2;
-    UNUSED(d);
-
-    l1 = strlen((char *)key1);
-    l2 = strlen((char *)key2);
-    if (l1 != l2)
-        return 0;
-    return memcmp(key1, key2, l1) == 0;
-}
-
-/* Dict case insensitive compare function for null terminated string */
-int distCStrKeyCaseCompare(dict *d, const void *key1, const void *key2) {
-    UNUSED(d);
-    return strcasecmp(key1, key2) == 0;
-}
-
-int dictEncObjKeyCompare(dict *d, const void *key1, const void *key2) {
-    robj *o1 = (robj *)key1, *o2 = (robj *)key2;
-    int cmp;
-
-    if (o1->encoding == OBJ_ENCODING_INT && o2->encoding == OBJ_ENCODING_INT)
-        return o1->ptr == o2->ptr;
-
-    /* Due to OBJ_STATIC_REFCOUNT, we avoid calling getDecodedObject() without
-     * good reasons, because it would incrRefCount() the object, which
-     * is invalid. So we check to make sure dictFind() works with static
-     * objects as well. */
-    if (o1->refcount != OBJ_STATIC_REFCOUNT)
-        o1 = getDecodedObject(o1);
-    if (o2->refcount != OBJ_STATIC_REFCOUNT)
-        o2 = getDecodedObject(o2);
-    cmp = dictSdsKeyCompare(d, o1->ptr, o2->ptr);
-    if (o1->refcount != OBJ_STATIC_REFCOUNT)
-        decrRefCount(o1);
-    if (o2->refcount != OBJ_STATIC_REFCOUNT)
-        decrRefCount(o2);
-    return cmp;
-}
-
+// dictObjHash、dictSdsHash 的集合体,会判断类型
 uint64_t dictEncObjHash(const void *key) {
     robj *o = (robj *)key;
 
@@ -345,151 +436,122 @@ uint64_t dictEncObjHash(const void *key) {
         return dictGenHashFunction((unsigned char *)buf, len);
     }
     else {
-        serverPanic("Unknown string encoding");
+        serverPanic("未知字符串编码");
     }
 }
+// 空终止字符串的字典哈希函数
+uint64_t distCStrCaseHash(const void *key) {
+    return dictGenCaseHashFunction((unsigned char *)key, strlen((char *)key));
+}
+/*====================== compare函数 ==================== */
+// dictEncObjKeyCompare、dictSdsKeyCompare、dictSdsKeyCaseCompare、dictObjKeyCompare、distCStrKeyCaseCompare
+// key是robj*
+int dictEncObjKeyCompare(dict *d, const void *key1, const void *key2) {
+    robj *o1 = (robj *)key1, *o2 = (robj *)key2; // 类型转换一下
+    int cmp;
+    if (o1->encoding == OBJ_ENCODING_INT && o2->encoding == OBJ_ENCODING_INT)
+        return o1->ptr == o2->ptr;
 
-/* Return 1 if currently we allow dict to expand. Dict may allocate huge
- * memory to contain hash buckets when dict expands, that may lead redis
- * rejects user's requests or evicts some keys, we can stop dict to expand
- * provisionally if used memory will be over maxmemory after dict expands,
- * but to guarantee the performance of redis, we still allow dict to expand
- * if dict load factor exceeds HASHTABLE_MAX_LOAD_FACTOR. */
+    // 由于OBJ_STATIC_REFCOUNT，我们避免在没有充分理由的情况下调用getDecodedObject()，因为它会incrRefCount()对象，这是无效的。
+    // 因此，我们检查dictFind()是否也适用于静态对象。
+    if (o1->refcount != OBJ_STATIC_REFCOUNT) // 在堆栈中分配的对象
+        o1 = getDecodedObject(o1);
+    if (o2->refcount != OBJ_STATIC_REFCOUNT)
+        o2 = getDecodedObject(o2);
+    cmp = dictSdsKeyCompare(d, o1->ptr, o2->ptr);
+    if (o1->refcount != OBJ_STATIC_REFCOUNT)
+        decrRefCount(o1);
+    if (o2->refcount != OBJ_STATIC_REFCOUNT)
+        decrRefCount(o2);
+    return cmp;
+}
+// key是sds*
+int dictSdsKeyCompare(dict *d, const void *key1, const void *key2) {
+    int l1, l2;
+    UNUSED(d);
+
+    l1 = sdslen((sds)key1);
+    l2 = sdslen((sds)key2);
+    if (l1 != l2)
+        return 0;
+    return memcmp(key1, key2, l1) == 0;
+}
+// 不区分大小写的版本，用于命令查找表和其他需要不区分大小写的非二进制安全比较的地方。,keys是char*
+int dictSdsKeyCaseCompare(dict *d, const void *key1, const void *key2) {
+    UNUSED(d);
+    return strcasecmp(key1, key2) == 0;
+}
+// key是robj*
+int dictObjKeyCompare(dict *d, const void *key1, const void *key2) {
+    const robj *o1 = key1, *o2 = key2;
+    return dictSdsKeyCompare(d, o1->ptr, o2->ptr);
+}
+// 字典不区分大小写的比较函数，用于空终止的字符串 keys是char*
+int distCStrKeyCaseCompare(dict *d, const void *key1, const void *key2) {
+    UNUSED(d);
+    return strcasecmp(key1, key2) == 0;
+}
+/*====================== 扩容 函数 ==================== */
+// 是否允许扩容
 int dictExpandAllowed(size_t moreMem, double usedRatio) {
     if (usedRatio <= HASHTABLE_MAX_LOAD_FACTOR) {
-        return !overMaxmemoryAfterAlloc(moreMem);
+        return !overMaxmemoryAfterAlloc(moreMem); // 扩容后是否超出最大内存
     }
     else {
         return 1; // 允许扩容
     }
 }
 
-/* Returns the size of the DB dict entry metadata in bytes. In cluster mode, the
- * metadata is used for constructing a doubly linked list of the dict entries
- * belonging to the same cluster slot. See the Slot to Key API in cluster.c. */
+// 以字节为单位返回DB dict条目元数据的大小。在集群模式下，元数据用于构造属于同一集群插槽的dict条目的双链表。请参见集群中的槽位到密钥API。
 size_t dictEntryMetadataSize(dict *d) {
     UNUSED(d);
-    /* NOTICE: this also affect overhead_ht_slot_to_keys in getMemoryOverheadData.
-     * If we ever add non-cluster related data here, that code must be modified too. */
+    // NOTICE: 这也会影响getMemoryOverheadData中的overhead_ht_slot_to_keys。
+    // 如果我们在这里添加非集群相关的数据，代码也必须修改。
     return server.cluster_enabled ? sizeof(clusterDictEntryMetadata) : 0;
 }
 
-/* Generic hash table type where keys are Redis Objects, Values
- * dummy pointers. */
+// 通用哈希表类型，其中键是Redis对象，值是虚拟指针。
 dictType objectKeyPointerValueDictType = {dictEncObjHash, NULL, NULL, dictEncObjKeyCompare, dictObjectDestructor, NULL, NULL};
-
-/* Like objectKeyPointerValueDictType(), but values can be destroyed, if
- * not NULL, calling zfree(). */
+// 通用哈希表类型，其中键是Redis对象，值是虚拟指针, 并且值可以被销毁。
 dictType objectKeyHeapPointerValueDictType = {dictEncObjHash, NULL, NULL, dictEncObjKeyCompare, dictObjectDestructor, dictVanillaFree, NULL};
-
-/* Set dictionary type. Keys are SDS strings, values are not used. */
+// set字典类型。键是SDS字符串，不使用值。
 dictType setDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, dictSdsDestructor, NULL};
-
-/* Sorted sets hash (note: a skiplist is used in addition to the hash table) */
+// 有序集合字典类型
 dictType zsetDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, NULL, NULL, NULL};
-
-/* Db->dict, keys are sds strings, vals are Redis objects. */
-dictType dbDictType = {
-    dictSdsHash,
-    NULL,
-    NULL,
-    dictSdsKeyCompare,
-    dictSdsDestructor,    // key的释放函数
-    dictObjectDestructor, // value的释放函数
-    dictExpandAllowed,
-    dictEntryMetadataSize};
-
+// Db->dict, key是sds字符串，val是Redis对象。
+dictType dbDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, dictSdsDestructor, dictObjectDestructor, dictExpandAllowed, dictEntryMetadataSize};
 // Db->expires 的dict结构
-dictType dbExpiresDictType = {
-    dictSdsHash,
-    NULL,
-    NULL,
-    dictSdsKeyCompare, //
-    NULL,
-    NULL,
-    dictExpandAllowed};
-
+dictType dbExpiresDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, NULL, NULL, dictExpandAllowed};
 // sds->command 的dict结构
-dictType commandTableDictType = {
-    dictSdsCaseHash, //
-    NULL,
-    NULL,
-    dictSdsKeyCaseCompare, //
-    dictSdsDestructor,
-    NULL,
-    NULL};
-
-/* Hash type hash table (note that small hashes are represented with listpacks) */
-dictType hashDictType = {
-    dictSdsHash, //
-    NULL,
-    NULL, //
-    dictSdsKeyCompare,
-    dictSdsDestructor,
-    dictSdsDestructor,
-    NULL};
-
-/* Dict type without destructor */
-dictType sdsReplyDictType = {
-    dictSdsHash, //
-    NULL,
-    NULL, //
-    dictSdsKeyCompare,
-    NULL,
-    NULL,
-    NULL};
-
-/* Keylist hash table type has unencoded redis objects as keys and
- * lists as values. It's used for blocking operations (BLPOP) and to
- * map swapped keys to a list of clients waiting for this keys to be loaded. */
-dictType keylistDictType = {
-    dictObjHash, //
-    NULL,
-    NULL, //
-    dictObjKeyCompare,
-    dictObjectDestructor,
-    dictListDestructor,
-    NULL};
-
-/* Modules system dictionary type. Keys are module name,
- * values are pointer to RedisModule struct. */
-dictType modulesDictType = {
-    dictSdsCaseHash, //
-    NULL,
-    NULL,
-    dictSdsKeyCaseCompare,
-    dictSdsDestructor,
-    NULL,
-    NULL};
-
+dictType commandTableDictType = {dictSdsCaseHash, NULL, NULL, dictSdsKeyCaseCompare, dictSdsDestructor, NULL, NULL};
+// 哈希类型哈希表(注意，小哈希表是用列表包表示的)
+dictType hashDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, dictSdsDestructor, dictSdsDestructor, NULL};
+// 字典类型没有析构函数
+dictType sdsReplyDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, NULL, NULL, NULL};
+// Keylist哈希表类型有未编码的redis对象作为键和列表作为值。它用于阻塞操作(BLPOP)，并将交换的键映射到等待加载此键的客户端列表。
+dictType keylistDictType = {dictObjHash, NULL, NULL, dictObjKeyCompare, dictObjectDestructor, dictListDestructor, NULL};
+// 模块系统字典类型。键是模块名，值是RedisModule结构的指针。
+dictType modulesDictType = {dictSdsCaseHash, NULL, NULL, dictSdsKeyCaseCompare, dictSdsDestructor, NULL, NULL};
 // 缓存迁移的dict类型.
 dictType migrateCacheDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, dictSdsDestructor, NULL, NULL};
-
-/* Dict for for case-insensitive search using null terminated C strings.
- * The keys stored in dict are sds though. */
+// 字典用于使用空终止的C字符串进行不区分大小写的搜索。不过，dict中存储的密钥是sds。
 dictType stringSetDictType = {distCStrCaseHash, NULL, NULL, distCStrKeyCaseCompare, dictSdsDestructor, NULL, NULL};
-
-/* Dict for for case-insensitive search using null terminated C strings.
- * The key and value do not have a destructor. */
+// 字典用于使用空终止的C字符串进行不区分大小写的搜索。键和值没有析构函数。
 dictType externalStringType = {distCStrCaseHash, NULL, NULL, distCStrKeyCaseCompare, NULL, NULL, NULL};
-
-/* Dict for case-insensitive search using sds objects with a zmalloc
- * allocated object as the value. */
+// 使用zmalloc分配对象作为值的sds对象进行不区分大小写的搜索。
 dictType sdsHashDictType = {dictSdsCaseHash, NULL, NULL, dictSdsKeyCaseCompare, dictSdsDestructor, dictVanillaFree, NULL};
 
+// 检查字典的使用率是否低于系统允许的最小比率
 int htNeedsResize(dict *dict) {
     long long size, used;
-
-    size = dictSlots(dict);
-    used = dictSize(dict);
+    size = dictSlots(dict); // 容量指数
+    used = dictSize(dict);  // 已存储的key数量
     return (size > DICT_HT_INITIAL_SIZE && (used * 100 / size < HASHTABLE_MIN_FILL));
 }
 
-/* If the percentage of used slots in the HT reaches HASHTABLE_MIN_FILL
- * we resize the hash table to save memory */
-// 如果字典的使用率比 REDIS_HT_MINFILL 常量要低
-// 那么通过缩小字典的体积来节约内存
+// 如果HT中已使用插槽的百分比达到HASHTABLE_MIN_FILL，否则调整哈希表的大小以节省内存
 void tryResizeHashTables(int dbid) {
+    // 16个数据库是否应该调整大小
     if (htNeedsResize(server.db[dbid].dict)) {
         dictResize(server.db[dbid].dict);
     }
@@ -503,15 +565,15 @@ void tryResizeHashTables(int dbid) {
 // 为了防止出现这种情况,我们需要对数据库执行主动 rehash .
 // 函数在执行了主动 rehash 时返回 1 ,否则返回 0 .
 int incrementallyRehash(int dbid) {
-    /* Keys dictionary */
+    // 键的字典
     if (dictIsRehashing(server.db[dbid].dict)) {
-        dictRehashMilliseconds(server.db[dbid].dict, 1);
-        return 1; /* already used our millisecond for this loop... */
+        dictRehashMilliseconds(server.db[dbid].dict, 1); // 调整1ms
+        return 1;                                        // 已经为这个循环使用了我们的毫秒…
     }
-    /* Expires */
+    // 过期字典
     if (dictIsRehashing(server.db[dbid].expires)) {
         dictRehashMilliseconds(server.db[dbid].expires, 1);
-        return 1; /* already used our millisecond for this loop... */
+        return 1;
     }
     return 0;
 }
@@ -519,11 +581,11 @@ int incrementallyRehash(int dbid) {
 // 禁止在 AOF 重写期间进行 rehash 操作.
 // 以便更好地进行写时复制(否则当发生大小调整时,会复制大量内存页).
 void updateDictResizePolicy(void) {
-    if (!hasActiveChildProcess()) { // 是否正在运行的AOF进程
+    if (!hasActiveChildProcess()) { // 是否正在运行的AOF、RDB 进程
         dictEnableResize();
     }
     else {
-        dictDisableResize();
+        dictDisableResize(); // 有AOF、RDB进程会阻止扩容
     }
 }
 
@@ -533,7 +595,7 @@ const char *strChildType(int type) {
             return "RDB";
         case CHILD_TYPE_AOF:
             return "AOF";
-        case CHILD_TYPE_LDB:
+        case CHILD_TYPE_LDB: // LUA进程
             return "LDB";
         case CHILD_TYPE_MODULE:
             return "MODULE";
@@ -547,18 +609,19 @@ int hasActiveChildProcess() {
     return server.child_pid != -1;
 }
 
+// 重置子进程相关的状态
 void resetChildState() {
     server.child_type = CHILD_TYPE_NONE;
     server.child_pid = -1;
-    server.stat_current_cow_peak = 0;
-    server.stat_current_cow_bytes = 0;
-    server.stat_current_cow_updated = 0;
-    server.stat_current_save_keys_processed = 0;
-    server.stat_module_progress = 0;
-    server.stat_current_save_keys_total = 0;
-    updateDictResizePolicy();
-    closeChildInfoPipe();
-    moduleFireServerEvent(REDISMODULE_EVENT_FORK_CHILD, REDISMODULE_SUBEVENT_FORK_CHILD_DIED, NULL);
+    server.stat_current_cow_peak = 0;                                                                // 写入字节时拷贝的峰值大小。
+    server.stat_current_cow_bytes = 0;                                                               // 当子节点处于活动状态时，在写字节上复制。
+    server.stat_current_cow_updated = 0;                                                             // stat_current_cow_bytes最近一次更新时间
+    server.stat_current_save_keys_processed = 0;                                                     // 当子节点处于活动状态时，已处理键。
+    server.stat_module_progress = 0;                                                                 // 模块保存进度
+    server.stat_current_save_keys_total = 0;                                                         // 子程序开始时的键数。
+    updateDictResizePolicy();                                                                        // 更新是否允许dict rehash状态
+    closeChildInfoPipe();                                                                            // 关闭子进程管道
+    moduleFireServerEvent(REDISMODULE_EVENT_FORK_CHILD, REDISMODULE_SUBEVENT_FORK_CHILD_DIED, NULL); // 触发一些事件,由模块捕获,然后执行相应的逻辑
 }
 
 /* Return if child type is mutual exclusive with other fork children */
@@ -977,10 +1040,11 @@ void updateCachedTime(int update_daylight_info) {
     updateCachedTimeWithUs(update_daylight_info, us);
 }
 
+// 检查子进程是否结束
 void checkChildrenDone(void) {
     int statloc = 0;
     pid_t pid;
-    // 接收子进程发来的信号,非阻塞
+    // waitpid会暂时停止进程的执行，直到有信号来到或子进程结束。
     if ((pid = waitpid(-1, &statloc, WNOHANG)) != 0) {
         int exitcode = WIFEXITED(statloc) ? WEXITSTATUS(statloc) : -1;
         int bysignal = 0;
@@ -3810,37 +3874,6 @@ int prepareForShutdown(int flags) {
     return finishShutdown();
 }
 
-static inline int isShutdownInitiated(void) {
-    return server.shutdown_mstime != 0;
-}
-
-/* Returns 0 if there are any replicas which are lagging in replication which we
- * need to wait for before shutting down. Returns 1 if we're ready to shut
- * down now. */
-int isReadyToShutdown(void) {
-    if (listLength(server.slaves) == 0)
-        return 1; /* No replicas. */
-
-    listIter li;
-    listNode *ln;
-    listRewind(server.slaves, &li);
-    while ((ln = listNext(&li)) != NULL) {
-        client *replica = listNodeValue(ln);
-        if (replica->repl_ack_off != server.master_repl_offset)
-            return 0;
-    }
-    return 1;
-}
-
-static void cancelShutdown(void) {
-    server.shutdown_asap = 0;
-    server.shutdown_flags = 0;
-    server.shutdown_mstime = 0;
-    server.last_sig_received = 0;
-    replyToClientsBlockedOnShutdown();
-    unpauseClients(PAUSE_DURING_SHUTDOWN);
-}
-
 /* Returns C_OK if shutdown was aborted and C_ERR if shutdown wasn't ongoing. */
 int abortShutdown(void) {
     if (isShutdownInitiated()) {
@@ -3857,146 +3890,6 @@ int abortShutdown(void) {
     }
     serverLog(LL_NOTICE, "Shutdown manually aborted.");
     return C_OK;
-}
-
-/* The final step of the shutdown sequence. Returns C_OK if the shutdown
- * sequence was successful and it's OK to call exit(). If C_ERR is returned,
- * it's not safe to call exit(). */
-int finishShutdown(void) {
-    int save = server.shutdown_flags & SHUTDOWN_SAVE;
-    int nosave = server.shutdown_flags & SHUTDOWN_NOSAVE;
-    int force = server.shutdown_flags & SHUTDOWN_FORCE;
-
-    /* Log a warning for each replica that is lagging. */
-    listIter replicas_iter;
-    listNode *replicas_list_node;
-    int num_replicas = 0, num_lagging_replicas = 0;
-    listRewind(server.slaves, &replicas_iter);
-    while ((replicas_list_node = listNext(&replicas_iter)) != NULL) {
-        client *replica = listNodeValue(replicas_list_node);
-        num_replicas++;
-        if (replica->repl_ack_off != server.master_repl_offset) {
-            num_lagging_replicas++;
-            long lag = replica->replstate == SLAVE_STATE_ONLINE ? time(NULL) - replica->repl_ack_time : 0;
-            serverLog(LL_WARNING, "Lagging replica %s reported offset %lld behind master, lag=%ld, state=%s.", replicationGetSlaveName(replica), server.master_repl_offset - replica->repl_ack_off, lag, replstateToString(replica->replstate));
-        }
-    }
-    if (num_replicas > 0) {
-        serverLog(LL_NOTICE, "%d of %d replicas are in sync when shutting down.", num_replicas - num_lagging_replicas, num_replicas);
-    }
-
-    /* Kill all the Lua debugger forked sessions. */
-    ldbKillForkedSessions();
-
-    /* Kill the saving child if there is a background saving in progress.
-       We want to avoid race conditions, for instance our saving child may
-       overwrite the synchronous saving did by SHUTDOWN. */
-    // 如果有 BGSAVE 正在执行,那么杀死子进程,避免竞争条件
-    if (server.child_type == CHILD_TYPE_RDB) {
-        serverLog(LL_WARNING, "There is a child saving an .rdb. Killing it!");
-        killRDBChild();
-        /* Note that, in killRDBChild normally has backgroundSaveDoneHandler
-         * doing it's cleanup, but in this case this code will not be reached,
-         * so we need to call rdbRemoveTempFile which will close fd(in order
-         * to unlink file actually) in background thread.
-         * The temp rdb file fd may won't be closed when redis exits quickly,
-         * but OS will close this fd when process exits. */
-        rdbRemoveTempFile(server.child_pid, 0);
-    }
-
-    /* Kill module child if there is one. */
-    if (server.child_type == CHILD_TYPE_MODULE) {
-        serverLog(LL_WARNING, "There is a module fork child. Killing it!");
-        TerminateModuleForkChild(server.child_pid, 0);
-    }
-
-    /* Kill the AOF saving child as the AOF we already have may be longer
-     * but contains the full dataset anyway. */
-    if (server.child_type == CHILD_TYPE_AOF) {
-        /* If we have AOF enabled but haven't written the AOF yet, don't
-         * shutdown or else the dataset will be lost. */
-        if (server.aof_state == AOF_WAIT_REWRITE) {
-            if (force) {
-                serverLog(LL_WARNING, "Writing initial AOF. Exit anyway.");
-            }
-            else {
-                serverLog(LL_WARNING, "Writing initial AOF, can't exit.");
-                goto error;
-            }
-        }
-        serverLog(LL_WARNING, "There is a child rewriting the AOF. Killing it!");
-        killAppendOnlyChild();
-    }
-    // 同理,杀死正在执行 BGREWRITEAOF 的子进程
-
-    if (server.aof_state != AOF_OFF) {
-        /* Append only file: flush buffers and fsync() the AOF at exit */
-        serverLog(LL_NOTICE, "Calling fsync() on the AOF file.");
-        flushAppendOnlyFile(1); // 将缓冲区的内容写入到硬盘里面
-
-        if (redis_fsync(server.aof_fd) == -1) {
-            serverLog(LL_WARNING, "Fail to fsync the AOF file: %s.", strerror(errno));
-        }
-    }
-
-    /* Create a new RDB file before exiting. */
-    // 如果客户端执行的是 SHUTDOWN save ,或者 SAVE 功能被打开
-    // 那么执行 SAVE 操作
-    if ((server.saveparamslen > 0 && !nosave) || save) {
-        serverLog(LL_NOTICE, "Saving the final RDB snapshot before exiting.");
-        if (server.supervised_mode == SUPERVISED_SYSTEMD)
-            redisCommunicateSystemd("STATUS=Saving the final RDB snapshot\n");
-        /* Snapshotting. Perform a SYNC SAVE and exit */
-        rdbSaveInfo rsi, *rsiptr;
-        rsiptr = rdbPopulateSaveInfo(&rsi);
-        if (rdbSave(SLAVE_REQ_NONE, server.rdb_filename, rsiptr) != C_OK) {
-            /* Ooops.. error saving! The best we can do is to continue
-             * operating. Note that if there was a background saving process,
-             * in the next cron() Redis will be notified that the background
-             * saving aborted, handling special stuff like slaves pending for
-             * synchronization... */
-            if (force) {
-                serverLog(LL_WARNING, "Error trying to save the DB. Exit anyway.");
-            }
-            else {
-                serverLog(LL_WARNING, "Error trying to save the DB, can't exit.");
-                if (server.supervised_mode == SUPERVISED_SYSTEMD)
-                    redisCommunicateSystemd("STATUS=Error trying to save the DB, can't exit.\n");
-                goto error;
-            }
-        }
-    }
-
-    /* Free the AOF manifest. */
-    if (server.aof_manifest)
-        aofManifestFree(server.aof_manifest);
-
-    /* Fire the shutdown modules event. */
-    moduleFireServerEvent(REDISMODULE_EVENT_SHUTDOWN, 0, NULL);
-
-    /* Remove the pid file if possible and needed. */
-    // 移除 pidfile 文件
-
-    if (server.daemonize || server.pid_file) {
-        serverLog(LL_NOTICE, "Removing the pid file.");
-        unlink(server.pid_file);
-    }
-
-    /* Best effort flush of slave output buffers, so that we hopefully
-     * send them pending writes. */
-    flushSlavesOutputBuffers();
-
-    /* Close the listening sockets. Apparently this allows faster restarts. */
-    // 关闭监听套接字,这样在重启的时候会快一点
-
-    closeListeningSockets(1);
-    serverLog(LL_WARNING, "%s is now ready to exit, bye bye...", server.sentinel_mode ? "Sentinel" : "Redis");
-    return C_OK;
-
-error:
-    serverLog(LL_WARNING, "Errors trying to shut down the server. Check the logs for more information.");
-    cancelShutdown();
-    return C_ERR;
 }
 
 /*================================== Commands =============================== */
@@ -4713,7 +4606,6 @@ void commandDocsCommand(client *c) {
         addReplyMapLen(c, dictSize(server.commands)); // 先返回 *480\r\n
         di = dictGetIterator(server.commands);
         while ((de = dictNext(di)) != NULL) {
-            printf("------------\n");
             struct redisCommand *cmd = dictGetVal(de);
             addReplyBulkCBuffer(c, cmd->fullname, sdslen(cmd->fullname));
             addReplyCommandDocs(c, cmd);
@@ -4812,20 +4704,6 @@ sds fillPercentileDistributionLatencies(sds info, const char *histogram_name, st
     }
     info = sdscatprintf(info, "\r\n");
     return info;
-}
-
-const char *replstateToString(int replstate) {
-    switch (replstate) {
-        case SLAVE_STATE_WAIT_BGSAVE_START:
-        case SLAVE_STATE_WAIT_BGSAVE_END:
-            return "wait_bgsave";
-        case SLAVE_STATE_SEND_BULK:
-            return "send_bulk";
-        case SLAVE_STATE_ONLINE:
-            return "online";
-        default:
-            return "";
-    }
 }
 
 /* Characters we sanitize on INFO output to maintain expected format. */
@@ -6351,8 +6229,7 @@ static sds redisProcTitleGetVariable(const sds varname, void *arg) {
         return NULL; /* Unknown variable name */
 }
 
-/* Expand the specified proc-title-template string and return a newly
- * allocated sds, or NULL. */
+// 展开指定的proc-title-template字符串并返回一个新分配的sds或NULL。
 static sds expandProcTitleTemplate(const char *template, const char *title) {
     sds res = sdstemplate(template, redisProcTitleGetVariable, (void *)title);
     if (!res)
@@ -6360,7 +6237,6 @@ static sds expandProcTitleTemplate(const char *template, const char *title) {
     return sdstrim(res, " ");
 }
 
-/* Validate the specified template, returns 1 if valid or 0 otherwise. */
 int validateProcTitleTemplate(const char *template) {
     int ok = 1;
     sds res = expandProcTitleTemplate(template, "");
@@ -6399,13 +6275,12 @@ void redisSetCpuAffinity(const char *cpulist) {
 }
 
 // 向systemd发送一条通知信息.成功时返回sd_notify返回代码,为正数.
-// 沟通
 int redisCommunicateSystemd(const char *sd_notify_msg) {
 #ifdef HAVE_LIBSYSTEMD
     int ret = sd_notify(0, sd_notify_msg);
 
     if (ret == 0)
-        serverLog(LL_WARNING, "systemd supervision error: NOTIFY_SOCKET not found!");
+        serverLog(LL_WARNING, "systemd supervision error: 没有发现NOTIFY_SOCKET!");
     else if (ret < 0)
         serverLog(LL_WARNING, "systemd supervision error: sd_notify: %d", ret);
     return ret;
@@ -6430,15 +6305,15 @@ static int redisSupervisedUpstart(void) {
     return 1;
 }
 
-/* Attempt to set up systemd supervision. Returns 1 if successful. */
+// 尝试设置systemd 管理，成功返回1
 static int redisSupervisedSystemd(void) {
 #ifndef HAVE_LIBSYSTEMD
-    serverLog(LL_WARNING, "systemd supervision requested or auto-detected, but Redis is compiled without libsystemd support!");
+    serverLog(LL_WARNING, "主动或自动使用systemd管理 失败, redis没有与libsystemd一起编译");
     return 0;
 #else
     if (redisCommunicateSystemd("STATUS=Redis is loading...\n") <= 0)
         return 0;
-    serverLog(LL_NOTICE, "Supervised by systemd. Please make sure you set appropriate values for TimeoutStartSec and TimeoutStopSec in your service unit.");
+    serverLog(LL_NOTICE, "由systemd监督。请确保在serivce.unit中为TimeoutStartSec和TimeoutStopSec设置了适当的值。");
     return 1;
 #endif
 }

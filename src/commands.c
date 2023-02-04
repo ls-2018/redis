@@ -5042,12 +5042,7 @@ const char *LATENCY_LATEST_tips[] = {"nondeterministic_output", "request_policy:
 const char *LATENCY_RESET_tips[] = {"request_policy:all_nodes", "response_policy:all_succeeded", NULL};
 
 /* LATENCY RESET argument table */
-struct redisCommandArg LATENCY_RESET_Args[] = {
-    {
-        .name = "event",
-     .type = ARG_TYPE_STRING, .key_spec_index = -1, .token = NULL,
-        .summary = NULL, .since = NULL,
-        .flags = CMD_ARG_OPTIONAL | CMD_ARG_MULTIPLE}, {0}};
+struct redisCommandArg LATENCY_RESET_Args[] = {{.name = "event", .type = ARG_TYPE_STRING, .key_spec_index = -1, .token = NULL, .summary = NULL, .since = NULL, .flags = CMD_ARG_OPTIONAL | CMD_ARG_MULTIPLE}, {0}};
 
 // 命令表
 struct redisCommand LATENCY_Subcommands[] = {

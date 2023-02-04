@@ -1,35 +1,5 @@
-/* CLI (command line interface) common methods
- *
- * Copyright (c) 2020, Redis Labs
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *   * Redistributions of source code must retain the above copyright notice,
- *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
- *     to endorse or promote products derived from this software without
- *     specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
 #include "fmacros.h"
-#include "cli_common.h"
+#include "over-cli_common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -49,9 +19,7 @@
 
 #define UNUSED(V) ((void)V)
 
-/* Wrapper around redisSecureConnection to avoid hiredis_ssl dependencies if
- * not building with TLS support.
- */
+// 包装redisSecureConnection以避免在不支持TLS的情况下构建hiredis_ssl依赖。
 int cliSecureConnection(redisContext *c, cliSSLconfig config, const char **err) {
 #ifdef USE_OPENSSL
     static SSL_CTX *ssl_ctx = NULL;
@@ -248,7 +216,7 @@ sds *getSdsArrayFromArgv(int argc, char **argv, int quoted) {
     return res;
 }
 
-/* Unquote a null-terminated string and return it as a binary-safe sds. */
+// 取消以空结束的字符串的引号，并将其作为二进制安全的sds返回。
 sds unquoteCString(char *str) {
     int count;
     sds *unquoted = sdssplitargs(str, &count);

@@ -132,7 +132,7 @@ address                                |                          |        |
 #include <string.h>
 #include <stdint.h>
 #include <limits.h>
-#include "zmalloc.h"
+#include "over-zmalloc.h"
 #include "util.h"
 #include "ziplist.h"
 #include "config.h"

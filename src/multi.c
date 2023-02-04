@@ -175,18 +175,14 @@ void execCommand(client *c) {
                     reason = "no permission to touch the specified keys";
                     break;
                 case ACL_DENIED_CHANNEL:
-                    reason =
-                        "no permission to access one of the channels used as arguments";
+                    reason = "no permission to access one of the channels used as arguments";
                     break;
                 default:
                     reason = "no permission";
                     break;
             }
             addACLLogEntry(c, acl_retval, ACL_LOG_CTX_MULTI, acl_errpos, NULL, NULL);
-            addReplyErrorFormat(
-                c,
-                "-NOPERM ACLs rules changed between the moment the transaction was accumulated and the EXEC call. This command is no longer allowed for the following reason: %s",
-                reason);
+            addReplyErrorFormat(c, "-NOPERM ACLs rules changed between the moment the transaction was accumulated and the EXEC call. This command is no longer allowed for the following reason: %s", reason);
         }
         else {
             if (c->id == CLIENT_ID_AOF)

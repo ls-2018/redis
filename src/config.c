@@ -2269,10 +2269,10 @@ static int isValidAnnouncedHostname(char *val, const char **err) {
     return 1;
 }
 
-/* Validate specified string is a valid proc-title-template */
+// 验证指定的字符串是有效的proc-title-template
 static int isValidProcTitleTemplate(char *val, const char **err) {
     if (!validateProcTitleTemplate(val)) {
-        *err = "template format is invalid or contains unknown variables";
+        *err = "模板格式无效或包含未知变量";
         return 0;
     }
     return 1;

@@ -58,12 +58,12 @@
 #include <sds.h>       /* use sds.h from hiredis, so that only one set of sds functions will be present in the binary */
 #include "dict.h"
 #include "adlist.h"
-#include "zmalloc.h"
+#include "over-zmalloc.h"
 #include "linenoise.h"
 #include "help.h" /* Used for backwards-compatibility with pre-7.0 servers that don't support COMMAND DOCS. */
 #include "anet.h"
 #include "over-ae.h"
-#include "cli_common.h"
+#include "over-cli_common.h"
 #include "mt19937-64.h"
 
 #define UNUSED(V) ((void)V)

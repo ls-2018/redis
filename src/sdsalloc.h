@@ -39,7 +39,7 @@
 #ifndef __SDS_ALLOC_H__
 #define __SDS_ALLOC_H__
 
-#include "zmalloc.h"
+#include "over-zmalloc.h"
 
 #define s_malloc zmalloc
 #define s_realloc zrealloc

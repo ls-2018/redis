@@ -294,14 +294,10 @@ unsigned long LFUDecrAndReturn(robj *o) {
     return counter; // 如果衰减大小为0,则返回原来的访问次数
 }
 
-/* We don't want to count AOF buffers and slaves output buffers as
- * used memory: the eviction should use mostly data size, because
- * it can cause feedback-loop when we push DELs into them, putting
- * more and more DELs will make them bigger, if we count them, we
- * need to evict more keys, and then generate more DELs, maybe cause
- * massive eviction loop, even all keys are evicted.
- *
- * This function returns the sum of AOF and replication buffer. */
+// 我们不希望将AOF缓冲区和slave输出缓冲区计算为已使用的内存:驱逐应该主要使用数据大小，
+// 因为当我们将DELs推入其中时会引起反馈循环，放置越来越多的DELs会使它们更大，
+// 如果我们计算它们，我们需要驱逐更多的键，然后生成更多的DELs，可能会导致大量的驱逐循环，甚至所有的键都被驱逐。
+// 这个函数返回AOF和复制缓冲区的和。
 size_t freeMemoryGetNotCountedMemory(void) {
     size_t overhead = 0;
 
@@ -416,14 +412,11 @@ int getMaxmemoryState(size_t *total, size_t *logical, size_t *tofree, float *lev
     return C_ERR;
 }
 
-/* Return 1 if used memory is more than maxmemory after allocating more memory,
- * return 0 if not. Redis may reject user's requests or evict some keys if used
- * memory exceeds maxmemory, especially, when we allocate huge memory at once. */
+// 如果分配更多内存后使用的内存大于maxmemory，则返回1，否则返回0。
+// 如果使用的内存超过maxmemory, Redis可能会拒绝用户的请求或驱逐一些键，特别是当我们一次性分配巨大的内存时。
 int overMaxmemoryAfterAlloc(size_t moremem) {
     if (!server.maxmemory)
-        return 0; /* No limit. */
-
-    /* Check quickly. */
+        return 0;
     size_t mem_used = zmalloc_used_memory();
     if (mem_used + moremem <= server.maxmemory)
         return 0;

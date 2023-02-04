@@ -10917,7 +10917,7 @@ int RM_IsSubEventSupported(RedisModuleEvent event, int64_t subevent) {
     return 0;
 }
 
-// 这是由Redis内部调用,每次我们想要触发一个事件,可以被一些模块拦截.指针'data'在需要时填充特定于事件的结构是很有用的,以便将包含更多信息的结构返回给回调函数.
+// 这是由Redis内部调用,每次我们想要触发一个事件,可以被一些模块拦截.指针'data'在需要时填充特定于事件的结构,以便将包含更多信息的结构返回给回调函数.
 void moduleFireServerEvent(uint64_t eid, int subid, void *data) {
     // eid 事件类型ID
     // subid与事件相关的子事件

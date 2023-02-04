@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 #include "adlist.h"
-#include "zmalloc.h"
+#include "over-zmalloc.h"
 
 // 创建一个新的列表.
 // 创建的列表可以通过 listRelease() 释放,但是每个节点的私有值需要由用户在调用 listRelease() 之前释放,

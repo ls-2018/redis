@@ -12,7 +12,7 @@
 #include <sys/time.h>
 
 #include "dict.h"
-#include "zmalloc.h"
+#include "over-zmalloc.h"
 #include "redisassert.h"
 
 // 通过 dictEnableResize() 和 dictDisableResize() 两个函数,
@@ -24,7 +24,7 @@
 // 大于字典强制 rehash 比率 dict_force_resize_ratio ,
 // 那么 rehash 仍然会（强制）进行.
 
-// 指示字典是否启用 rehash 的标识
+// 指示字典是否可以 rehash 的标识
 static int dict_can_resize = 1;
 // 强制 rehash 的比率
 static unsigned int dict_force_resize_ratio = 5;
@@ -62,7 +62,6 @@ uint64_t dictGenHashFunction(const void *key, size_t len) {
     return siphash(key, len, dict_hash_function_seed);
 }
 
-// ok
 uint64_t dictGenCaseHashFunction(const unsigned char *buf, size_t len) {
     return siphash_nocase(buf, len, dict_hash_function_seed);
 }

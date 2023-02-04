@@ -155,11 +155,10 @@ struct clusterSlotToKeyMapping {
     slotToKeys by_slot[CLUSTER_SLOTS];
 };
 
-/* Dict entry metadata for cluster mode, used for the Slot to Key API to form a
- * linked list of the entries belonging to the same slot. */
+// 用于集群模式的Dict条目元数据，用于Slot to Key API，以形成属于同一插槽的条目的链表。
 typedef struct clusterDictEntryMetadata {
-    dictEntry *prev; /* Prev entry with key in the same slot */
-    dictEntry *next; /* Next entry with key in the same slot */
+    dictEntry *prev;
+    dictEntry *next;
 } clusterDictEntryMetadata;
 
 typedef struct clusterState {

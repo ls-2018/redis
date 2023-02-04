@@ -37,13 +37,6 @@ typedef struct dictEntry {
                              * pointer-aligned address) of size as returned
                              * by dictType's dictEntryMetadataBytes(). */
 } dictEntry;
-
-/*
-1
-2
-3 : [dictEntry,dictEntry,dictEntry]
-*/
-
 typedef struct dict dict;
 
 // 字典类型特定函数

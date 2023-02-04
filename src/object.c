@@ -681,24 +681,22 @@ robj *tryObjectEncoding(robj *o) {
     return o;
 }
 
-/* Get a decoded version of an encoded object (returned as a new object).
- * If the object is already raw-encoded just increment the ref count. */
+// 获取已编码对象的解码版本(作为新对象返回)。如果对象已经是原始编码，则增加ref计数。
 robj *getDecodedObject(robj *o) {
     robj *dec;
 
-    if (sdsEncodedObject(o)) {
+    if (sdsEncodedObject(o)) { // OBJ_ENCODING_RAW|OBJ_ENCODING_EMBSTR
         incrRefCount(o);
         return o;
     }
     if (o->type == OBJ_STRING && o->encoding == OBJ_ENCODING_INT) {
         char buf[32];
-
         ll2string(buf, 32, (long)o->ptr);
         dec = createStringObject(buf, strlen(buf));
         return dec;
     }
     else {
-        serverPanic("Unknown encoding type");
+        serverPanic("未知编码类型");
     }
 }
 

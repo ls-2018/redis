@@ -69,13 +69,13 @@ set(SRC_SERVER_TMP
         src/lolwut5.c
         src/call_reply.c
         src/redis-check-aof.c
-        src/localtime.c
+        src/over-localtime.c
         src/rdb.c
         src/slowlog.c
         src/listpack.c
         src/multi.c
         src/debug.c
-        src/cli_common.c
+        src/over-cli_common.c
         src/t_list.c
         src/rio.c
         src/cluster.c
@@ -101,7 +101,7 @@ set(SRC_SERVER_TMP
         src/crc64.c
         src/resp_parser.c
         src/mt19937-64.c
-        src/zmalloc.c
+        src/over-zmalloc.c
         src/zipmap.c
         src/syncio.c
         src/db.c
@@ -125,7 +125,7 @@ set(SRC_CLI
         src/sds.c
         src/adlist.c
         src/redis-cli.c
-        src/zmalloc.c
+        src/over-zmalloc.c
         src/release.c
         src/over-ae.c
         src/crc64.c

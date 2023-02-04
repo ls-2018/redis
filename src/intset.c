@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "intset.h"
-#include "zmalloc.h"
+#include "over-zmalloc.h"
 #include "over-endianconv.h"
 #include "redisassert.h"
 

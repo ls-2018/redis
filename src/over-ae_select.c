@@ -1,6 +1,6 @@
 #include "redisassert.h"
 #include "over-ae.h"
-#include "zmalloc.h"
+#include "over-zmalloc.h"
 #include "errno.h"
 #include <sys/select.h>
 #include <string.h>

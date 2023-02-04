@@ -448,13 +448,12 @@ void addReplySds(client *c, sds s) {
 // 这个低级函数只是添加您发送给客户端缓冲区的任何协议,最初尝试静态缓冲区,如果不可能,则使用对象字符串.
 // 它是高效的,因为如果不需要,它不会创建SDS对象或Redis对象.只有在扩展对象列表中现有的尾部对象失败时,才会通过调用_addReplyProtoToList()创建该对象.
 void addReplyProto(client *c, const char *s, size_t len) {
-    if (s[len - 1] == '\n') {
-        printf("%s", s);
-    }
-    else {
-        printf("%s\n", s);
-    }
-    // TODO 需要再看看
+    //    if (s[len - 1] == '\n') {
+    //        printf("%s", s);
+    //    }
+    //    else {
+    //        printf("%s\n", s);
+    //    }
     if (prepareClientToWrite(c) != C_OK)
         return;
     _addReplyToBufferOrList(c, s, len);
@@ -4195,7 +4194,7 @@ void *IOThreadMain(void *myid) {
     }
 }
 
-/* Initialize the data structures needed for threaded I/O. */
+// 初始化多线程io所需的数据结构
 void initThreadedIO(void) {
     server.io_threads_active = 0; // 表示IO线程还没有被激活
 
@@ -4233,6 +4232,7 @@ void initThreadedIO(void) {
     }
 }
 
+// 只由主线程调用
 void killIOThreads(void) {
     int err, j;
     for (j = 0; j < server.io_threads_num; j++) {
@@ -4240,15 +4240,16 @@ void killIOThreads(void) {
             continue;
         if (io_threads[j] && pthread_cancel(io_threads[j]) == 0) {
             if ((err = pthread_join(io_threads[j], NULL)) != 0) {
-                serverLog(LL_WARNING, "IO thread(tid:%lu) can not be joined: %s", (unsigned long)io_threads[j], strerror(err));
+                serverLog(LL_WARNING, "IO线程(tid:%lu) 无法joined: %s", (unsigned long)io_threads[j], strerror(err));
             }
             else {
-                serverLog(LL_WARNING, "IO thread(tid:%lu) terminated", (unsigned long)io_threads[j]);
+                serverLog(LL_WARNING, "IO线程(tid:%lu) 已终止", (unsigned long)io_threads[j]);
             }
         }
     }
 }
 
+// 只由主线程调用
 void startThreadedIO(void) {
     serverAssert(server.io_threads_active == 0);
     for (int j = 1; j < server.io_threads_num; j++) {
@@ -4257,7 +4258,7 @@ void startThreadedIO(void) {
     server.io_threads_active = 1;
 }
 
-// OK
+// 只由主线程调用
 void stopThreadedIO(void) {
     /* 当调用此函数时,可能仍然有客户端挂起读取:在停止线程之前处理它们.*/
     handleClientsWithPendingReadsUsingThreads();

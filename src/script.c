@@ -555,7 +555,7 @@ void scriptCall(scriptRunCtx *run_ctx, robj **argv, int argc, sds *err) {
     if (run_ctx->repl_flags & PROPAGATE_REPL) {
         call_flags |= CMD_CALL_PROPAGATE_REPL;
     }
-    call(c, call_flags);// scriptCall
+    call(c, call_flags); // scriptCall
     serverAssert((c->flags & CLIENT_BLOCKED) == 0);
     return;
 

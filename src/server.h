@@ -35,21 +35,21 @@
 typedef long long mstime_t; /* millisecond time type. */
 typedef long long ustime_t; /* microsecond time type. */
 
-#include "over-ae.h"    /* Event driven programming library */
-#include "sds.h"        /* Dynamic safe strings */
-#include "dict.h"       /* Hash tables */
-#include "adlist.h"     /* Linked lists */
-#include "zmalloc.h"    /* total memory usage aware version of malloc/free */
-#include "anet.h"       /* Networking the easy way */
-#include "ziplist.h"    /* Compact list data structure */
-#include "intset.h"     /* Compact integer set structure */
-#include "version.h"    /* Version macro */
-#include "util.h"       /* Misc functions useful in many places */
-#include "latency.h"    /* Latency monitor API */
-#include "sparkline.h"  /* ASCII graphs API */
-#include "quicklist.h"  /* Lists are encoded as linked lists of N-elements flat arrays */
-#include "rax.h"        /* Radix tree */
-#include "connection.h" /* Connection abstraction */
+#include "over-ae.h"      /* Event driven programming library */
+#include "sds.h"          /* Dynamic safe strings */
+#include "dict.h"         /* Hash tables */
+#include "adlist.h"       /* Linked lists */
+#include "over-zmalloc.h" /* total memory usage aware version of malloc/free */
+#include "anet.h"         /* Networking the easy way */
+#include "ziplist.h"      /* Compact list data structure */
+#include "intset.h"       /* Compact integer set structure */
+#include "version.h"      /* Version macro */
+#include "util.h"         /* Misc functions useful in many places */
+#include "latency.h"      /* Latency monitor API */
+#include "sparkline.h"    /* ASCII graphs API */
+#include "quicklist.h"    /* Lists are encoded as linked lists of N-elements flat arrays */
+#include "rax.h"          /* Radix tree */
+#include "connection.h"   /* Connection abstraction */
 
 #define REDISMODULE_CORE 1
 
@@ -488,10 +488,10 @@ typedef enum {
 
 /* SHUTDOWN flags */
 #define SHUTDOWN_NOFLAGS 0 /* No flags. */
-#define SHUTDOWN_SAVE 1    /* Force SAVE on SHUTDOWN even if no save points are configured. */
-#define SHUTDOWN_NOSAVE 2  /* Don't SAVE on SHUTDOWN. */
-#define SHUTDOWN_NOW 4     /* Don't wait for replicas to catch up. */
-#define SHUTDOWN_FORCE 8   /* Don't let errors prevent shutdown. */
+#define SHUTDOWN_SAVE 1    // 在SHUTDOWN时强制SAVE，即使没有配置保存点。
+#define SHUTDOWN_NOSAVE 2  // 不要在关机时SAVE
+#define SHUTDOWN_NOW 4     // 不要等待SLAVE的追赶
+#define SHUTDOWN_FORCE 8   // 不要让错误阻止关机
 
 // 命令执行 的标志
 #define CMD_CALL_NONE 0
@@ -515,12 +515,12 @@ typedef enum {
     CLIENT_PAUSE_ALL      // 暂停所有命令
 } pause_type;
 
-/* Client pause purposes. Each purpose has its own end time and pause type. */
+// 客户端暂停的目的。每个目的都有自己的结束时间和暂停类型。
 typedef enum {
-    PAUSE_BY_CLIENT_COMMAND = 0,
-    PAUSE_DURING_SHUTDOWN,
-    PAUSE_DURING_FAILOVER,
-    NUM_PAUSE_PURPOSES /* This value is the number of purposes above. */
+    PAUSE_BY_CLIENT_COMMAND = 0, // 由于客户端的命令
+    PAUSE_DURING_SHUTDOWN,       // 由于在shutdown状态中
+    PAUSE_DURING_FAILOVER,       // 失败
+    NUM_PAUSE_PURPOSES           // 上述目的的数量
 } pause_purpose;
 
 typedef struct {
@@ -811,8 +811,9 @@ typedef struct RedisModuleDigest {
 #define LRU_CLOCK_MAX ((1 << LRU_BITS) - 1) // obj->lru 的最大值, 4字节的最大值
 #define LRU_CLOCK_RESOLUTION 1000           // LRU检查最大时间  以毫秒为单位的 LRU 时钟精度
 
-#define OBJ_SHARED_REFCOUNT INT_MAX       /* Global object never destroyed. */
-#define OBJ_STATIC_REFCOUNT (INT_MAX - 1) /* Object allocated in the stack. */
+#define OBJ_SHARED_REFCOUNT INT_MAX       // 全局对象永不销毁。
+#define OBJ_STATIC_REFCOUNT (INT_MAX - 1) // 在堆栈中分配的对象。
+
 #define OBJ_FIRST_SPECIAL_REFCOUNT OBJ_STATIC_REFCOUNT
 // unsigned  4字节
 typedef struct redisObject { // 16个字节
@@ -820,10 +821,10 @@ typedef struct redisObject { // 16个字节
     unsigned encoding : 4;   // 编码 4bits  基本类型的底层数据结构,例如 SDS、压缩列表、哈希表、跳表等;
     unsigned lru : LRU_BITS; // 24bits      对象最后一次被访问的时间,在服务器启用了maxmemory时 空转时间较大的哪些键可能会优先被服务器删除
     // 前16位 存储数据的访问时间戳、后8位 表示数据的访问次数
-
     int refcount; // 引用计数 4bytes
     void *ptr;    // 指向对象的底层实现数据结构,而这些结构由encoding属性决定 8bytes
 } robj;
+// redisObject->SDS->
 
 /* The a string name for an object's type as listed above
  * Native types are checked against the OBJ_STRING, OBJ_LIST, OBJ_* defines,
@@ -1438,7 +1439,7 @@ typedef struct {
 #define CHILD_TYPE_NONE 0
 #define CHILD_TYPE_RDB 1
 #define CHILD_TYPE_AOF 2
-#define CHILD_TYPE_LDB 3
+#define CHILD_TYPE_LDB 3 // LUA进程
 #define CHILD_TYPE_MODULE 4
 
 typedef enum childInfoType { CHILD_INFO_TYPE_CURRENT_INFO, CHILD_INFO_TYPE_AOF_COW_SIZE, CHILD_INFO_TYPE_RDB_COW_SIZE, CHILD_INFO_TYPE_MODULE_COW_SIZE } childInfoType;
@@ -1463,7 +1464,7 @@ struct redisServer {
     redisAtomic unsigned int lru_clock;                                      // 最近一次使用时钟
     volatile sig_atomic_t shutdown_asap;                                     // 关闭服务器的标识
     mstime_t shutdown_mstime;                                                // 优雅关闭限制的时间
-    int last_sig_received;                                                   /* Indicates the last SIGNAL received, if any (e.g., SIGINT or SIGTERM). */
+    int last_sig_received;                                                   // 最近一次收到的信号
     int shutdown_flags;                                                      // 传递给prepareForShutdown()的标志.
     int active_rehashing;                                                    // 在执行 serverCron() 时进行渐进式 rehash
     int active_defrag_running;                                               // 运行中的主动碎片整理
@@ -1490,7 +1491,7 @@ struct redisServer {
     dict *module_configs_queue;                                              /* Dict that stores module configurations from .conf file until after modules are loaded during startup or arguments to loadex. */
     list *loadmodule_queue;                                                  /* List of modules to load at startup. */
     int module_pipe[2];                                                      // 用来唤醒模块线程的事件循环的管道.
-    pid_t child_pid;                                                         // 子进程 ID
+    pid_t child_pid;                                                         // 子进程 ID,-1表示没有子进程
     int child_type;                                                          // 负责进行AOF重写、负责执行 BGSAVE 的子进程的ID
     int port;                                                                // TCP 监听端口
     int tls_port;                                                            /* TLS listening port */
@@ -1584,15 +1585,15 @@ struct redisServer {
     struct malloc_stats cron_malloc_stats;              /* sampled in serverCron(). */
     redisAtomic long long stat_net_input_bytes;         // 从网络读取到的字节数
     redisAtomic long long stat_net_output_bytes;        /* 写到网络的字节数 */
-    size_t stat_current_cow_peak;                       /* Peak size of copy on write bytes. */
-    size_t stat_current_cow_bytes;                      /* Copy on write bytes while child is active. */
-    monotime stat_current_cow_updated;                  /* Last update time of stat_current_cow_bytes */
-    size_t stat_current_save_keys_processed;            /* Processed keys while child is active. */
-    size_t stat_current_save_keys_total;                /* Number of keys when child started. */
+    size_t stat_current_cow_peak;                       // 写入字节时拷贝的峰值大小。
+    size_t stat_current_cow_bytes;                      // 当子节点处于活动状态时，在写字节上复制。
+    monotime stat_current_cow_updated;                  // stat_current_cow_bytes最近一次更新时间
+    size_t stat_current_save_keys_processed;            // 当子节点处于活动状态时，已处理键。
+    size_t stat_current_save_keys_total;                // 子程序开始时的键数。
     size_t stat_rdb_cow_bytes;                          // rdb 过程中 COW 消耗d内存大小
     size_t stat_aof_cow_bytes;                          /* Copy on write bytes during AOF rewrite. */
     size_t stat_module_cow_bytes;                       /* Copy on write bytes during module fork. */
-    double stat_module_progress;                        /* Module save progress. */
+    double stat_module_progress;                        // 模块保存进度
     size_t stat_clients_type_memory[CLIENT_TYPE_COUNT]; // 记录每种客户端类型的数量
     size_t stat_cluster_links_memory;                   /* Mem usage by cluster links */
     long long stat_unexpected_error_replies;            /* Number of unexpected (aof-loading, replica to master, etc.) error replies */
@@ -2128,11 +2129,9 @@ struct redisCommand {
     uint64_t flags;                                 // 位掩码形式的 FLAG
     uint64_t acl_categories;                        /* ACl categories, see ACL_CATEGORY_*. */
     keySpec key_specs_static[STATIC_KEY_SPECS_NUM]; // key规格
-    /* Use a function to determine keys arguments in a command line.
-     * Used for Redis Cluster redirect (may be NULL) */
-    redisGetKeysProc *getkeys_proc;   // 从命令中判断命令的键参数.在 Redis 集群转向时使用.
-    struct redisCommand *subcommands; // 子命令数组或者NULL
-    struct redisCommandArg *args;     // 参数数组,可能为NULL
+    redisGetKeysProc *getkeys_proc;                 // 从命令中判断命令的键参数.在 Redis 集群转向时使用.
+    struct redisCommand *subcommands;               // 子命令数组或者NULL
+    struct redisCommandArg *args;                   // 参数数组,可能为NULL
 
     // 统计信息
     long long microseconds;   // 记录了命令执行耗费的总毫微秒数
@@ -2202,7 +2201,6 @@ typedef struct {
     dictIterator *di; // 字典迭代器,编码为 HT 时使用
 } setTypeIterator;
 
-/*  */
 // 哈希对象的迭代器
 typedef struct {
     robj *subject;              // 被迭代的哈希对象
