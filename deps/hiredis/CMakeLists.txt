@@ -36,7 +36,7 @@ SET(hiredis_sources
     hiredis.c
     net.c
     read.c
-    sds.c
+        over-sds.c
     sockcompat.c)
 
 SET(hiredis_sources ${hiredis_sources})
@@ -118,7 +118,7 @@ endif()
 INSTALL(FILES hiredis.targets
     DESTINATION build/native)
 
-INSTALL(FILES hiredis.h read.h sds.h async.h alloc.h
+INSTALL(FILES hiredis.h read.h over-sds.h async.h alloc.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hiredis)
 
 INSTALL(DIRECTORY adapters

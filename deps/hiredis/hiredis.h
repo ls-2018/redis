@@ -42,7 +42,7 @@ struct timeval; /* forward declaration */
 typedef long long          ssize_t;
 #endif
 #include <stdint.h> /* uintXX_t, etc */
-#include "sds.h"    /* for hisds */
+#include "over-sds.h"    /* for hisds */
 #include "alloc.h"  /* for allocation wrappers */
 
 #define HIREDIS_MAJOR 1

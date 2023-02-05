@@ -1,32 +1,3 @@
-/*
- * Copyright (c) 2009-2012, Salvatore Sanfilippo <antirez at gmail dot com>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *   * Redistributions of source code must retain the above copyright notice,
- *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
- *     to endorse or promote products derived from this software without
- *     specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
 #include "server.h"
 #include "sha1.h"
 #include "rand.h"
@@ -64,26 +35,18 @@ static uint64_t dictStrCaseHash(const void *key) {
 }
 
 /* server.lua_scripts sha (as sds string) -> scripts (as luaScript) cache. */
-dictType shaScriptObjectDictType = {
-    dictStrCaseHash,         /* hash function */
-    NULL,                    /* key dup */
-    NULL,                    /* val dup */
-    dictSdsKeyCaseCompare,   /* key compare */
-    dictSdsDestructor,       /* key destructor */
-    dictLuaScriptDestructor, /* val destructor */
-    NULL                     /* allow to expand */
-};
+dictType shaScriptObjectDictType = {dictStrCaseHash, NULL, NULL, dictSdsKeyCaseCompare, dictSdsDestructor, dictLuaScriptDestructor, NULL};
 
 struct luaCtx {
-    lua_State *lua; // Lua 环境  The Lua interpreter. We use just one for all clients
+    lua_State *lua; // Lua 环境  clients共同使用一个
     // lua_client伪客户端在服务器运行的整个生命期中会一直存在,只有服务器被关闭时,这个客户端才会被关闭.
     client *lua_client;                 // 建负责执行Lua脚本中包含的Redis命令的伪 客户端
     dict *lua_scripts;                  // 一个字典, SHA1 -> Lua scripts
     unsigned long long lua_scripts_mem; /* Cached scripts' memory + oh */
 } lctx;
 
-/* Debugger shared state is stored inside this global structure. */
-#define LDB_BREAKPOINTS_MAX 64  /* Max number of breakpoints. */
+// 调试器共享状态存储在此全局结构中。
+#define LDB_BREAKPOINTS_MAX 64  // 最大断点数量
 #define LDB_MAX_LEN_DEFAULT 256 /* Default len limit for replies / var dumps. */
 struct ldbState {
     connection *conn;            /* Connection of the debugging client. */
@@ -102,7 +65,7 @@ struct ldbState {
     sds cbuf;                    /* Debugger client command buffer. */
     size_t maxlen;               /* Max var dump / reply length. */
     int maxlen_hint_sent;        /* Did we already hint about "set maxlen"? */
-} ldb;
+} ldb;                           // lua debug
 
 /* ---------------------------------------------------------------------------
  * Utility functions.
@@ -812,9 +775,7 @@ void ldbEndSession(client *c) {
     ldb.active = 0;
 }
 
-/* If the specified pid is among the list of children spawned for
- * forked debugging sessions, it is removed from the children list.
- * If the pid was found non-zero is returned. */
+// 如果指定的pid在为forked调试会话生成的子列表中，则它将从子列表中删除。如果发现pid非零则返回。
 int ldbRemoveChild(pid_t pid) {
     listNode *ln = listSearchKey(ldb.children, (void *)(unsigned long)pid);
     if (ln) {
@@ -824,8 +785,7 @@ int ldbRemoveChild(pid_t pid) {
     return 0;
 }
 
-/* Return the number of children we still did not receive termination
- * acknowledge via wait() in the parent process. */
+// 返回我们仍然没有收到终止确认的子进程的数量。 在父进程中通过wait()
 int ldbPendingChildren(void) {
     return listLength(ldb.children);
 }

@@ -2001,7 +2001,7 @@ unsigned int ziplistRandomPairsUnique(unsigned char *zl, unsigned int count, zip
 #ifdef REDIS_TEST
 #    include <sys/time.h>
 #    include "adlist.h"
-#    include "sds.h"
+#    include "over-sds.h"
 #    include "testhelp.h"
 
 #    define debug(f, ...)               \

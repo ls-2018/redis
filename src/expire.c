@@ -345,8 +345,7 @@ void activeExpireCycle(int type) {
  * ID greater than 63, and check all the configured DBs in such a case. */
 dict *slaveKeysWithExpire = NULL;
 
-/* Check the set of keys created by the master with an expire set in order to
- * check if they should be evicted. */
+// 检查带有过期设置的主服务器创建的keys  以检查它们是否应该被清除。
 void expireSlaveKeys(void) {
     if (slaveKeysWithExpire == NULL || dictSize(slaveKeysWithExpire) == 0)
         return;

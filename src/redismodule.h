@@ -635,7 +635,6 @@ typedef struct RedisModuleConfigChange {
 } RedisModuleConfigChangeV1;
 
 #define RedisModuleConfigChange RedisModuleConfigChangeV1
-
 #define REDISMODULE_CRON_LOOP_VERSION 1
 typedef struct RedisModuleCronLoopInfo {
     uint64_t version; /* Not used since this structure is never passed

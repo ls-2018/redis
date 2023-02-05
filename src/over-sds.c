@@ -5,7 +5,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <limits.h>
-#include "sds.h"
+#include "over-sds.h"
 #include "sdsalloc.h"
 
 const char *SDS_NOINIT = "SDS_NOINIT";
@@ -302,7 +302,7 @@ sds sdsRemoveFreeSpace(sds s) {
     }
 
     // 检查刚刚好适合这个字符串的最小SDS头.
-    type = sdsReqType(len);
+    type = sdsReqType(len); // 刚好适用于当前数据长度的结构
     hdrlen = sdsHdrSize(type);
 
     // 如果类型相同,或者至少需要足够大的类型,则只需realloc(),让分配器只在真正需要时进行复制.否则,如果变化很大,我们手动重新分配字符串,以使用不同的头类型.

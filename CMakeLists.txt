@@ -32,7 +32,7 @@ add_subdirectory(src/modules)
 set(SRC_SERVER_TMP
         src/dict.c
         src/geohash_helper.c
-        src/sds.c
+        src/over-sds.c
         src/crcspeed.c
         src/hyperloglog.c
         src/adlist.c
@@ -118,11 +118,11 @@ set(SRC_SERVER_TMP
         src/pubsub.c
         src/over-monotonic.c
         src/quicklist.c
-        )
-set(SRC_SERVER src/server.c ${SRC_SERVER_TMP} ${OPTION})
+        src/server.h)
+set(SRC_SERVER src/server.c ${SRC_SERVER_TMP} ${OPTION} src/server.h)
 set(SRC_CLI
         src/anet.c
-        src/sds.c
+        src/over-sds.c
         src/adlist.c
         src/redis-cli.c
         src/over-zmalloc.c
@@ -132,13 +132,13 @@ set(SRC_CLI
         src/crc16.c
         src/dict.c
         src/siphash.c
-        )
+        src/server.h)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     # better not to work with jemalloc
 endif ()
 set(EXECUTABLE_OUTPUT_PATH src)
-add_executable(redis-server ${SRC_SERVER})
-add_executable(redis-cli ${SRC_CLI})
+add_executable(redis-server ${SRC_SERVER} src/server.h)
+add_executable(redis-cli ${SRC_CLI} src/server.h)
 set_property(TARGET redis-server PROPERTY C_STANDARD 99)
 set_property(TARGET redis-server PROPERTY CXX_STANDARD 11)
 set_property(TARGET redis-server PROPERTY CXX_STANDARD_REQUIRED ON)

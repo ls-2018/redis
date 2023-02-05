@@ -488,6 +488,7 @@ void trackingInvalidateKeysOnFlush(int async) {
  * specified fill rate: if we are over, we can just evict information about
  * a random key, and send invalidation messages to clients like if the key was
  * modified. */
+// 调整跟踪键表的大小
 void trackingLimitUsedSlots(void) {
     static unsigned int timeout_counter = 0;
     if (TrackingTable == NULL)

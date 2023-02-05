@@ -1608,7 +1608,7 @@ void lpRepr(unsigned char *lp) {
 
 #    include <sys/time.h>
 #    include "adlist.h"
-#    include "sds.h"
+#    include "over-sds.h"
 #    include "testhelp.h"
 
 #    define UNUSED(x) (void)(x)

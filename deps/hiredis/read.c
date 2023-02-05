@@ -44,7 +44,7 @@
 
 #include "alloc.h"
 #include "read.h"
-#include "sds.h"
+#include "over-sds.h"
 #include "win32.h"
 
 /* Initial size of our nested reply stack and how much we grow it when needd */

@@ -46,31 +46,18 @@ int checkBlockedClientTimeout(client *c, mstime_t now) {
     }
 }
 
-/* Check for timeouts. Returns non-zero if the client was terminated.
- * The function gets the current time in milliseconds as argument since
- * it gets called multiple times in a loop, so calling gettimeofday() for
- * each iteration would be costly without any actual gain. */
-// 检查客户端是否已经超时,如果超时就关闭客户端,并返回 1 ;
-// 否则返回 0 .
+// 检查客户端是否已经超时,如果超时就关闭客户端,并返回 1 ;否则返回 0 .
 int clientsCronHandleTimeout(client *c, mstime_t now_ms) {
     time_t now = now_ms / 1000; // 获取当前时间
 
-    // 服务器设置了 maxidletime 时间
-    if (server.maxidletime &&
-        /* This handles the idle clients connection timeout if set. */
-        // 不检查作为从服务器的客户端
-        !(c->flags & CLIENT_SLAVE) && /* No timeout for slaves and monitors */
-        !mustObeyClient(c) &&         /* No timeout for masters and AOF */
-
-        // 不检查被阻塞的客户端
-        !(c->flags & CLIENT_BLOCKED) && /* No timeout for BLPOP */
-
-        // 不检查订阅了频道的客户端
-        !(c->flags & CLIENT_PUBSUB) && /* No timeout for Pub/Sub clients */
-
-        // 客户端最后一次与服务器通讯的时间已经超过了 maxidletime 时间
-        (now - c->lastinteraction > server.maxidletime)) {
-        serverLog(LL_VERBOSE, "Closing idle client");
+    if (server.maxidletime &&                           // 服务器设置了 maxidletime 时间
+        !(c->flags & CLIENT_SLAVE) &&                   // 不检查作为从服务器的客户端
+        !mustObeyClient(c) &&                           // 不检查主节点 和AOF
+        !(c->flags & CLIENT_BLOCKED) &&                 // 不检查被阻塞的客户端
+        !(c->flags & CLIENT_PUBSUB) &&                  // 不检查订阅了频道的客户端
+        (now - c->lastinteraction > server.maxidletime) // 客户端最后一次与服务器通讯的时间已经超过了 maxidletime 时间
+    ) {
+        serverLog(LL_VERBOSE, "关闭客户端");
         freeClient(c); // 关闭超时客户端
         return 1;
     }

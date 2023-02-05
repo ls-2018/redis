@@ -33,7 +33,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include "sds.h"
+#include "over-sds.h"
 #include "connection.h"
 
 #define RIO_FLAG_READ_ERROR (1 << 0)

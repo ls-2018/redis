@@ -1960,7 +1960,7 @@ void watchdogScheduleSignal(int period) { // period这么长时间后,接收一�
     new_value           为传入参数 表示定时的时长
     old_value           为传出参数 表示上一次定时剩余的时间,例如第一次定时10s,但是过了3s后,再次用setitimer函数定时,此时第二次的计时会将第一次计时覆盖,而上一次定时的剩余时间则为7s.
      */
-    setitimer(ITIMER_REAL, &it, NULL);
+    setitimer(ITIMER_REAL, &it, NULL); // ITIMER_REAL 相对时长
 }
 // 设置SIGALRM信号的处理程序
 void applyWatchdogPeriod() {

@@ -40,7 +40,7 @@
 
 #include "hiredis.h"
 #include "net.h"
-#include "sds.h"
+#include "over-sds.h"
 #include "async.h"
 #include "win32.h"
 

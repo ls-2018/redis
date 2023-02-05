@@ -43,7 +43,7 @@
 #include <stdlib.h>
 
 #include "net.h"
-#include "sds.h"
+#include "over-sds.h"
 #include "sockcompat.h"
 #include "win32.h"
 

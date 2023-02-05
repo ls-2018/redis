@@ -387,7 +387,7 @@ void feedReplicationBuffer(char *s, size_t len) {
     incrementalTrimReplicationBacklog(REPL_BACKLOG_TRIM_BLOCKS_PER_CALL);
 }
 
-/* Propagate write commands to replication stream.
+/* 向复制流传播写命令。
  *
  * This function is used if the instance is a master: we use the commands
  * received by our clients in order to create the replication stream.
@@ -3493,8 +3493,10 @@ long long replicationGetSlaveOffset(void) {
 
 /* --------------------------- REPLICATION CRON  ---------------------------- */
 
-/* Replication cron function, called 1 time per second. */
+// 正常情况，每秒调用1次。
 void replicationCron(void) {
+    // 重新连接主服务器、向主服务器发送 ACK 、判断数据发送失败情况、断开本服务器超时的从服务器,等等
+
     static long long replication_cron_loops = 0;
 
     /* Check failover status first, to see if we need to start

@@ -35,7 +35,7 @@ static struct evictionPoolEntry *EvictionPoolLRU;
  * 驱逐老龄化 的LRU实现
  * --------------------------------------------------------------------------*/
 
-// 获得以毫秒为单位计算的 UNIX 时间戳,底层
+// 获得以毫秒为单位计算的 UNIX 时间戳,底层  计算全局LRU时钟值
 unsigned int getLRUClock(void) {
     return (mstime() / LRU_CLOCK_RESOLUTION) & LRU_CLOCK_MAX; // 11111111 11111111 11111111 11111111
     // 4字节 可以存储 138 年的秒 ,距1969年

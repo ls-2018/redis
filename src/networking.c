@@ -3733,33 +3733,31 @@ void rewriteClientCommandArgument(client *c, int i, robj *newval) {
     }
 }
 
-/* This function returns the number of bytes that Redis is
- * using to store the reply still not read by the client.
- *
- * Note: this function is very fast so can be called as many time as
- * the caller wishes. The main usage of this function currently is
- * enforcing the client output length limits. */
+// 这个函数返回Redis用来存储客户端还没有读取的要回复的字节数。
+// 注意:这个函数非常快。这个函数目前的主要用途是强制客户端输出长度限制。
 size_t getClientOutputBufferMemoryUsage(client *c) {
-    if (getClientType(c) == CLIENT_TYPE_SLAVE) {
+    if (getClientType(c) == CLIENT_TYPE_SLAVE) { // 从节点
         size_t repl_buf_size = 0;
         size_t repl_node_num = 0;
         size_t repl_node_size = sizeof(listNode) + sizeof(replBufBlock);
-        if (c->ref_repl_buf_node) {
-            replBufBlock *last = listNodeValue(listLast(server.repl_buffer_blocks));
-            replBufBlock *cur = listNodeValue(c->ref_repl_buf_node);
-            repl_buf_size = last->repl_offset + last->size - cur->repl_offset;
-            repl_node_num = last->id - cur->id + 1;
+        if (c->ref_repl_buf_node) {                                                  // 复制缓冲区块的引用节点
+            replBufBlock *last = listNodeValue(listLast(server.repl_buffer_blocks)); // server端最新的数据
+            // server端的复制日志，是用链表存储，每个节点都有一定量的数据
+            replBufBlock *cur = listNodeValue(c->ref_repl_buf_node);           // 从节点要发送的数据
+            repl_buf_size = last->repl_offset + last->size - cur->repl_offset; // 从节点距离最新的数据  的一个差值
+            repl_node_num = last->id - cur->id + 1;                            // 节点数
         }
-        return repl_buf_size + (repl_node_size * repl_node_num);
+        return repl_buf_size + (repl_node_size * repl_node_num); // 数据量+ 存储的节点大小*数量
     }
     else {
         size_t list_item_size = sizeof(listNode) + sizeof(clientReplyBlock);
-        return c->reply_bytes + (list_item_size * listLength(c->reply));
+        return c->reply_bytes + (list_item_size * listLength(c->reply)); // todo 回复链表中对象的总大小 +
     }
 }
 
 // 返回客户端总的内存使用情况
 size_t getClientMemoryUsage(client *c, size_t *output_buffer_mem_usage) {
+    // 内存包括输出缓冲区、查询缓冲区、client数据结构本身占用、事务、pubsub、redis6.0中支持客户端本地缓存功能占用的内存等
     size_t mem = getClientOutputBufferMemoryUsage(c);
     if (output_buffer_mem_usage != NULL) {
         *output_buffer_mem_usage = mem;
@@ -3785,20 +3783,9 @@ size_t getClientMemoryUsage(client *c, size_t *output_buffer_mem_usage) {
     return mem;
 }
 
-/* Get the class of a client, used in order to enforce limits to different
- * classes of clients.
- *
- * The function will return one of the following:
- * CLIENT_TYPE_NORMAL -> Normal client
- * CLIENT_TYPE_SLAVE  -> Slave
- * CLIENT_TYPE_PUBSUB -> Client subscribed to Pub/Sub channels
- * CLIENT_TYPE_MASTER -> The client representing our replication master.
- */
 int getClientType(client *c) {
     if (c->flags & CLIENT_MASTER)
         return CLIENT_TYPE_MASTER;
-    /* Even though MONITOR clients are marked as replicas, we
-     * want the expose them as normal clients. */
     if ((c->flags & CLIENT_SLAVE) && !(c->flags & CLIENT_MONITOR))
         return CLIENT_TYPE_SLAVE;
     if (c->flags & CLIENT_PUBSUB)
@@ -3889,17 +3876,10 @@ int checkClientOutputBufferLimits(client *c) {
     return soft || hard;
 }
 
-/* Asynchronously close a client if soft or hard limit is reached on the
- * output buffer size. The caller can check if the client will be closed
- * checking if the client CLIENT_CLOSE_ASAP flag is set.
- *
- * Note: we need to close the client asynchronously because this function is
- * called from contexts where the client can't be freed safely, i.e. from the
- * lower level functions pushing data inside the client output buffers.
- * When `async` is set to 0, we close the client immediately, this is
- * useful when called from cron.
- *
- * Returns 1 if client was (flagged) closed. */
+// 如果达到输出缓冲区大小的软限制或硬限制，异步关闭客户端。调用者可以检查客户机是否将被关闭，检查客户机CLIENT_CLOSE_ASAP标志是否被设置。
+// 注意:我们需要异步关闭客户端，因为这个函数是在客户端不能安全释放的情况下调用的，即从较低级别的函数在客户端输出缓冲区中推送数据。
+// 当 'async' 被设置为0时，我们立即关闭客户端，这在从cron调用时非常有用。
+// 如果客户端被(标记)关闭，返回1。
 int closeClientOnOutputBufferLimitReached(client *c, int async) {
     if (!c->conn)
         return 0; /* It is unsafe to free fake clients. */
@@ -4007,21 +3987,12 @@ void unblockPostponedClients() {
     }
 }
 
-/* Pause clients up to the specified unixtime (in ms) for a given type of
- * commands.
- *
- * A main use case of this function is to allow pausing replication traffic
- * so that a failover without data loss to occur. Replicas will continue to receive
- * traffic to facilitate this functionality.
- *
- * This function is also internally used by Redis Cluster for the manual
- * failover procedure implemented by CLUSTER FAILOVER.
- *
- * The function always succeed, even if there is already a pause in progress.
- * In such a case, the duration is set to the maximum and new end time and the
- * type is set to the more restrictive type of pause. */
+// 对于给定类型的命令，将客户端暂停到指定的unixtime(毫秒)。
+// 此功能的一个主要用例是允许暂停复制流量，以便在不发生数据丢失的情况下进行故障转移。副本将继续接收流量以促进此功能。
+// 此功能也被Redis集群内部用于由Cluster failover实现的手动故障转移过程。
+// 函数总是成功的，即使在进程中已经有一个暂停。在这种情况下，将持续时间设置为最大和新的结束时间，并将类型设置为更严格的暂停类型。
 void pauseClients(pause_purpose purpose, mstime_t end, pause_type type) {
-    /* Manage pause type and end time per pause purpose. */
+    // 管理每个暂停目的的暂停类型和结束时间。
     if (server.client_pause_per_purpose[purpose] == NULL) {
         server.client_pause_per_purpose[purpose] = zmalloc(sizeof(pause_event));
         server.client_pause_per_purpose[purpose]->type = type;

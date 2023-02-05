@@ -55,7 +55,7 @@
 #endif
 
 #include <sdscompat.h> /* Use hiredis' sds compat header that maps sds calls to their hi_ variants */
-#include <sds.h>       /* use sds.h from hiredis, so that only one set of sds functions will be present in the binary */
+#include <over-sds.h>  /* use sds.h from hiredis, so that only one set of sds functions will be present in the binary */
 #include "dict.h"
 #include "adlist.h"
 #include "over-zmalloc.h"

@@ -42,7 +42,7 @@
 #include "async.h"
 #include "net.h"
 #include "dict.c"
-#include "sds.h"
+#include "over-sds.h"
 #include "win32.h"
 
 #include "async_private.h"

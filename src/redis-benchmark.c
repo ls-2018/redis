@@ -44,7 +44,7 @@
 #include <pthread.h>
 
 #include <sdscompat.h> /* Use hiredis' sds compat header that maps sds calls to their hi_ variants */
-#include <sds.h>       /* Use hiredis sds. */
+#include <over-sds.h>  /* Use hiredis sds. */
 #include "over-ae.h"
 #include <hiredis.h>
 

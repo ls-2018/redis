@@ -65,7 +65,7 @@ void closeChildInfoPipe(void) {
     }
 }
 
-/* Send save data to parent. */
+// 发送数据到父进程
 void sendChildInfoGeneric(childInfoType info_type, size_t keys, double progress, char *pname) {
     if (server.child_info_pipe[1] == -1)
         return;
@@ -135,10 +135,8 @@ void updateChildInfo(childInfoType information_type, size_t cow, monotime cow_up
     }
 }
 
-/* Read child info data from the pipe.
- * if complete data read into the buffer,
- * data is stored into *buffer, and returns 1.
- * otherwise, the partial data is left in the buffer, waiting for the next read, and returns 0. */
+// 从管道中读取子进程数据。如果将完整的数据读入缓冲区，则将数据存储到 缓冲区，并返回1。
+// 否则，部分数据将留在缓冲区中，等待下一次读取，并返回0。
 int readChildInfo(childInfoType *information_type, size_t *cow, monotime *cow_updated, size_t *keys, double *progress) {
     /* We are using here a static buffer in combination with the server.child_info_nread to handle short reads */
     static child_info_data buffer;
@@ -167,7 +165,7 @@ int readChildInfo(childInfoType *information_type, size_t *cow, monotime *cow_up
     }
 }
 
-/* Receive info data from child. */
+// 从子节点接收信息数据。
 void receiveChildInfo(void) {
     if (server.child_info_pipe[0] == -1)
         return;
@@ -178,7 +176,7 @@ void receiveChildInfo(void) {
     double progress;
     childInfoType information_type;
 
-    /* Drain the pipe and update child info so that we get the final message. */
+    // 释放管道并更新子信息，以便获得最终消息。
     while (readChildInfo(&information_type, &cow, &cow_updated, &keys, &progress)) {
         updateChildInfo(information_type, cow, cow_updated, keys, progress);
     }
