@@ -49,7 +49,7 @@ typedef long long ustime_t; // 微秒
 #include "sparkline.h"    /* ASCII graphs API */
 #include "quicklist.h"    /* Lists are encoded as linked lists of N-elements flat arrays */
 #include "rax.h"          /* Radix tree */
-#include "connection.h"   /* Connection abstraction */
+#include "over-connection.h" /* Connection abstraction */
 
 #define REDISMODULE_CORE 1
 #include "redismodule.h"

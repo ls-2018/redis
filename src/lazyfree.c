@@ -191,8 +191,9 @@ void freeObjAsync(robj *key, robj *obj, int dbid) {
     // 否则按照同步方式直接删除，因为那样代价更小
 
     if (free_effort > LAZYFREE_THRESHOLD && obj->refcount == 1) {
-        atomicIncr(lazyfree_objects, 1);
+        atomicIncr(lazyfree_objects, 1);// 异步释放+1，原子操作
         // 创建惰性删除的后台任务,交给后台线程执行
+        // 将 value 的释放添加到异步线程队列中去，后台处理, 任务类型为 异步释放内存
         bioCreateLazyFreeJob(lazyfreeFreeObject, 1, obj);
     }
     else {

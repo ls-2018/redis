@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "over-sds.h"
-#include "connection.h"
+#include "over-connection.h"
 
 #define RIO_FLAG_READ_ERROR (1 << 0)
 #define RIO_FLAG_WRITE_ERROR (1 << 1)

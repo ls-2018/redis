@@ -60,16 +60,16 @@ void bioInit(void) {
     // 初始化互斥锁数组和条件变量数组
     for (j = 0; j < BIO_NUM_OPS; j++) {
         pthread_mutex_init(&bio_mutex[j], NULL);
-        pthread_cond_init(&bio_newjob_cond[j], NULL);
-        pthread_cond_init(&bio_step_cond[j], NULL);
-        bio_jobs[j] = listCreate(); // 给 bio_jobs 这个数组的每个元素创建一个链表,每个链表保存了每个后台线程要处理的任务列表
-        bio_pending[j] = 0;         // 每种任务中,处于等待状态的任务个数.
+        pthread_cond_init(&bio_newjob_cond[j], NULL); // 用来初始化条件变量的函数
+        pthread_cond_init(&bio_step_cond[j], NULL);   // 用来初始化条件变量的函数
+        bio_jobs[j] = listCreate();                   // 给 bio_jobs 这个数组的每个元素创建一个链表,每个链表保存了每个后台线程要处理的任务列表
+        bio_pending[j] = 0;                           // 每种任务中,处于等待状态的任务个数.
     }
 
     pthread_attr_init(&attr);                     // 线程设置属性,包括堆栈地址和大小、优先级等
     pthread_attr_getstacksize(&attr, &stacksize); // 获取当前的线程栈大小, 512k
     // 打印堆栈值
-    serverLog(LL_NOTICE, "\nstack_size = %zuB, %luk\n", stacksize, stacksize / 1024);
+    serverLog(LL_NOTICE, "\n栈大小 = %zuB, %luk\n", stacksize, stacksize / 1024);
     if (!stacksize) {
         stacksize = 1; // 针对Solaris系统做处理
     }
@@ -100,18 +100,19 @@ void bioInit(void) {
 // 把任务挂到对应类型的「链表」下
 void bioSubmitJob(int type, struct bio_job *job) {
     // 「多线程」读写链表数据,这个过程是需要「加锁」操作的.
-    pthread_mutex_lock(&bio_mutex[type]);        // 加锁
-    listAddNodeTail(bio_jobs[type], job);        // 添加到链表尾
-    bio_pending[type]++;                         // +1
-    pthread_cond_signal(&bio_newjob_cond[type]); //
-    pthread_mutex_unlock(&bio_mutex[type]);      // 解锁
+    pthread_mutex_lock(&bio_mutex[type]); // 加锁
+    listAddNodeTail(bio_jobs[type], job); // 添加到链表尾
+    bio_pending[type]++;                  // +1
+    // 发送一个信号给另外一个正在处于阻塞等待状态的线程,使其脱离阻塞状态,继续执行.如果没有线程处在阻塞等待状态,pthread_cond_signal也会成功返回
+    // 唤醒任务线程
+    pthread_cond_signal(&bio_newjob_cond[type]);
+    pthread_mutex_unlock(&bio_mutex[type]); // 解锁
 }
 
-// 创建后台任务
+// 将 value 的释放添加到异步线程队列中去，后台处理, 任务类型为 异步释放内存
 void bioCreateLazyFreeJob(lazy_free_fn free_fn, int arg_count, ...) {
     va_list valist;
-    /* Allocate memory for the job structure and all required
-     * arguments */
+    /* 为作业结构和所有必需的参数分配内存 */
     struct bio_job *job = zmalloc(sizeof(*job) + sizeof(void *) * (arg_count));
     job->free_fn = free_fn;
 

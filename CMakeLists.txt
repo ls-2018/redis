@@ -79,7 +79,7 @@ set(SRC_SERVER_TMP
         src/t_list.c
         src/rio.c
         src/cluster.c
-        src/connection.c
+        src/over-connection.c
         src/function_lua.c
         src/bio.c
         src/over-ae.c
