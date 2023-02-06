@@ -30,7 +30,7 @@ execute_process(
 add_subdirectory(deps)
 add_subdirectory(src/modules)
 set(SRC_SERVER_TMP
-        src/dict.c
+        src/over-dict.c
         src/geohash_helper.c
         src/over-sds.c
         src/crcspeed.c
@@ -38,7 +38,7 @@ set(SRC_SERVER_TMP
         src/adlist.c
         src/eval.c
         src/lzf_d.c
-        src/geo.c
+        src/over-geo.c
         src/lolwut.c
         src/lazyfree.c
         src/rand.c
@@ -130,7 +130,7 @@ set(SRC_CLI
         src/over-ae.c
         src/crc64.c
         src/crc16.c
-        src/dict.c
+        src/over-dict.c
         src/siphash.c
         src/over-server.h)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")

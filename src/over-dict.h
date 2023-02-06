@@ -24,15 +24,15 @@
 
 // 哈希表
 typedef struct dictEntry {
-    void *key; // string 对象    redisObject 对象
+    void *key;    // 存储 key 字段内容    redisObject 对象
     union
     {
         void *val;    // redisObject对象   值为整数或双精度浮点数时,本身就是64位,就可以不用指针指向了,而是可以直接存在键值对的结构体中,这样就避免了再用一个指针,从而节省了内存空间.
         uint64_t u64; // 无符号64位
-        int64_t s64;
-        double d;
+        int64_t s64;// 存储过期时间时使用该字段
+        double d;// 存储 score 时使用
     } v;
-    struct dictEntry *next; // 指向下个哈希表节点,形成链表
+    struct dictEntry *next; // 存在hash冲突时，作链表使用
     void *metadata[];       /* An arbitrary number of bytes (starting at a
                              * pointer-aligned address) of size as returned
                              * by dictType's dictEntryMetadataBytes(). */
@@ -56,7 +56,7 @@ struct dict {
     dictType *type;           // 类型特定函数
     dictEntry **ht_table[2];  // 哈希表;一般情况下,字典只使用ht[0]哈希表,ht[1]哈希表只会在对ht[0]哈希表进行rehash时使用
     unsigned long ht_used[2]; // 该哈希表已有节点的数量
-    long rehashidx;           // rehash 索引; 当 rehash 不在进行时,值为 -1 , >=0正在rehash
+    long rehashidx;           // rehash 索引; 当 rehash 不在进行时,值为 -1 , >=0正在rehash  , 代表了dict中数组的索引
     /* Keep small vars at end for optimal (minimal) struct padding */
     int16_t pauserehash;        // >0 表示rehash被暂停了
     signed char ht_size_exp[2]; // 记录了大小指数,实际大小是1<<n
@@ -92,7 +92,7 @@ typedef void(dictScanBucketFunction)(dict *d, dictEntry **bucketref);
 #define DICT_HT_INITIAL_SIZE (1 << (DICT_HT_INITIAL_EXP))
 
 /* ------------------------------- Macros ------------------------------------*/
-// 释放给定字典节点的值
+// 释放给定字典节点的值   dictSdsDestructor
 #define dictFreeVal(d, entry)     \
     if ((d)->type->valDestructor) \
     (d)->type->valDestructor((d), (entry)->v.val)

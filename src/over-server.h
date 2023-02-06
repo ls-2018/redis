@@ -37,7 +37,7 @@ typedef long long ustime_t; // 微秒
 
 #include "over-ae.h"      /* Event driven programming library */
 #include "over-sds.h"     /* Dynamic safe strings */
-#include "dict.h"         /* Hash tables */
+#include "over-dict.h"    /* Hash tables */
 #include "adlist.h"       /* Linked lists */
 #include "over-zmalloc.h" /* total memory usage aware version of malloc/free */
 #include "anet.h"         /* Networking the easy way */

@@ -11,7 +11,7 @@
 #include <limits.h>
 #include <sys/time.h>
 
-#include "dict.h"
+#include "over-dict.h"
 #include "over-zmalloc.h"
 #include "redisassert.h"
 
@@ -110,7 +110,7 @@ int dictResize(dict *d) {
 
 // ########### 实际扩容函数 ####################
 
-// 扩容、创建哈希表 ,size是新的大小
+// 扩容、创建哈希表 ,size是新的大小  ,创建了一个新的dict
 int _dictExpand(dict *d, unsigned long size, int *malloc_failed) {
     if (malloc_failed) {
         *malloc_failed = 0; // 初始默认值
@@ -150,8 +150,7 @@ int _dictExpand(dict *d, unsigned long size, int *malloc_failed) {
 
     new_ht_used = 0;
 
-    /* Is this the first initialization? If so it's not really a rehashing
-     * we just set the first hash table so that it can accept keys. */
+    /*这是第一次初始化吗?如果是这样，它就不是真正的重哈希我们只是设置了第一个哈希表以便它可以接受键。*/
     if (d->ht_table[0] == NULL) {
         d->ht_size_exp[0] = new_ht_size_exp;
         d->ht_used[0] = new_ht_used;
@@ -159,7 +158,7 @@ int _dictExpand(dict *d, unsigned long size, int *malloc_failed) {
         return DICT_OK;
     }
 
-    /* Prepare a second hash table for incremental rehashing */
+    /* 准备第二个哈希表进行增量重哈希 */
     d->ht_size_exp[1] = new_ht_size_exp;
     d->ht_used[1] = new_ht_used;
     d->ht_table[1] = new_ht_table;
@@ -216,7 +215,7 @@ int dictRehash(dict *d, int n) {
             d->ht_used[1]++;
             de = nextde;
         }
-        d->ht_table[0][d->rehashidx] = NULL;
+        d->ht_table[0][d->rehashidx] = NULL; // 将旧的dict置空了
         d->rehashidx++;
     }
 
@@ -403,36 +402,16 @@ static dictEntry *dictGenericDelete(dict *d, const void *key, int nofree) {
 
 // 从字典中删除包含给定键的节点,并且调用键值的释放函数来删除键值, 找到并成功删除返回 DICT_OK ,没找到则返回 DICT_ERR
 int dictDelete(dict *ht, const void *key) {
+    // 0:要释放相应的val内存,
+    // 1:不释放相应val内存只删除key
     return dictGenericDelete(ht, key, 0) ? DICT_OK : DICT_ERR;
 }
 
-/* Remove an element from the table, but without actually releasing
- * the key, value and dictionary entry. The dictionary entry is returned
- * if the element was found (and unlinked from the table), and the user
- * should later call `dictFreeUnlinkedEntry()` with it in order to release it.
- * Otherwise if the key is not found, NULL is returned.
- *
- * This function is useful when we want to remove something from the hash
- * table but want to use its value before actually deleting the entry.
- * Without this function the pattern would require two lookups:
- *
- *  entry = dictFind(...);
- *  // Do something with entry
- *  dictDelete(dictionary,entry);
- *
- * Thanks to this function it is possible to avoid this, and use
- * instead:
- *
- * entry = dictUnlink(dictionary,entry);
- * // Do something with entry
- * dictFreeUnlinkedEntry(entry); // <- This does not need to lookup again.
- */
 dictEntry *dictUnlink(dict *ht, const void *key) {
     return dictGenericDelete(ht, key, 1);
 }
 
-/* You need to call this function to really free the entry after a call
- * to dictUnlink(). It's safe to call this function with 'he' = NULL. */
+/* 在调用dictUnlink()之后，需要调用这个函数来真正释放条目。用'he' = NULL来调用这个函数是安全的。 */
 void dictFreeUnlinkedEntry(dict *d, dictEntry *he) {
     if (he == NULL)
         return;
@@ -474,9 +453,9 @@ int _dictClear(dict *d, int htidx, void(callback)(dict *)) {
 // 删除并释放整个字典
 void dictRelease(dict *d) {
     // 删除并清空两个哈希表
-    _dictClear(d, 0, NULL);
-    _dictClear(d, 1, NULL);
-    zfree(d); // 释放节点结构
+    _dictClear(d, 0, NULL); // dictRelease
+    _dictClear(d, 1, NULL); // dictRelease
+    zfree(d);               // 释放节点结构
 }
 
 // 返回字典中包含键 key 的节点 ,找到返回节点,找不到返回 NULL
@@ -995,7 +974,7 @@ static int dictTypeExpandAllowed(dict *d) {
     // 当前的负载因子
     double b = (double)d->ht_used[0] / DICTHT_SIZE(d->ht_size_exp[0]);
     // 扩容后的大小, 当前的负载因子
-    return d->type->expandAllowed(a, b);
+    return d->type->expandAllowed(a, b); // dictExpandAllowed
 }
 
 // 根据需要,初始化字典（的哈希表）,或者对字典（的现有哈希表）进行扩展
@@ -1086,8 +1065,8 @@ static long _dictKeyIndex(dict *d, const void *key, uint64_t hash, dictEntry **e
 void dictEmpty(dict *d, void(callback)(dict *)) {
     // 删除两个哈希表上的所有节点
     // T = O(N)
-    _dictClear(d, 0, callback);
-    _dictClear(d, 1, callback);
+    _dictClear(d, 0, callback); // dictEmpty
+    _dictClear(d, 1, callback); // dictEmpty
     // 重置属性
     d->rehashidx = -1;
     d->pauserehash = 0;

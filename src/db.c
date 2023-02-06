@@ -276,24 +276,22 @@ robj *dbRandomKey(redisDb *db) {
     }
 }
 
-/* Helper for sync and async delete. */
+// 同步和异步删除。
 static int dbGenericDelete(redisDb *db, robj *key, int async) {
-    /* Deleting an entry from the expires dict will not free the sds of
-     * the key, because it is shared with the main dictionary. */
+    // 从expires字典中删除条目不会释放该键的sds，因为它与主字典共享。
+    // 首先从 expires 队列删除，然后再从 db->dict 中删除
     if (dictSize(db->expires) > 0) {
         dictDelete(db->expires, key->ptr);
     }
-    dictEntry *de = dictUnlink(db->dict, key->ptr);
+    dictEntry *de = dictUnlink(db->dict, key->ptr);// 异步
     if (de) {
         robj *val = dictGetVal(de);
-        /* Tells the module that the key has been unlinked from the database. */
-        moduleNotifyKeyUnlink(key, val, db->id);
-        /* We want to try to unblock any client using a blocking XREADGROUP */
-        if (val->type == OBJ_STREAM) {
+        moduleNotifyKeyUnlink(key, val, db->id); // 告诉模块该key已从数据库中解除链接。
+        if (val->type == OBJ_STREAM) { // 我们想尝试使用阻塞的 XREADGROUP 解除阻塞任何客户端
             signalKeyAsReady(db, key, val->type);
         }
         if (async) {
-            freeObjAsync(key, val, db->id);
+            freeObjAsync(key, val, db->id);// 异步释放逻辑  ✈️✈️✈️✈️✈️✈️✈️✈️
             dictSetVal(db->dict, de, NULL);
         }
         if (server.cluster_enabled) {
@@ -307,19 +305,17 @@ static int dbGenericDelete(redisDb *db, robj *key, int async) {
     }
 }
 
-/* Delete a key, value, and associated expiration entry if any, from the DB */
+/* 从DB中删除键、值和相关过期项(如果有的话) */
 int dbSyncDelete(redisDb *db, robj *key) {
     return dbGenericDelete(db, key, 0);
 }
 
-/* Delete a key, value, and associated expiration entry if any, from the DB. If
- * the value consists of many allocations, it may be freed asynchronously. */
+/* 从DB中删除键、值和相关过期项(如果有的话)。如果该值包含许多分配，则可以异步释放它。*/
 int dbAsyncDelete(redisDb *db, robj *key) {
     return dbGenericDelete(db, key, 1);
 }
 
-/* This is a wrapper whose behavior depends on the Redis lazy free
- * configuration. Deletes the key synchronously or asynchronously. */
+/* 这是一个包装器，其行为依赖于Redis lazy free配置。同步或异步删除密钥。*/
 int dbDelete(redisDb *db, robj *key) {
     return dbGenericDelete(db, key, server.lazyfree_lazy_server_del);
 }
@@ -639,14 +635,15 @@ void flushallCommand(client *c) {
 }
 
 // 这个命令实现了DEL和LAZYDEL.
-void delGenericCommand(client *c, int lazy) {
+void delGenericCommand(client *c, int lazy) {// del unlink 决定lazy
     int numdel = 0, j;
     // 遍历所有输入键
     for (j = 1; j < c->argc; j++) {
         expireIfNeeded(c->db, c->argv[j], 0);
 
         // 使用不同模式删除
-        int deleted = lazy ? dbAsyncDelete(c->db, c->argv[j]) : dbSyncDelete(c->db, c->argv[j]);
+        int deleted = lazy ? dbAsyncDelete(c->db, c->argv[j]) : dbSyncDelete(c->db, c->argv[j]);// del unlink 决定lazy
+        // 写命令的传播问题
         if (deleted) {
             // 删除键成功,发送通知
             signalModifiedKey(c, c->db, c->argv[j]);
@@ -655,6 +652,7 @@ void delGenericCommand(client *c, int lazy) {
             numdel++;
         }
     }
+    // 响应删除数据量, 粒度到 key 级别
     addReplyLongLong(c, numdel);
 }
 // 删除键

@@ -29,7 +29,7 @@
 
 #include "functions.h"
 #include "over-sds.h"
-#include "dict.h"
+#include "over-dict.h"
 #include "adlist.h"
 #include "atomicvar.h"
 

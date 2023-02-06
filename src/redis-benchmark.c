@@ -55,7 +55,7 @@
 #endif
 
 #include "adlist.h"
-#include "dict.h"
+#include "over-dict.h"
 #include "over-zmalloc.h"
 #include "atomicvar.h"
 #include "crc16_slottable.h"

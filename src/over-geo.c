@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "geo.h"
+#include "over-geo.h"
 #include "geohash_helper.h"
 #include "debugmacro.h"
 #include "pqsort.h"

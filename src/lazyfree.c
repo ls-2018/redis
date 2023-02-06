@@ -178,14 +178,17 @@ size_t lazyfreeGetFreeEffort(robj *key, robj *obj, int dbid) {
  * slower... So under a certain limit we just free the object synchronously. */
 #define LAZYFREE_THRESHOLD 64
 
-/* Free an object, if the object is huge enough, free it in async way. */
+/* 释放一个对象，如果对象足够大，以异步方式释放它。 */
 void freeObjAsync(robj *key, robj *obj, int dbid) {
-    size_t free_effort = lazyfreeGetFreeEffort(key, obj, dbid);
+    size_t free_effort = lazyfreeGetFreeEffort(key, obj, dbid);// 判断释放的开销
     /* Note that if the object is shared, to reclaim it now it is not
      * possible. This rarely happens, however sometimes the implementation
      * of parts of the Redis core may call incrRefCount() to protect
      * objects, and then call dbDelete(). */
     // 如果要淘汰的键值对包含超过64个元素
+
+    // 其实异步方法与同步方法的差别在这，即要求 删除的元素影响须大于某阀值(64)
+    // 否则按照同步方式直接删除，因为那样代价更小
 
     if (free_effort > LAZYFREE_THRESHOLD && obj->refcount == 1) {
         atomicIncr(lazyfree_objects, 1);

@@ -146,7 +146,7 @@ pkgconfig: $(PKGCONFNAME) $(SSL_PKGCONF)
 # Deps (use make dep to generate this)
 alloc.o: alloc.c fmacros.h alloc.h
 async.o: async.c fmacros.h alloc.h async.h hiredis.h read.h over-sds.h net.h dict.c dict.h win32.h async_private.h
-dict.o: dict.c fmacros.h alloc.h dict.h
+over-dict.o: over-dict.c fmacros.h alloc.h over-dict.h
 hiredis.o: hiredis.c fmacros.h hiredis.h read.h over-sds.h alloc.h net.h async.h win32.h
 net.o: net.c fmacros.h net.h hiredis.h read.h over-sds.h alloc.h sockcompat.h win32.h
 read.o: read.c fmacros.h alloc.h read.h over-sds.h win32.h
