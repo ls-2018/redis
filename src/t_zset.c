@@ -56,7 +56,7 @@
  * pointers being only at "level 1". This allows to traverse the list
  * from tail to head, useful for ZREVRANGE. */
 
-#include "server.h"
+#include "over-server.h"
 #include <math.h>
 
 /*-----------------------------------------------------------------------------
@@ -123,12 +123,12 @@ void zslFree(zskiplist *zsl) {
 }
 
 int zslRandomLevel(void) {
-    //    跳表在创建节点时候,会生成范围为[0-1]的一个随机数,如果这个随机数小于 0.25（相当于概率 25%）,那么层数就增加 1 层,
-    //    然后继续生成下一个随机数,直到随机数的结果大于 0.25 结束,最终确定该节点的层数
+    //  跳表在创建节点时候,会生成范围为[0-1]的一个随机数,如果这个随机数小于 0.25（相当于概率 25%）,那么层数就增加 1 层,
+    //  然后继续生成下一个随机数,直到随机数的结果大于 0.25 结束,最终确定该节点的层数
     static const int threshold = ZSKIPLIST_P * RAND_MAX;
     int level = 1;
     while (random() < threshold) level += 1;
-    //    层高最大限制是 64.
+    //  层高最大限制是 64.
     return (level < ZSKIPLIST_MAXLEVEL) ? level : ZSKIPLIST_MAXLEVEL;
 }
 

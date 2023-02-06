@@ -48,7 +48,7 @@
 
 #include "anet.h"
 #include "config.h"
-#include "server.h"
+#include "over-server.h"
 
 // 打印错误信息
 static void anetSetError(char *err, const char *fmt, ...) {
@@ -178,8 +178,8 @@ static int anetSetTcpNoDelay(char *err, int fd, int val) {
 
 // 禁用 Nagle 算法
 int anetEnableTcpNoDelay(char *err, int fd) {
-    //    启动TCP_NODELAY,就意味着禁用了Nagle算法,允许小包的发送.
-    //    https://blog.csdn.net/qq_32907195/article/details/120287099
+    // 启动TCP_NODELAY,就意味着禁用了Nagle算法,允许小包的发送.
+    // https://blog.csdn.net/qq_32907195/article/details/120287099
     return anetSetTcpNoDelay(err, fd, 1);
 }
 
@@ -431,8 +431,8 @@ static int _anetTcpServer(char *err, int port, char *bindaddr, int af, int backl
     struct addrinfo hints, *servinfo, *p;
 
     snprintf(_port, 6, "%d", port);
-    //    new一个结构体,c语言中,new一个对象比较麻烦,要先定义一个结构体类型的变量,如struct addrinfo hints,
-    //    ,然后调用memset来初始化内存,然后设置各个属性.总体来说,这里就是new了一个ipv4的地址
+    // new一个结构体,c语言中,new一个对象比较麻烦,要先定义一个结构体类型的变量,如struct addrinfo hints,
+    // ,然后调用memset来初始化内存,然后设置各个属性.总体来说,这里就是new了一个ipv4的地址
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = af;
     hints.ai_socktype = SOCK_STREAM;
@@ -552,8 +552,8 @@ static int anetGenericAccept(char *err, int s, struct sockaddr *sa, socklen_t *l
 // TCP 连接 accept 函数
 // 返回错误、客户端IP,本地使用的端口
 int anetTcpAccept(char *err, int serversock, char *ip, size_t ip_len, int *port) {
-    //    ntohs  作用是将一个16位数由网络字节顺序转换为主机字节顺序.
-    //    inet_ntop 从数值格式(addrptr)转换到表达式(strptr)
+    // ntohs  作用是将一个16位数由网络字节顺序转换为主机字节顺序.
+    // inet_ntop 从数值格式(addrptr)转换到表达式(strptr)
 
     int fd;
     struct sockaddr_storage sa;
@@ -563,7 +563,7 @@ int anetTcpAccept(char *err, int serversock, char *ip, size_t ip_len, int *port)
         return ANET_ERR;
     }
 
-    if (sa.ss_family == AF_INET) { //   ipv4
+    if (sa.ss_family == AF_INET) { // ipv4
         struct sockaddr_in *s = (struct sockaddr_in *)&sa;
         if (ip) {
             // 将IPv4或IPv6 Internet网络地址转换为 Internet标准格式的字符串。

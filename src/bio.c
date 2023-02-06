@@ -23,7 +23,7 @@
  * 目前还没有办法在任务完成时通知执行者,在有需要的时候,会实现这个功能.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "bio.h"
 // 保存线程描述符的数组
 static pthread_t bio_threads[BIO_NUM_OPS];
@@ -79,15 +79,15 @@ void bioInit(void) {
     pthread_attr_setstacksize(&attr, stacksize); // 设置线程栈
 
     /* 准备派生我们的线程.我们使用线程函数接受的单个参数来传递线程负责的作业ID.*/
-    //      * 创建线程
+    //  * 创建线程
     for (j = 0; j < BIO_NUM_OPS; j++) {
         void *arg = (void *)(unsigned long)j;
         // 把创建的 proc 绑在编号为arg的逻辑核上
 
-        // *tidp,指向线程数据结构 pthread_t 的指针;
-        // *attr,指向线程属性结构 pthread_attr_t 的指针;
-        // *start_routine,线程所要运行的函数的起始地址,也是指向函数的指针;
-        // *arg,传给运行函数的参数.
+        // tidp,指向线程数据结构 pthread_t 的指针;
+        // attr,指向线程属性结构 pthread_attr_t 的指针;
+        // start_routine,线程所要运行的函数的起始地址,也是指向函数的指针;
+        // arg,传给运行函数的参数.
 
         if (pthread_create(&thread, &attr, bioProcessBackgroundJobs, arg) != 0) {
             serverLog(LL_WARNING, "Fatal: 不能初始化后台线程");
@@ -99,7 +99,7 @@ void bioInit(void) {
 
 // 把任务挂到对应类型的「链表」下
 void bioSubmitJob(int type, struct bio_job *job) {
-    //    「多线程」读写链表数据,这个过程是需要「加锁」操作的.
+    // 「多线程」读写链表数据,这个过程是需要「加锁」操作的.
     pthread_mutex_lock(&bio_mutex[type]);        // 加锁
     listAddNodeTail(bio_jobs[type], job);        // 添加到链表尾
     bio_pending[type]++;                         // +1

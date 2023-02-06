@@ -113,7 +113,7 @@ int dictResize(dict *d) {
 // 扩容、创建哈希表 ,size是新的大小
 int _dictExpand(dict *d, unsigned long size, int *malloc_failed) {
     if (malloc_failed) {
-        *malloc_failed = 0; //  初始默认值
+        *malloc_failed = 0; // 初始默认值
     }
 
     if (dictIsRehashing(d) || d->ht_used[0] > size) { // 已使用的大小> 新的大小
@@ -527,7 +527,7 @@ dictEntry *dictFind(dict *d, const void *key) {
 // 获取包含给定键的节点的值; 如果节点不为空,返回节点的值,否则返回 NULL
 void *dictFetchValue(dict *d, const void *key) {
     dictEntry *he;
-    //  server.commands=dictCreate(&commandTableDictType);   dictSdsCaseHash
+    // server.commands=dictCreate(&commandTableDictType);   dictSdsCaseHash
     he = dictFind(d, key);
     return he ? dictGetVal(he) : NULL;
 }

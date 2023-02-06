@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 
 // 解析允许事件通知类型
 int keyspaceEventsStringToFlags(char *classes) {

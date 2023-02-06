@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "util.h"
 #include "sha1.h" /* SHA1 is used for DEBUG DIGEST */
 #include "crc64.h"
@@ -1940,9 +1940,9 @@ void watchdogSignalHandler(int sig, siginfo_t *info, void *secret) {
 // 如果一个计时器已经被调度,这个函数将重新调度它到指定的时间.如果period为0,则关闭当前定时器.
 void watchdogScheduleSignal(int period) { // period这么长时间后,接收一个SIGALRM信号
     struct itimerval it;
-    //    settimer工作机制是,先对it_value倒计时,当it_value为零时触发信号,然后重置为it_interval,继续对it_value倒计时,一直这样循环下去.
-    //    基于此机制,setitimer既可以用来延时执行,也可定时执行.
-    //    假如it_value为0是不会触发信号的,所以要能触发信号,it_value得大于0;如果it_interval为零,只会延时,不会定时（也就是说只会触发一次信号).
+    // settimer工作机制是,先对it_value倒计时,当it_value为零时触发信号,然后重置为it_interval,继续对it_value倒计时,一直这样循环下去.
+    // 基于此机制,setitimer既可以用来延时执行,也可定时执行.
+    // 假如it_value为0是不会触发信号的,所以要能触发信号,it_value得大于0;如果it_interval为零,只会延时,不会定时（也就是说只会触发一次信号).
 
     // 延时时长         如果周期为0,将停止计时器
     it.it_value.tv_sec = period / 1000;           // 秒数
@@ -1950,7 +1950,7 @@ void watchdogScheduleSignal(int period) { // period这么长时间后,接收一�
     // 计时间隔
     it.it_interval.tv_sec = 0;
     it.it_interval.tv_usec = 0;
-    //    setitimer函数为设置定时器（闹钟）,可替代alarm函数,比alarm函数精确度更高,精度为微秒,可以实现周期定时.
+    // setitimer函数为设置定时器（闹钟）,可替代alarm函数,比alarm函数精确度更高,精度为微秒,可以实现周期定时.
     /*
     which 指定定时方式：
         ITIMER_REAL     以系统真实的时间来计算,它送出 SIGALRM 信号.
@@ -1972,8 +1972,8 @@ void applyWatchdogPeriod() {
         // 将信号处理程序设置为SIG_IGN,这也将从队列中移除挂起的信号.
         sigemptyset(&act.sa_mask); // 函数初始化信号集合set,将set 设置为空.
         act.sa_flags = 0;
-        //        SIG_DFL：默认信号处理程序
-        //        SIG_IGN：忽略信号的处理程序
+        //     SIG_DFL：默认信号处理程序
+        //     SIG_IGN：忽略信号的处理程序
         act.sa_handler = SIG_IGN;
         sigaction(SIGALRM, &act, NULL); // sigaction函数的功能是检查或修改与指定信号相关联的处理动作（可同时两种操作）    act参数指定新的信号处理方式,
     }

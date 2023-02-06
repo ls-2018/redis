@@ -5,7 +5,7 @@
 
 typedef void lazy_free_fn(void *args[]);
 
-// Redis Server 在启动时,会在 server.c 中调用 bioInit 函数,这个函数会创建4类后台任务
+// Redis Server 在启动时,会在 over-server.c 中调用 bioInit 函数,这个函数会创建4类后台任务
 void bioInit(void);
 
 unsigned long long bioPendingJobsOfType(int type);

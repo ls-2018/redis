@@ -1,7 +1,7 @@
 #ifndef __SDS_H
 #define __SDS_H
 
-#define SDS_MAX_PREALLOC (1024 * 1024) //  * 最大预分配长度
+#define SDS_MAX_PREALLOC (1024 * 1024) // * 最大预分配长度
 
 extern const char *SDS_NOINIT;
 

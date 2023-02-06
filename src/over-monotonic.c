@@ -135,8 +135,8 @@ static void monotonicInit_posix() {
     // clock_gettime: 此方法返回一个浮点值,该值表示指定时钟clk_id的时间(以秒为单位).
     int rc = clock_gettime(CLOCK_MONOTONIC, &ts);
     assert(rc == 0);
-    //    snprintf(),函数原型为int snprintf(char *str, size_t size, const char *format, ...).
-    //    将可变参数 “…” 按照format的格式格式化为字符串,然后再将其拷贝至str中.
+    //  snprintf(),函数原型为int snprintf(char *str, size_t size, const char *format, ...).
+    //  将可变参数 “…” 按照format的格式格式化为字符串,然后再将其拷贝至str中.
     snprintf(monotonic_info_string, sizeof(monotonic_info_string), "POSIX clock_gettime");
     getMonotonicUs = getMonotonicUs_posix;
 }

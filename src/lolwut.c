@@ -33,7 +33,7 @@
  * each new version of Redis.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "lolwut.h"
 #include <math.h>
 

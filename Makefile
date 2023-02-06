@@ -23,3 +23,7 @@ lint:
 
 sync:
 	env https_proxy=https://127.0.0.1:7890 && git push --force
+
+rm:
+	rm -rf ./src/appendonlydir
+	rm -rf ./src/dump.rdb

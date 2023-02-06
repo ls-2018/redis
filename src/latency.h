@@ -36,7 +36,7 @@ int THPDisable(void);
 
 /* Latency monitoring macros. */
 
-/* Start monitoring an event. We just set the current time. */
+// 开始监测一个事件。我们只是设置了当前的时间。
 #define latencyStartMonitor(var)            \
     if (server.latency_monitor_threshold) { \
         var = mstime();                     \

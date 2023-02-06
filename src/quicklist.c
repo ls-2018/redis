@@ -477,7 +477,7 @@ REDIS_STATIC int _quicklistNodeAllowInsert(const quicklistNode *node, const int 
      * below the lowest limit of 4k (see optimization_level).
      * Note: No need to check for overflow below since both `node->sz` and
      * `sz` are to be less than 1GB after the plain/large element check above. */
-    //    在计算完大小之后,_quicklistNodeAllowInsert 函数会依次判断新插入的数据大小（sz）是否满足要求,即单个 ziplist 是否不超过 4KB,或是单个 ziplist 里的元素个数是否满足要求.
+    //  在计算完大小之后,_quicklistNodeAllowInsert 函数会依次判断新插入的数据大小（sz）是否满足要求,即单个 ziplist 是否不超过 4KB,或是单个 ziplist 里的元素个数是否满足要求.
     size_t new_sz = node->sz + sz + SIZE_ESTIMATE_OVERHEAD;
     if (likely(_quicklistNodeSizeMeetsOptimizationRequirement(new_sz, fill)))
         return 1;

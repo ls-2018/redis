@@ -118,8 +118,8 @@ set(SRC_SERVER_TMP
         src/pubsub.c
         src/over-monotonic.c
         src/quicklist.c
-        src/server.h)
-set(SRC_SERVER src/server.c ${SRC_SERVER_TMP} ${OPTION} src/server.h)
+        src/over-server.h)
+set(SRC_SERVER src/over-server.c ${SRC_SERVER_TMP} ${OPTION} src/over-server.h)
 set(SRC_CLI
         src/anet.c
         src/over-sds.c
@@ -132,13 +132,13 @@ set(SRC_CLI
         src/crc16.c
         src/dict.c
         src/siphash.c
-        src/server.h)
+        src/over-server.h)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     # better not to work with jemalloc
 endif ()
 set(EXECUTABLE_OUTPUT_PATH src)
-add_executable(redis-server ${SRC_SERVER} src/server.h)
-add_executable(redis-cli ${SRC_CLI} src/server.h)
+add_executable(redis-server ${SRC_SERVER} src/over-server.h)
+add_executable(redis-cli ${SRC_CLI} src/over-server.h)
 set_property(TARGET redis-server PROPERTY C_STANDARD 99)
 set_property(TARGET redis-server PROPERTY CXX_STANDARD 11)
 set_property(TARGET redis-server PROPERTY CXX_STANDARD_REQUIRED ON)

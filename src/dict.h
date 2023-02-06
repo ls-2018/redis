@@ -24,7 +24,7 @@
 
 // 哈希表
 typedef struct dictEntry {
-    void *key; // *string 对象    redisObject 对象
+    void *key; // string 对象    redisObject 对象
     union
     {
         void *val;    // redisObject对象   值为整数或双精度浮点数时,本身就是64位,就可以不用指针指向了,而是可以直接存在键值对的结构体中,这样就避免了再用一个指针,从而节省了内存空间.

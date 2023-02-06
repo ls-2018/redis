@@ -1,6 +1,6 @@
 //
-//  Created by Дмитрий Бахвалов on 13.07.15.
-//  Copyright (c) 2015 Dmitry Bakhvalov. All rights reserved.
+// Created by Дмитрий Бахвалов on 13.07.15.
+// Copyright (c) 2015 Dmitry Bakhvalov. All rights reserved.
 //
 
 #ifndef __HIREDIS_MACOSX_H__

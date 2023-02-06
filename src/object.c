@@ -1,4 +1,4 @@
-#include "server.h"
+#include "over-server.h"
 #include "functions.h"
 #include <math.h>
 #include <ctype.h>
@@ -19,9 +19,9 @@ robj *createObject(int type, void *ptr) {
 
     // 如果缓存替换策略是LFU,那么将lru变量设置为LFU的计数值
     if (server.maxmemory_policy & MAXMEMORY_FLAG_LFU) {
-        //          16 bits      8 bits
-        //     +----------------+--------+
-        //     + Last decr time | LOG_C  |
+        //        16 bits      8 bits
+        //   +----------------+--------+
+        //   + Last decr time | LOG_C  |
         // 占据了第6、7字节                        占据第8字节
         // 截断后三个字节
         o->lru = (LFUGetTimeInMinutes() << 8) | LFU_INIT_VAL; // | 5

@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 
 #include <stdint.h>
 #include <math.h>
@@ -90,9 +90,9 @@
  *
  * The dense representation used by Redis is the following:
  *
- * +--------+--------+--------+------//      //--+
+ * +--------+--------+--------+------//   //--+
  * |11000000|22221111|33333322|55444444 ....     |
- * +--------+--------+--------+------//      //--+
+ * +--------+--------+--------+------//    //--+
  *
  * The 6 bits counters are encoded one after the other starting from the
  * LSB to the MSB, and using the next bytes as needed.

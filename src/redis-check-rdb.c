@@ -28,7 +28,7 @@
  */
 
 #include "mt19937-64.h"
-#include "server.h"
+#include "over-server.h"
 #include "rdb.h"
 
 #include <stdarg.h>
@@ -379,7 +379,7 @@ static sds checkRdbVersion(void) {
     return version;
 }
 
-/* RDB check main: called form server.c when Redis is executed with the
+/* RDB check main: called form over-server.c when Redis is executed with the
  * redis-check-rdb alias, on during RDB loading errors.
  *
  * The function works in two ways: can be called with argc/argv as a

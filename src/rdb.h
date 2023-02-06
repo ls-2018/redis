@@ -34,7 +34,7 @@
 #include "rio.h"
 
 /* TBD: include only necessary headers. */
-#include "server.h"
+#include "over-server.h"
 
 /* The current RDB version. When the format changes in a way that is no longer
  * backward compatible this number gets incremented. */

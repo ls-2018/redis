@@ -19,7 +19,7 @@ extern "C" {
 // thunk?
 //
 // extern __typeof (sdallocx) sdallocx_int
-//  __attribute ((alias ("sdallocx"),
+// __attribute ((alias ("sdallocx"),
 //		visibility ("hidden")));
 //
 // ... but it needs to work with jemalloc namespaces.

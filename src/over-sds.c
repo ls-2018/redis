@@ -229,7 +229,7 @@ sds _sdsMakeRoomFor(sds s, size_t addlen, int greedy) {
     /* Return ASAP if there is enough space left. */
     if (avail >= addlen)
         return s;
-    //    printf("分配空间,%zu\n",addlen);
+    //  printf("分配空间,%zu\n",addlen);
     len = sdslen(s);
     sh = (char *)s - sdsHdrSize(oldtype);
     reqlen = newlen = (len + addlen);
@@ -307,9 +307,9 @@ sds sdsRemoveFreeSpace(sds s) {
 
     // 如果类型相同,或者至少需要足够大的类型,则只需realloc(),让分配器只在真正需要时进行复制.否则,如果变化很大,我们手动重新分配字符串,以使用不同的头类型.
     if (oldtype == type || type > SDS_TYPE_8) {
-        //        ptr -- 指针指向一个要重新分配内存的内存块,该内存块之前是通过调用 malloc、calloc 或 realloc 进行分配内存的.
-        //        如果为空指针,则会分配一个新的内存块,且函数返回一个指向它的指针.
-        //        size -- 内存块的新的大小,以字节为单位.如果大小为 0,且 ptr 指向一个已存在的内存块,则 ptr 所指向的内存块会被释放,并返回一个空指针.
+        //      ptr -- 指针指向一个要重新分配内存的内存块,该内存块之前是通过调用 malloc、calloc 或 realloc 进行分配内存的.
+        //      如果为空指针,则会分配一个新的内存块,且函数返回一个指向它的指针.
+        //      size -- 内存块的新的大小,以字节为单位.如果大小为 0,且 ptr 指向一个已存在的内存块,则 ptr 所指向的内存块会被释放,并返回一个空指针.
         // 新分配的内存块里的数据不会变
         newsh = s_realloc(sh, oldhdrlen + len + 1);
         if (newsh == NULL) {
@@ -465,7 +465,7 @@ sds sdsgrowzero(sds s, size_t len) {
 
 // 字符串追加操作
 // 目标字符串 s、源字符串 t 和要追加的长度 len
-//  s+t
+// s+t
 sds sdscatlen(sds s, const void *t, size_t len) {
     size_t curlen = sdslen(s);  // 获取目标字符串s的当前长度
     s = sdsMakeRoomFor(s, len); // 根据要追加的长度len和目标字符串s的现有长度,判断是否要增加新的空间  , 空间检查和扩容

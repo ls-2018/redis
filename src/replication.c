@@ -1,6 +1,6 @@
 // 主从复制功能
 
-#include "server.h"
+#include "over-server.h"
 #include "cluster.h"
 #include "bio.h"
 #include "functions.h"
@@ -387,12 +387,7 @@ void feedReplicationBuffer(char *s, size_t len) {
     incrementalTrimReplicationBacklog(REPL_BACKLOG_TRIM_BLOCKS_PER_CALL);
 }
 
-/* 向复制流传播写命令。
- *
- * This function is used if the instance is a master: we use the commands
- * received by our clients in order to create the replication stream.
- * Instead if the instance is a replica and has sub-replicas attached, we use
- * replicationFeedStreamFromMasterStream() */
+// 向复制流传播写命令。
 void replicationFeedSlaves(list *slaves, int dictid, robj **argv, int argc) {
     int j, len;
     char llstr[LONG_STR_SIZE];
@@ -642,7 +637,7 @@ long long addReplyReplicationBacklog(client *c, long long offset) {
     o->refcount++;
     c->ref_repl_buf_node = node;
     c->ref_block_pos = offset - o->repl_offset;
-    //    它会根据这个跳过长度计算实际要读取的数据长度
+    //  它会根据这个跳过长度计算实际要读取的数据长度
     return server.repl_backlog->histlen - skip;
 }
 

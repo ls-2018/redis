@@ -147,7 +147,7 @@ address                                |                          |        |
 #define ZIP_STR_MASK 0xc0
 #define ZIP_INT_MASK 0x30
 
-//  * 字符串编码类型
+// * 字符串编码类型
 #define ZIP_STR_06B (0 << 6)
 #define ZIP_STR_14B (1 << 6)
 #define ZIP_STR_32B (2 << 6)
@@ -169,7 +169,7 @@ address                                |                          |        |
 #define INT24_MAX 0x7fffff
 #define INT24_MIN (-INT24_MAX - 1)
 
-//  查看给定编码 enc 是否字符串编码
+// 查看给定编码 enc 是否字符串编码
 #define ZIP_IS_STR(enc) (((enc)&ZIP_STR_MASK) < ZIP_STR_MASK)
 
 // 获取zl前4个字节代表的总字节数
@@ -235,9 +235,9 @@ typedef struct zlentry {
     unsigned char *p;            // 指向当前节点真实数据的指针
 } zlentry;
 // 缺陷：
-//     连锁更新一旦发生,就会导致压缩列表占用的内存空间要多次重新分配,这就会直接影响到压缩列表的访问性能
+//   连锁更新一旦发生,就会导致压缩列表占用的内存空间要多次重新分配,这就会直接影响到压缩列表的访问性能
 // 优点：
-//     内存紧凑
+//   内存紧凑
 
 #define ZIPLIST_ENTRY_ZERO(zle)                              \
     {                                                        \
@@ -459,7 +459,7 @@ unsigned int zipStorePrevEntryLength(unsigned char *p, unsigned int len) {
 // 解码 ptr 指针,
 // 取出编码前置节点长度所需的字节数,
 // 并将这个字节数保存到 prevlensize 中.
-// *
+//
 // 然后根据 prevlensize ,从 ptr 中取出前置节点的长度值,
 // 并将这个长度值保存到 prevlen 变量中.
 #define ZIP_DECODE_PREVLEN(ptr, prevlensize, prevlen)                                              \

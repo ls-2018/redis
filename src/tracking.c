@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 
 /* The tracking table is constituted by a radix tree of keys, each pointing
  * to a radix tree of client IDs, used to track the clients that may have

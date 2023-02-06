@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "cluster.h"
 
 /* Structure to hold the pubsub related metadata. Currently used

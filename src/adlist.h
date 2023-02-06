@@ -24,8 +24,8 @@ typedef struct list {
     unsigned long len;                  // 链表所包含的节点数量
 } list;
 // 缺点:
-//  1、每个节点都不是连续的,意味着无法很好利用CPU缓存
-//  2、每个节点都需要结构头,内存开销较大
+// 1、每个节点都不是连续的,意味着无法很好利用CPU缓存
+// 2、每个节点都需要结构头,内存开销较大
 
 #define listLength(l) ((l)->len)
 #define listFirst(l) ((l)->head)

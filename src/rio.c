@@ -20,7 +20,7 @@
 #include "util.h"
 #include "crc64.h"
 #include "config.h"
-#include "server.h"
+#include "over-server.h"
 
 /* ------------------------- Buffer I/O implementation ----------------------- */
 
@@ -154,11 +154,11 @@ static const rio rioFileIO = {
     rioFileWrite, // 写函数
     rioFileTell,  // 偏移量函数
     rioFileFlush, //
-    NULL,         //   /* update_checksum */
-    0,            //      /* current checksum */
-    0,            //   /* flags */
-    0,            //          /* bytes read or written */
-    0,            //          /* read/write chunk size */
+    NULL,         // /* update_checksum */
+    0,            //    /* current checksum */
+    0,            // /* flags */
+    0,            //        /* bytes read or written */
+    0,            //        /* read/write chunk size */
     {{NULL, 0}}   /* union for io-specific vars */
 };
 // 初始化文件流

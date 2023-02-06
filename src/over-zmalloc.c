@@ -74,7 +74,7 @@ static void (*zmalloc_oom_handler)(size_t) = zmalloc_default_oom;
 
 // 尝试分配内存或panic
 void *ztrymalloc_usable(size_t size, size_t *usable) {
-    //    printf("DEBUG %s:%d 分配内存: %zu \n", __FILE__, __LINE__, size);
+    //  printf("DEBUG %s:%d 分配内存: %zu \n", __FILE__, __LINE__, size);
     // serverLog(LL_NOTICE, "ztrymalloc_usable:%zu    usable:%s",size ,  usable );
     ASSERT_NO_SIZE_OVERFLOW(size); // size不能溢出
     void *ptr = malloc(MALLOC_MIN_SIZE(size) + PREFIX_SIZE);
@@ -352,9 +352,7 @@ void zmalloc_set_oom_handler(void (*oom_handler)(size_t)) {
     zmalloc_oom_handler = oom_handler;
 }
 
-/* Use 'MADV_DONTNEED' to release memory to operating system quickly.
- * We do that in a fork child process to avoid CoW when the parent modifies
- * these shared pages. */
+// 释放内存[子进程]
 void zmadvise_dontneed(void *ptr) {
 #if defined(USE_JEMALLOC) && defined(__linux__)
     static size_t page_size = 0;

@@ -31,8 +31,8 @@
 #define AE_TIME_EVENTS (1 << 1)                         // 时间事件                                         00010
 #define AE_ALL_EVENTS (AE_FILE_EVENTS | AE_TIME_EVENTS) // 所有事件                                         00011
 #define AE_DONT_WAIT (1 << 2)                           // 不阻塞,也不进行等待                                00100
-#define AE_CALL_BEFORE_SLEEP (1 << 3)                   //                                                 01000
-#define AE_CALL_AFTER_SLEEP (1 << 4)                    //                                                 10000
+#define AE_CALL_BEFORE_SLEEP (1 << 3)                   //                                               01000
+#define AE_CALL_AFTER_SLEEP (1 << 4)                    //                                               10000
 #define AE_NOMORE (-1)                                  // 决定时间事件是否要持续执行的 flag
 #define AE_DELETED_EVENT_ID (-1)                        // 要删除的事件   ID 被置为-1
 
@@ -53,8 +53,8 @@ typedef void aeBeforeSleepProc(struct aeEventLoop *eventLoop);
 
 // 定义了IO事件      对应了客户端发送的网络请求
 typedef struct aeFileEvent {
-    //    用来表示事件类型的掩码.对于网络通信的事件来说,主要有 AE_READABLE、AE_WRITABLE 和 AE_BARRIER 三种类型事件.
-    //    框架在分发事件时,依赖的就是结构体中的事件类型;
+    //  用来表示事件类型的掩码.对于网络通信的事件来说,主要有 AE_READABLE、AE_WRITABLE 和 AE_BARRIER 三种类型事件.
+    //  框架在分发事件时,依赖的就是结构体中的事件类型;
     int mask;              // 期待发生的事件类型
     aeFileProc *rfileProc; // AE_READABLE事件处理器
     aeFileProc *wfileProc; // AE_WRITABLE事件处理器

@@ -1,26 +1,26 @@
-//  * String -> String Map data structure optimized for size.
-//  *
-//  * 为节约空间而实现的字符串到字符串映射结构
-//  *
-//  * This file implements a data structure mapping strings to other strings
-//  * implementing an O(n) lookup data structure designed to be very memory
-//  * efficient.
-//  *
-//  * 本文件实现了一个将字符串映射到另一个字符串的数据结构,
-//  * 这个数据结构非常节约内存,并且支持复杂度为 O(N) 的查找操作.
-//  *
-//  * The Redis Hash type uses this data structure for hashes composed of a small
-//  * number of elements, to switch to a hash table once a given number of
-//  * elements is reached.
-//  *
-//  * Redis 使用这个数据结构来储存键值对数量不多的 Hash ,
-//  * 一旦键值对的数量超过某个给定值,Hash 的底层表示就会自动转换成哈希表.
-//  *
-//  * Given that many times Redis Hashes are used to represent objects composed
-//  * of few fields, this is a very big win in terms of used memory.
-//  *
-//  * 因为很多时候,一个 Hash 都只保存少数几个 key-value 对,
-//  * 所以使用 zipmap 比起直接使用真正的哈希表要节约不少内存.
+// * String -> String Map data structure optimized for size.
+// *
+// * 为节约空间而实现的字符串到字符串映射结构
+// *
+// * This file implements a data structure mapping strings to other strings
+// * implementing an O(n) lookup data structure designed to be very memory
+// * efficient.
+// *
+// * 本文件实现了一个将字符串映射到另一个字符串的数据结构,
+// * 这个数据结构非常节约内存,并且支持复杂度为 O(N) 的查找操作.
+// *
+// * The Redis Hash type uses this data structure for hashes composed of a small
+// * number of elements, to switch to a hash table once a given number of
+// * elements is reached.
+// *
+// * Redis 使用这个数据结构来储存键值对数量不多的 Hash ,
+// * 一旦键值对的数量超过某个给定值,Hash 的底层表示就会自动转换成哈希表.
+// *
+// * Given that many times Redis Hashes are used to represent objects composed
+// * of few fields, this is a very big win in terms of used memory.
+// *
+// * 因为很多时候,一个 Hash 都只保存少数几个 key-value 对,
+// * 所以使用 zipmap 比起直接使用真正的哈希表要节约不少内存.
 
 /* Memory layout of a zipmap, for the map "foo" => "bar", "hello" => "world":
  *
@@ -133,7 +133,7 @@ unsigned char *zipmapNew(void) {
     return zm;
 }
 
-//  * 解码并返回 p 所指向的已编码长度
+// * 解码并返回 p 所指向的已编码长度
 static unsigned int zipmapDecodeLength(unsigned char *p) {
     unsigned int len = *p;
 

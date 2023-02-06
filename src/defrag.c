@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "cluster.h"
 #include <time.h>
 #include <assert.h>

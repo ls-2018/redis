@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -36,12 +36,9 @@ typedef struct {
     size_t cow;
     monotime cow_updated;
     double progress;
-    childInfoType information_type; /* Type of information */
+    childInfoType information_type; // 子进程类型
 } child_info_data;
 
-/* Open a child-parent channel used in order to move information about the
- * RDB / AOF saving process from the child to the parent (for instance
- * the amount of copy on write memory used) */
 // 打开当前进程和子进程之间的进程通信
 void openChildInfoPipe(void) {
     if (anetPipe(server.child_info_pipe, O_NONBLOCK, 0) == -1) {

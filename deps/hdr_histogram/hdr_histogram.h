@@ -31,7 +31,7 @@ struct hdr_histogram {
     int32_t  counts_len;
     int64_t  total_count;
     int64_t *counts;
-};
+};// 命令延迟直方图
 
 #ifdef __cplusplus
 extern "C" {

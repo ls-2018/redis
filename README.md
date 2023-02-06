@@ -863,8 +863,9 @@ updateClientMemUsage |-> lookupCommand
 # todo
 
 addACLLogEntry ACLSelectorCheckCmd
-https://blog.csdn.net/qq_29235677/article/details/121475204
-
+- https://blog.csdn.net/qq_29235677/article/details/121475204
+- https://zhuanlan.zhihu.com/p/341434214
+- https://blog.csdn.net/weixin_40785301/article/details/122629052
 PROPAGATE_AOF与PROPAGATE_REPL的区别
 
 // lua执行时，为什么会接收新的请求 src/networking.c:2510

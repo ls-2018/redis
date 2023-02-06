@@ -1,5 +1,5 @@
 // 如果内存满了,Redis 还会按照一定规则清除不需要的数据
-#include "server.h"
+#include "over-server.h"
 #include "bio.h"
 #include "atomicvar.h"
 #include "script.h"
@@ -250,7 +250,7 @@ uint8_t LFULogIncr(uint8_t counter) {
     // 且随着counter的增加,这个概率也会更低
 
     // counter 当前访问次数
-    //     非线性递增的计数器,可以有效地区分不同的访问次数
+    //  非线性递增的计数器,可以有效地区分不同的访问次数
     if (counter == 255) {
         return 255;
     }
@@ -259,7 +259,7 @@ uint8_t LFULogIncr(uint8_t counter) {
     if (baseval < 0) {
         baseval = 0;
     }
-    //    默认lfu_log_factor是10,如果一段时间内,访问一万次该key,计数将会在 50 左右. 基本上,如果是频繁访问的缓存,应该设置大一些,反之则相反.
+    // 默认lfu_log_factor是10,如果一段时间内,访问一万次该key,计数将会在 50 左右. 基本上,如果是频繁访问的缓存,应该设置大一些,反之则相反.
     double p = 1.0 / (baseval * server.lfu_log_factor + 1);
 
     // 阈值 p 的大小就决定了访问次数增加的难度;越小、越难
@@ -274,7 +274,7 @@ uint8_t LFULogIncr(uint8_t counter) {
 
 // 获取键值对衰减之后的值
 unsigned long LFUDecrAndReturn(robj *o) {
-    //   LFU 删减因子
+    // LFU 删减因子
     unsigned long ldt = o->lru >> 8; // 获取当前键值对的上一次访问时间,取前16位的值
 
     unsigned long counter = o->lru & 255; // 获取当前的访问次数 , 取后8位的值

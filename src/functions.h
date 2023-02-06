@@ -43,7 +43,7 @@
  * * Register engines
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "script.h"
 #include "redismodule.h"
 

@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <regex.h>

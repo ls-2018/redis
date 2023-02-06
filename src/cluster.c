@@ -1,4 +1,4 @@
-#include "server.h"
+#include "over-server.h"
 #include "cluster.h"
 #include "over-endianconv.h"
 
@@ -2878,7 +2878,7 @@ void clusterSendPing(clusterLink *link, int type) {
      * to feature our node, we set the number of entries per packet as
      * 10% of the total nodes we have. */
     // 既需要及时获得节点状态,又不能给集群的正常运行带来过大的额外通信负担.
-    //    计算要携带多少节点的信息，最少3个，最多 1/10 集群总节点数量
+    // 计算要携带多少节点的信息，最少3个，最多 1/10 集群总节点数量
     wanted = floor(dictSize(server.cluster->nodes) / 10);
     if (wanted < 3)
         wanted = 3;
@@ -2958,7 +2958,7 @@ void clusterSendPing(clusterLink *link, int type) {
         freshnodes--;
         gossipcount++;
     }
-    //  如果有 PFAIL 节点，最后添加
+    // 如果有 PFAIL 节点，最后添加
     /* If there are PFAIL nodes, add them at the end. */
     if (pfail_wanted) {
         dictIterator *di;

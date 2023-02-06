@@ -39,7 +39,7 @@
  * output to have a better artistic effect.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "lolwut.h"
 
 /* Render the canvas using the four gray levels of the standard color

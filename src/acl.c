@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "over-sha256.h"
 #include <fcntl.h>
 #include <ctype.h>
@@ -968,7 +968,7 @@ cleanup:
  *              May be used with `|` for blocking subcommands (e.g "-config|set")
  * +@<category> Allow the execution of all the commands in such category
  *              with valid categories are like @admin, @set, @sortedset, ...
- *              and so forth, see the full list in the server.c file where
+ *              and so forth, see the full list in the over-server.c file where
  *              the Redis command table is described and defined.
  *              The special category @all means all the commands, but currently
  *              present in the server, and that will be loaded in the future
@@ -1822,8 +1822,8 @@ int ACLCheckAllUserCommandPerm(user *u, struct redisCommand *cmd, robj **argv, i
         return ACL_OK;
     }
     // 我们必须挑选一个错误来记录,挑选的逻辑如下:
-    //  1)如果没有选择器可以执行命令,返回命令.
-    //  2)返回没有选择器可以匹配的最后一个键或通道.
+    // 1)如果没有选择器可以执行命令,返回命令.
+    // 2)返回没有选择器可以匹配的最后一个键或通道.
     int relevant_error = ACL_DENIED_CMD;
     int local_idxptr = 0, last_idx = 0;
 

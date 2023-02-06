@@ -219,10 +219,10 @@ int lpStringToInt64(const char *s, unsigned long slen, int64_t *value) {
  * over-allocated memory can be shrunk by `lpShrinkToFit`.
  * */
 unsigned char *lpNew(size_t capacity) {
-    //  分配 至少 LP_HRD_SIZE+1
-    //  其中 4 个字节是记录 listpack 的总字节数, 2 个字节是记录 listpack 的元素数量.
-    //  末尾有个结尾标识
-    //  capacity 一般会比 6+1 大
+    // 分配 至少 LP_HRD_SIZE+1
+    // 其中 4 个字节是记录 listpack 的总字节数, 2 个字节是记录 listpack 的元素数量.
+    // 末尾有个结尾标识
+    // capacity 一般会比 6+1 大
     unsigned char *lp = lp_malloc(capacity > LP_HDR_SIZE + 1 ? capacity : LP_HDR_SIZE + 1); //
     if (lp == NULL)
         return NULL;
@@ -504,9 +504,9 @@ static inline uint32_t lpCurrentEncodedSizeBytes(unsigned char *p) {
  * listpack, however, while this function is used to implement lpNext(),
  * it does not return NULL when the EOF element is encountered. */
 unsigned char *lpSkip(unsigned char *p) {
-    //    根据当前列表项第 1 个字节的取值,来计算当前项的编码类型,并根据编码类型,计算当前项编码类型和实际数据的总长度
+    //  根据当前列表项第 1 个字节的取值,来计算当前项的编码类型,并根据编码类型,计算当前项编码类型和实际数据的总长度
     unsigned long entrylen = lpCurrentEncodedSizeUnsafe(p);
-    //    根据编码类型和实际数据的长度之和,进一步计算列表项最后一部分 entry-len 本身的长度.
+    //  根据编码类型和实际数据的长度之和,进一步计算列表项最后一部分 entry-len 本身的长度.
     entrylen += lpEncodeBacklen(NULL, entrylen);
     p += entrylen;
     return p;

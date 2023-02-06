@@ -52,9 +52,7 @@ uint64_t redisBuildId(void) {
     return crc64(0, (unsigned char *)buildid, strlen(buildid));
 }
 
-/* Return a cached value of the build string in order to avoid recomputing
- * and converting it in hex every time: this string is shown in the INFO
- * output that should be fast. */
+/*  */
 char *redisBuildIdString(void) {
     static char buf[32];
     static int cached = 0;

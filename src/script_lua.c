@@ -29,7 +29,7 @@
 
 #include "script_lua.h"
 
-#include "server.h"
+#include "over-server.h"
 #include "sha1.h"
 #include "rand.h"
 #include "cluster.h"

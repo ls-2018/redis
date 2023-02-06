@@ -81,7 +81,7 @@ static inline int connWrite(connection *conn, const void *data, size_t data_len)
 // 从iov成员指定的iovcnt缓冲区中收集输出数据
 // 测试类似eagain的条件，使用connGetState()查看连接状态是否仍然为CONN_STATE_CONNECTED。
 static inline int connWritev(connection *conn, const struct iovec *iov, int iovcnt) {
-    //    返回值-1表示错误
+    // 返回值-1表示错误
     return conn->type->writev(conn, iov, iovcnt);
 }
 

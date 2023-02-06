@@ -269,7 +269,7 @@ typedef struct {
 
 union clusterMsgData
 {
-    //  PING, MEET 或者 PONG 消息时，ping 字段被赋值
+    // PING, MEET 或者 PONG 消息时，ping 字段被赋值
     struct {
         /* Array of N clusterMsgDataGossip structures */
         clusterMsgDataGossip gossip[1];

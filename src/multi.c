@@ -1,4 +1,4 @@
-#include "server.h"
+#include "over-server.h"
 
 /* ================================ MULTI/EXEC ============================== */
 
@@ -54,7 +54,7 @@ void queueMultiCommand(client *c) {
 }
 // 查询的 key 不在当前实例时,如果 client 执行的是 EXEC 命令,discardTransaction 函数就会被调用
 void discardTransaction(client *c) {
-    //    会放弃事务的执行,清空当前 client 之前缓存的命令,并对事务中的 key 执行 unWatch 操作,最后重置 client 的事务标记.
+    //  会放弃事务的执行,清空当前 client 之前缓存的命令,并对事务中的 key 执行 unWatch 操作,最后重置 client 的事务标记.
     freeClientMultiState(c);
     initClientMultiState(c);
     c->flags &= ~(CLIENT_MULTI | CLIENT_DIRTY_CAS | CLIENT_DIRTY_EXEC);

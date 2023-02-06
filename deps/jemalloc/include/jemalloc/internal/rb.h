@@ -617,27 +617,27 @@
                     if (rightleft != NULL && rbtn_red_get(a_type, a_field, rightleft)) {         \
         /* In the following diagrams, ||, //, and \\      */                                     \
         /* indicate the path to the removed node.         */                                     \
-        //                                                                                                                                              \
-                        //       ||                                                                                                                                     \
-                        //     pathp(r)                                                                                                                                 \
-                        //   //        \                                                                                                                                \
-                        //  (b)        (b)                                                                                                                              \
-                        //            /                                                                                                                                 \
-                        //           (r)                                                                                                                                \
-                        //                                                                                                                                              \
+        //                                                                                                                                            \
+                        //     ||                                                                                                                                     \
+                        //   pathp(r)                                                                                                                                 \
+                        // //      \                                                                                                                                \
+                        // (b)        (b)                                                                                                                              \
+                        //          /                                                                                                                                 \
+                        //         (r)                                                                                                                                \
+                        //                                                                                                                                            \
                         rbtn_black_set(a_type, a_field, pathp->node);                                                                                                   \
                         rbtn_rotate_right(a_type, a_field, right, tnode);                                                                                               \
                         rbtn_right_set(a_type, a_field, pathp->node, tnode);                                                                                            \
                         rbtn_rotate_left(a_type, a_field, pathp->node, tnode);                                                                                          \
                     }                                                                                                                                                   \
                     else {                                                                                                                                              \
-                        //      ||                                                                                                                               \
-                        //    pathp(r)                                                                                                                           \
-                        //  //        \                                                                                                                          \
+                        //    ||                                                                                                                               \
+                        //  pathp(r)                                                                                                                           \
+                        // //      \                                                                                                                          \
                         // (b)        (b)                                                                                                                        \
-                        //           /                                                                                                                           \
-                        //          (b)                                                                                                                          \
-                        //                                                                                                                                       \
+                        //         /                                                                                                                           \
+                        //        (b)                                                                                                                          \
+                        //                                                                                                                                     \
                         rbtn_rotate_left(a_type, a_field, pathp->node, tnode);                                                                                          \
                     }                                                                                                                                                   \
                     /* Balance restored, but rotation modified subtree    */                                                                                            \
@@ -655,12 +655,12 @@
                     a_type *right = rbtn_right_get(a_type, a_field, pathp->node);                                                                                       \
                     a_type *rightleft = rbtn_left_get(a_type, a_field, right);                                                                                          \
                     if (rightleft != NULL && rbtn_red_get(a_type, a_field, rightleft)) {                                                                                \
-                        //      ||                                                                                                                                      \
-                        //    pathp(b)                                                                                                                                  \
-                        //  //        \                                                                                                                                 \
+                        //    ||                                                                                                                                      \
+                        //  pathp(b)                                                                                                                                  \
+                        // //      \                                                                                                                                 \
                         // (b)        (b)                                                                                                                               \
-                        //           /                                                                                                                                  \
-                        //          (r)                                                                                                                                 \
+                        //         /                                                                                                                                  \
+                        //        (r)                                                                                                                                 \
                         a_type *tnode;                                                                                                                                  \
                         rbtn_black_set(a_type, a_field, rightleft);                                                                                                     \
                         rbtn_rotate_right(a_type, a_field, right, tnode);                                                                                               \
@@ -684,12 +684,12 @@
                         return;                                                                                                                                         \
                     }                                                                                                                                                   \
                     else {                                                                                                                                              \
-                        //      ||                                                                                                                                      \
-                        //    pathp(b)                                                                                                                                  \
-                        //  //        \                                                                                                                                 \
+                        //    ||                                                                                                                                      \
+                        //  pathp(b)                                                                                                                                  \
+                        // //      \                                                                                                                                 \
                         // (b)        (b)                                                                                                                               \
-                        //           /                                                                                                                                  \
-                        //          (b)                                                                                                                                 \
+                        //         /                                                                                                                                  \
+                        //        (b)                                                                                                                                 \
                         a_type *tnode;                                                                                                                                  \
                         rbtn_red_set(a_type, a_field, pathp->node);                                                                                                     \
                         rbtn_rotate_left(a_type, a_field, pathp->node, tnode);                                                                                          \
@@ -706,13 +706,13 @@
                     a_type *leftright = rbtn_right_get(a_type, a_field, left);                                                                                          \
                     a_type *leftrightleft = rbtn_left_get(a_type, a_field, leftright);                                                                                  \
                     if (leftrightleft != NULL && rbtn_red_get(a_type, a_field, leftrightleft)) {                                                                        \
-                        //      ||                                                                                                                               \
-                        //    pathp(b)                                                                                                                           \
-                        //   /        \\                                                                                                                         \
+                        //    ||                                                                                                                               \
+                        //  pathp(b)                                                                                                                           \
+                        // /        \\                                                                                                                         \
                         // (r)        (b)                                                                                                                        \
-                        //   \                                                                                                                                   \
-                        //   (b)                                                                                                                                 \
-                        //   /                                                                                                                                   \
+                        // \                                                                                                                                   \
+                        // (b)                                                                                                                                 \
+                        // /                                                                                                                                   \
                         // (r)                                                                                                                                   \
                         a_type *unode;                                                                                                                                  \
                         rbtn_black_set(a_type, a_field, leftrightleft);                                                                                                 \
@@ -722,13 +722,13 @@
                         rbtn_rotate_left(a_type, a_field, unode, tnode);                                                                                                \
                     }                                                                                                                                                   \
                     else {                                                                                                                                              \
-                        //      ||                                                                                                                                   \
-                        //    pathp(b)                                                                                                                               \
-                        //   /        \\                                                                                                                             \
+                        //    ||                                                                                                                                   \
+                        //  pathp(b)                                                                                                                               \
+                        // /        \\                                                                                                                             \
                         // (r)        (b)                                                                                                                            \
-                        //   \                                                                                                                                       \
-                        //   (b)                                                                                                                                     \
-                        //   /                                                                                                                                       \
+                        // \                                                                                                                                       \
+                        // (b)                                                                                                                                     \
+                        // /                                                                                                                                       \
                         // (b)                                                                                                                                       \
                         assert(leftright != NULL);                                                                                                                      \
                         rbtn_red_set(a_type, a_field, leftright);                                                                                                       \
@@ -754,11 +754,11 @@
                 else if (rbtn_red_get(a_type, a_field, pathp->node)) {                                                                                                  \
                     a_type *leftleft = rbtn_left_get(a_type, a_field, left);                                                                                            \
                     if (leftleft != NULL && rbtn_red_get(a_type, a_field, leftleft)) {                                                                                  \
-                        //        ||                                                                                                                                \
-                        //      pathp(r)                                                                                                                            \
-                        //     /        \\                                                                                                                          \
-                        //   (b)        (b)                                                                                                                         \
-                        //   /                                                                                                                                      \
+                        //      ||                                                                                                                                \
+                        //    pathp(r)                                                                                                                            \
+                        //   /        \\                                                                                                                          \
+                        // (b)        (b)                                                                                                                         \
+                        // /                                                                                                                                      \
                         // (r)                                                                                                                                      \
                         a_type *tnode;                                                                                                                                  \
                         rbtn_black_set(a_type, a_field, pathp->node);                                                                                                   \
@@ -777,11 +777,11 @@
                         return;                                                                                                                                         \
                     }                                                                                                                                                   \
                     else {                                                                                                                                              \
-                        //        ||                                                                                                                            \
-                        //      pathp(r)                                                                                                                        \
-                        //     /        \\                                                                                                                      \
-                        //   (b)        (b)                                                                                                                     \
-                        //   /                                                                                                                                  \
+                        //      ||                                                                                                                            \
+                        //    pathp(r)                                                                                                                        \
+                        //   /        \\                                                                                                                      \
+                        // (b)        (b)                                                                                                                     \
+                        // /                                                                                                                                  \
                         // (b)                                                                                                                                  \
                         rbtn_red_set(a_type, a_field, left);                                                                                                            \
                         rbtn_black_set(a_type, a_field, pathp->node);                                                                                                   \
@@ -792,12 +792,12 @@
                 else {                                                                                                                                                  \
                     a_type *leftleft = rbtn_left_get(a_type, a_field, left);                                                                                            \
                     if (leftleft != NULL && rbtn_red_get(a_type, a_field, leftleft)) {                                                                                  \
-                        //               ||                                                                                                                             \
-                        //             pathp(b)                                                                                                                         \
-                        //            /        \\                                                                                                                       \
-                        //          (b)        (b)                                                                                                                      \
-                        //          /                                                                                                                                   \
-                        //        (r)                                                                                                                                   \
+                        //             ||                                                                                                                             \
+                        //           pathp(b)                                                                                                                         \
+                        //          /        \\                                                                                                                       \
+                        //        (b)        (b)                                                                                                                      \
+                        //        /                                                                                                                                   \
+                        //      (r)                                                                                                                                   \
                         a_type *tnode;                                                                                                                                  \
                         rbtn_black_set(a_type, a_field, leftleft);                                                                                                      \
                         rbtn_rotate_right(a_type, a_field, pathp->node, tnode);                                                                                         \
@@ -819,12 +819,12 @@
                         return;                                                                                                                                         \
                     }                                                                                                                                                   \
                     else {                                                                                                                                              \
-                        //               ||                                                                                                                           \
-                        //             pathp(b)                                                                                                                       \
-                        //            /        \\                                                                                                                     \
-                        //          (b)        (b)                                                                                                                    \
-                        //          /                                                                                                                                 \
-                        //        (b)                                                                                                                                 \
+                        //             ||                                                                                                                           \
+                        //           pathp(b)                                                                                                                       \
+                        //          /        \\                                                                                                                     \
+                        //        (b)        (b)                                                                                                                    \
+                        //        /                                                                                                                                 \
+                        //      (b)                                                                                                                                 \
                         rbtn_red_set(a_type, a_field, left);                                                                                                            \
                     }                                                                                                                                                   \
                 }                                                                                                                                                       \

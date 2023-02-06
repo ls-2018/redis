@@ -1,5 +1,5 @@
 // 对键值对的新增、查询、修改和删除等操作接口
-#include "server.h"
+#include "over-server.h"
 #include "cluster.h"
 #include "atomicvar.h"
 #include "latency.h"
@@ -641,7 +641,7 @@ void flushallCommand(client *c) {
 // 这个命令实现了DEL和LAZYDEL.
 void delGenericCommand(client *c, int lazy) {
     int numdel = 0, j;
-    //     遍历所有输入键
+    // 遍历所有输入键
     for (j = 1; j < c->argc; j++) {
         expireIfNeeded(c->db, c->argv[j], 0);
 
@@ -1680,7 +1680,7 @@ int expireIfNeeded(redisDb *db, robj *key, int force_delete_expired) {
             return 1;
     }
 
-    //  如果客户暂停,我们保持当前数据集不变.但向客户返回我们认为是正确的状态.通常情况下,在暂停结束时,我们将正确地过期key,或者我们已经失败了,新的master会给我们发送过期.
+    // 如果客户暂停,我们保持当前数据集不变.但向客户返回我们认为是正确的状态.通常情况下,在暂停结束时,我们将正确地过期key,或者我们已经失败了,新的master会给我们发送过期.
     if (checkClientPauseTimeoutAndReturnIfPaused()) {
         return 1;
     }

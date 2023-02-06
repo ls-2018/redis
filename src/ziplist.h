@@ -76,8 +76,8 @@ unsigned char *ziplistReplace(unsigned char *zl, unsigned char *p, unsigned char
 unsigned int ziplistCompare(unsigned char *p, unsigned char *s, unsigned int slen);
 
 // 在压缩列表中查找并返回包含了给定值的节点
-//  因为节点的值可能是一个字节数组,所以检查节点值和给定值是否相同的复杂度是O(N)
-//  而查找整个列表的复杂度则为O(n^2)
+// 因为节点的值可能是一个字节数组,所以检查节点值和给定值是否相同的复杂度是O(N)
+// 而查找整个列表的复杂度则为O(n^2)
 unsigned char *ziplistFind(unsigned char *zl, unsigned char *p, unsigned char *vstr, unsigned int vlen, unsigned int skip);
 
 // 返回压缩列表目前包含的节点数量

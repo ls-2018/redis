@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "lzf.h" /* LZF compression library */
 #include "zipmap.h"
 #include "over-endianconv.h"

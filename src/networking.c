@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "atomicvar.h"
 #include "cluster.h"
 #include "script.h"
@@ -125,7 +125,7 @@ int authRequired(client *c) {
 client *createClient(connection *conn) {
     client *c = zmalloc(sizeof(client));
 
-    //    传递NULL作为conn可以创建一个未连接的客户端.这很有用,因为所有命令都需要在客户机上下文中执行.当命令在其他上下文中执行时(例如Lua脚本),我们需要一个非连接的客户端.
+    //  传递NULL作为conn可以创建一个未连接的客户端.这很有用,因为所有命令都需要在客户机上下文中执行.当命令在其他上下文中执行时(例如Lua脚本),我们需要一个非连接的客户端.
 
     if (conn) {
         connEnableTcpNoDelay(conn); // 启动TCP_NODELAY,就意味着禁用了Nagle算法,允许小包的发送.
@@ -448,12 +448,12 @@ void addReplySds(client *c, sds s) {
 // 这个低级函数只是添加您发送给客户端缓冲区的任何协议,最初尝试静态缓冲区,如果不可能,则使用对象字符串.
 // 它是高效的,因为如果不需要,它不会创建SDS对象或Redis对象.只有在扩展对象列表中现有的尾部对象失败时,才会通过调用_addReplyProtoToList()创建该对象.
 void addReplyProto(client *c, const char *s, size_t len) {
-    //    if (s[len - 1] == '\n') {
-    //        printf("%s", s);
-    //    }
-    //    else {
-    //        printf("%s\n", s);
-    //    }
+    //  if (s[len - 1] == '\n') {
+    //      printf("%s", s);
+    //  }
+    //  else {
+    //      printf("%s\n", s);
+    //  }
     if (prepareClientToWrite(c) != C_OK)
         return;
     _addReplyToBufferOrList(c, s, len);
@@ -656,11 +656,11 @@ void addReplyErrorFormat(client *c, const char *fmt, ...) {
 }
 
 void addReplyErrorArity(client *c) {
-    addReplyErrorFormat(c, "wrong number of arguments for '%s' command", c->cmd->fullname);
+    addReplyErrorFormat(c, "'%s'命令的参数数量错了", c->cmd->fullname);
 }
 
 void addReplyErrorExpireTime(client *c) {
-    addReplyErrorFormat(c, "invalid expire time in '%s' command", c->cmd->fullname);
+    addReplyErrorFormat(c, " '%s'命令无效的过期时间", c->cmd->fullname);
 }
 
 void addReplyStatusLength(client *c, const char *s, size_t len) {
@@ -709,7 +709,7 @@ void trimReplyUnusedTailSpace(client *c) {
 
 // reply 列表中新增一个 dummy 节点, 来占位, 方便后续函数来补充这个数值
 void *addReplyDeferredLen(client *c) {
-    //    注意,即使对象还没有准备好发送,我们也会在这里安装write事件,因为我们确信在返回事件循环之前会调用setDeferredAggregateLen().
+    //  注意,即使对象还没有准备好发送,我们也会在这里安装write事件,因为我们确信在返回事件循环之前会调用setDeferredAggregateLen().
     if (prepareClientToWrite(c) != C_OK)
         return NULL;
 
@@ -901,7 +901,7 @@ void addReplyLongLongWithPrefix(client *c, long long ll, char prefix) {
     const size_t hdr_len = OBJ_SHARED_HDR_STRLEN(ll);           // 4290772992 == 11111111110000000000000000000000   小于这个数是4 否则是5
 
     // opt_hdr 一般为0
-    //  resp2  '*' ; resp3  '%' ;
+    // resp2  '*' ; resp3  '%' ;
     if (prefix == '*' && opt_hdr) { // 数组类型
         addReplyProto(c, shared.mbulkhdr[ll]->ptr, hdr_len);
         return;
@@ -1274,7 +1274,7 @@ void clientAcceptHandler(connection *conn) {
 
 // 接受客户端连接,并创建已连接套接字cfd
 static void acceptCommonHandler(connection *conn, int flags, char *ip) {
-    //    flags 套接字类型,目前包含tcp:0,unix_socket:1 << 11
+    //  flags 套接字类型,目前包含tcp:0,unix_socket:1 << 11
     client *c;
     char conninfo[100];
     UNUSED(ip);
@@ -1294,7 +1294,7 @@ static void acceptCommonHandler(connection *conn, int flags, char *ip) {
         else
             err = "-ERR 已到达最大的客户端链接数[client]\r\n";
 
-        //        这是最好的错误消息,不要检查写错误.注意,对于TLS连接,还没有完成握手,所以没有写入任何内容,连接将被删除.
+        //      这是最好的错误消息,不要检查写错误.注意,对于TLS连接,还没有完成握手,所以没有写入任何内容,连接将被删除.
         if (connWrite(conn, err, strlen(err)) == -1) { // 往客户端写入错误信息
         }
         server.stat_rejected_conn++;
@@ -1345,7 +1345,7 @@ void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
         }
         serverLog(LL_VERBOSE, "接收客户端连接 %s:%d,fd编号%d", cip, cport, cfd); //
         connection *c = connCreateAcceptedSocket(cfd);                           // 组装成内部的connection结构体
-        acceptCommonHandler(c, 0, cip);                                          //   接受客户端连接,并创建已连接套接字cfd
+        acceptCommonHandler(c, 0, cip);                                          // 接受客户端连接,并创建已连接套接字cfd
     }
 }
 
@@ -2270,9 +2270,9 @@ int processMultibulkBuffer(client *c) {
         // 参数数量之后的位置
         // 比如对于 *3\r\n$3\r\n$SET\r\n... 来说,
         // pos 指向 *3\r\n$3\r\n$SET\r\n...
-        //                ^
-        //                |
-        //               pos
+        //              ^
+        //              |
+        //             pos
         c->qb_pos = (newline - c->querybuf) + 2; // 跳过了*3\r\n
         // 如果 ll <= 0 ,那么这个命令是一个空白命令
         // 那么将这段内容从查询缓冲区中删除,只保留未阅读的那部分内容
@@ -2337,9 +2337,9 @@ int processMultibulkBuffer(client *c) {
             // 定位到参数的开头
             // 比如
             // $3\r\nSET\r\n...
-            //       ^
-            //       |
-            //      pos
+            //     ^
+            //     |
+            //    pos
             c->qb_pos = newline - c->querybuf + 2;
             // 如果参数非常长,那么做一些预备措施来优化接下来的参数复制操作
             if (!(c->flags & CLIENT_MASTER) && ll >= PROTO_MBULK_BIG_ARG) {
@@ -2573,14 +2573,14 @@ int processInputBuffer(client *c) {
             }
         }
     }
-    //  客户端有 CLIENT_MASTER 标记
+    // 客户端有 CLIENT_MASTER 标记
     if (c->flags & CLIENT_MASTER) {
         // 如果客户端是主客户端，则将querybuf修剪为repl_applied，因为主客户端非常特殊，它的querybuf不仅用于解析命令，还可以代理到子副本。
         // 下面是一些我们不能修剪到qb_pos的场景:
         //* 1。我们没有收到主人的完整命令
         //* 2。主客户端被阻塞导致客户端暂停
         //* 3。io线程操作读，主客户端标记为CLIENT_PENDING_COMMAND
-        //         在这些场景中，qb_pos指向当前命令的部分
+        //       在这些场景中，qb_pos指向当前命令的部分
         //*或下一个命令的开头，当前命令还没有应用，
         //*因此repl_applied不等于qb_pos。
         if (c->repl_applied) {
@@ -2611,7 +2611,7 @@ void readQueryFromClient(connection *conn) {
     size_t old_qblen; // 缓冲区中存在的数据长度，备份
     size_t readlen;   // 缓冲区长度
 
-    //    主线程将 待读客户端 添加到Read任务队列（生产者）
+    //  主线程将 待读客户端 添加到Read任务队列（生产者）
     if (postponeClientRead(c)) { // 延迟读
         return;
     }
@@ -3612,7 +3612,7 @@ void helloCommand(client *c) {
 }
 
 // 这个回调被绑定到POST和"Host:"命令名.这些并不是真正的命令,而是在安全攻击中使用的,
-//  目的是通过HTTP与Redis实例对话,使用一种称为“跨协议脚本”的技术,它利用了Redis这样的服务会丢弃无效的HTTP报头,并将处理接下来的内容的事实.
+// 目的是通过HTTP与Redis实例对话,使用一种称为“跨协议脚本”的技术,它利用了Redis这样的服务会丢弃无效的HTTP报头,并将处理接下来的内容的事实.
 // 作为对这种攻击的一种保护,当看到POST或"Host:"报头时,Redis会终止连接,并会不时地记录事件(以避免由于日志太多而创建DOS).
 void securityWarningCommand(client *c) {
     static time_t logged_time = 0;
@@ -4107,7 +4107,7 @@ static inline unsigned long getIOPendingCount(int i) {
 
 // OK
 static inline void setIOPendingCount(int i, unsigned long count) {
-    atomicSetWithSync(io_threads_pending[i], count); //  原子设置, 不成功一直循环
+    atomicSetWithSync(io_threads_pending[i], count); // 原子设置, 不成功一直循环
 }
 
 void *IOThreadMain(void *myid) {
@@ -4272,7 +4272,7 @@ int handleClientsWithPendingWritesUsingThreads(void) {
     /* If I/O threads are disabled or we have few clients to serve, don't
      * use I/O threads, but the boring synchronous code. */
     if (server.io_threads_num == 1 || stopThreadedIOIfNeeded()) {
-        //        stopThreadedIOIfNeeded 函数一旦发现待处理任务数,不足 IO 线程数的 2 倍,它就会调用 stopThreadedIO 函数来暂停 IO 线程.
+        //      stopThreadedIOIfNeeded 函数一旦发现待处理任务数,不足 IO 线程数的 2 倍,它就会调用 stopThreadedIO 函数来暂停 IO 线程.
         return handleClientsWithPendingWrites();
     }
 

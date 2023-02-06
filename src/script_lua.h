@@ -48,7 +48,7 @@
  * Uses script.c for interaction back with Redis.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "script.h"
 #include <lua.h>
 #include <lauxlib.h>

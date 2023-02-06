@@ -93,10 +93,10 @@ void aeSetDontWait(aeEventLoop *eventLoop, int noWait) {
 }
 
 // 调整事件槽的大小
-// *
+//
 // 如果尝试调整大小为 setsize ,但是有 >= setsize 的文件描述符存在
 // 那么返回 AE_ERR ,不进行任何动作.
-// *
+//
 // 否则,执行大小调整操作,并返回 AE_OK .
 int aeResizeSetSize(aeEventLoop *eventLoop, int setsize) {
     int i;
@@ -140,11 +140,11 @@ void aeStop(aeEventLoop *eventLoop) {
 }
 
 // 实现事件和处理函数的注册
-//    循环流程结构体 *eventLoop
-//    IO 事件对应的文件描述符  fd
-//    事件类型掩码 mask       AE_NONE|AE_READABLE|AE_WRITABLE|AE_BARRIER
-//    事件处理回调函数*proc
-//    以及事件私有数据*clientData.
+//  循环流程结构体 *eventLoop
+//  IO 事件对应的文件描述符  fd
+//  事件类型掩码 mask       AE_NONE|AE_READABLE|AE_WRITABLE|AE_BARRIER
+//  事件处理回调函数*proc
+//  以及事件私有数据*clientData.
 int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask, aeFileProc *proc, void *clientData) {
     // fd是文件描述符的编号,一般是从6开始
     // 运行之出,首先是ipv4 ,ipv6对6379端口的套接字
@@ -171,7 +171,7 @@ int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask, aeFileProc *proc
     fe->clientData = clientData;
     // 如果有需要,更新事件处理器的最大 fd
     if (fd > eventLoop->maxfd) {
-        //        文件描述符从3开始,从小到大编号,因为0、1、2被分配给了标准IO描述符
+        //      文件描述符从3开始,从小到大编号,因为0、1、2被分配给了标准IO描述符
         eventLoop->maxfd = fd;
     }
     return AE_OK;
@@ -335,7 +335,7 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
         }
         // 已经到了定时的时间
         if (te->when <= now) {
-            //            然后根据当前时间判断该事件的触发时间戳是否已满足
+            //          然后根据当前时间判断该事件的触发时间戳是否已满足
             int retval; // 执行结果
 
             id = te->id; // 事件ID
@@ -360,7 +360,7 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
 
 // 事件的捕获【aeApiPoll】、分发、处理
 int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
-    // server.c        flasgs  AE_ALL_EVENTS[AE_FILE_EVENTS | AE_TIME_EVENTS] | AE_CALL_BEFORE_SLEEP | AE_CALL_AFTER_SLEEP
+    // over-server.c        flasgs  AE_ALL_EVENTS[AE_FILE_EVENTS | AE_TIME_EVENTS] | AE_CALL_BEFORE_SLEEP | AE_CALL_AFTER_SLEEP
     // networking.c    flasgs  AE_FILE_EVENTS | AE_DONT_WAIT | AE_CALL_BEFORE_SLEEP | AE_CALL_AFTER_SLEEP
     int processed = 0, numevents;
 
@@ -480,9 +480,9 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
 int aeWait(int fd, int mask, long long milliseconds) {
     struct pollfd pfd;
     // struct pollfd{
-    //     int fd; /*文件描述符，如建立socket后获取的fd, 此处表示想查询的文件描述符*/
-    //     short events;	/*等待的事件，就是要监测的感兴趣的事情*/
-    //     short revents;	/*实际发生了的事情*/
+    //   int fd; /*文件描述符，如建立socket后获取的fd, 此处表示想查询的文件描述符*/
+    //   short events;	/*等待的事件，就是要监测的感兴趣的事情*/
+    //   short revents;	/*实际发生了的事情*/
     // };
 
     int retmask = 0;
@@ -501,8 +501,8 @@ int aeWait(int fd, int mask, long long milliseconds) {
     // unsigned int nfds: 指定pollfd 结构体数组的个数，即监控几个pollfd.
     // timeout:指poll() 函数调用阻塞的时间，单位是ms.如果timeout=0则不阻塞，如timeout=INFTIM 表 示一直阻塞直到感兴趣的事情发生。
     // 返回值：>0 表示数组fds 中准备好读，写或出错状态的那些socket描述符的总数量
-    //   ==0 表示数组fds 中都没有准备好读写或出错，当poll 阻塞超时timeout 就会返回。
-    //   -1 表示poll() 函数调用失败，同时回自动设置全局变量errno.
+    // ==0 表示数组fds 中都没有准备好读写或出错，当poll 阻塞超时timeout 就会返回。
+    // -1 表示poll() 函数调用失败，同时回自动设置全局变量errno.
     if ((retval = poll(&pfd, 1, milliseconds)) == 1) {
         if (pfd.revents & POLLIN)
             retmask |= AE_READABLE;

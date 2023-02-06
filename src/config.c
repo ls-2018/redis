@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include "over-server.h"
 #include "cluster.h"
 
 #include <fcntl.h>
@@ -1632,16 +1632,10 @@ cleanup:
     return retval;
 }
 
-/* Rewrite the configuration file at "path".
- * If the configuration file already exists, we try at best to retain comments
- * and overall structure.
- *
- * Configuration parameters that are at their default value, unless already
- * explicitly included in the old configuration file, are not rewritten.
- * The force_write flag overrides this behavior and forces everything to be
- * written. This is currently only used for testing purposes.
- *
- * On error -1 is returned and errno is set accordingly, otherwise 0. */
+// 重写“path”处的配置文件。如果配置文件已经存在，我们尽量保留注释和整体结构。
+// 除非已显式地包含在旧配置文件中，否则不重写处于默认值的配置参数。
+// force_write标志覆盖这个行为并强制写入所有内容。目前仅用于测试目的。
+// 如果出现错误，返回-1并相应地设置errno，否则为0。
 int rewriteConfig(char *path, int force_write) {
     struct rewriteConfigState *state;
     sds newcontent;
@@ -2051,7 +2045,7 @@ static int numericParseString(standardConfig *config, sds value, const char **er
             return 1; /* No overflow or invalid characters */
     }
 
-    //  尝试一个简单的数字（没有设置特殊标志）.
+    // 尝试一个简单的数字（没有设置特殊标志）.
     if (!config->data.numeric.flags && string2ll(value, sdslen(value), res))
         return 1;
 

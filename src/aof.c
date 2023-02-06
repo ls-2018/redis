@@ -1,4 +1,4 @@
-#include "server.h"
+#include "over-server.h"
 #include "bio.h"
 #include "rio.h"
 #include "functions.h"
@@ -882,8 +882,8 @@ void killAppendOnlyChild(void) {
         return;
     /* Kill AOFRW child, wait for child exit. */
     serverLog(LL_NOTICE, "Killing running AOF rewrite child: %ld", (long)server.child_pid);
-    //    * 如果 BGREWRITEAOF 正在执行,那么杀死它
-    //    * 并等待子进程退出
+    // * 如果 BGREWRITEAOF 正在执行,那么杀死它
+    // * 并等待子进程退出
     // 杀死子进程
 
     if (kill(server.child_pid, SIGUSR1) != -1) {
@@ -920,8 +920,8 @@ void stopAppendOnly(void) {
     server.aof_state = AOF_OFF;
     server.aof_rewrite_scheduled = 0;
     server.aof_last_incr_size = 0;
-    //    * 如果 BGREWRITEAOF 正在执行,那么杀死它
-    //    * 并等待子进程退出
+    // * 如果 BGREWRITEAOF 正在执行,那么杀死它
+    // * 并等待子进程退出
     killAppendOnlyChild();
     sdsfree(server.aof_buf);
     server.aof_buf = sdsempty();
@@ -2405,11 +2405,11 @@ int rewriteAppendOnlyFileRio(rio *aof) {
                 dismissObject(o, dump_size);
 
             /* Save the expire time */
-            //            * 保存键的过期时间
+            //        * 保存键的过期时间
 
             if (expiretime != -1) {
                 char cmd[] = "*3\r\n$9\r\nPEXPIREAT\r\n";
-                //                                // 写入 PEXPIREAT expiretime 命令
+                //                            // 写入 PEXPIREAT expiretime 命令
                 if (rioWrite(aof, cmd, sizeof(cmd) - 1) == 0)
                     goto werr;
                 if (rioWriteBulkObject(aof, &key) == 0)
@@ -2514,7 +2514,7 @@ int rewriteAppendOnlyFile(char *filename) {
 
     /* Use RENAME to make sure the DB file is changed atomically only
      * if the generate DB file is ok. */
-    //         * 原子地改名,用重写后的新 AOF 文件覆盖旧 AOF 文件
+    //     * 原子地改名,用重写后的新 AOF 文件覆盖旧 AOF 文件
     if (rename(tmpfile, filename) == -1) {
         serverLog(LL_WARNING, "Error moving temp append only file on the final destination: %s", strerror(errno));
         unlink(tmpfile);
