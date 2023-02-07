@@ -31,7 +31,7 @@
 #include "over-server.h"
 #include "util.h"
 #include "sha1.h" /* SHA1 is used for DEBUG DIGEST */
-#include "crc64.h"
+#include "over-crc64.h"
 #include "over-bio.h"
 #include "quicklist.h"
 

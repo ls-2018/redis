@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "fmacros.h"
+#include "over-fmacros.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -46,7 +46,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "anet.h"
+#include "over-anet.h"
 #include "config.h"
 #include "over-server.h"
 

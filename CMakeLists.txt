@@ -33,7 +33,7 @@ set(SRC_SERVER_TMP
         src/over-dict.c
         src/geohash_helper.c
         src/over-sds.c
-        src/crcspeed.c
+        src/over-crcspeed.c
         src/hyperloglog.c
         src/adlist.c
         src/eval.c
@@ -59,7 +59,7 @@ set(SRC_SERVER_TMP
         src/networking.c
         src/pqsort.c
         src/sort.c
-        src/anet.c
+        src/over-anet.c
         src/module.c
         src/setproctitle.c
         src/lzf_c.c
@@ -87,7 +87,7 @@ set(SRC_SERVER_TMP
         src/t_string.c
         src/config.c
         src/over-endianconv.c
-        src/crc16.c
+        src/over-crc16.c
         src/setcpuaffinity.c
         src/script.c
         src/bitops.c
@@ -98,7 +98,7 @@ set(SRC_SERVER_TMP
         src/geohash.c
         src/over-sha256.c
         src/siphash.c
-        src/crc64.c
+        src/over-crc64.c
         src/resp_parser.c
         src/mt19937-64.c
         src/over-zmalloc.c
@@ -121,15 +121,15 @@ set(SRC_SERVER_TMP
         src/over-server.h)
 set(SRC_SERVER src/over-server.c ${SRC_SERVER_TMP} ${OPTION} src/over-server.h)
 set(SRC_CLI
-        src/anet.c
+        src/over-anet.c
         src/over-sds.c
         src/adlist.c
         src/redis-cli.c
         src/over-zmalloc.c
         src/release.c
         src/over-ae.c
-        src/crc64.c
-        src/crc16.c
+        src/over-crc64.c
+        src/over-crc16.c
         src/over-dict.c
         src/siphash.c
         src/over-server.h)

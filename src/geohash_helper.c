@@ -34,7 +34,7 @@
  * https://github.com/yinqiwen/ardb/blob/d42503/src/geo/geohash_helper.cpp
  */
 
-#include "fmacros.h"
+#include "over-fmacros.h"
 #include "geohash_helper.h"
 #include "debugmacro.h"
 #include <math.h>

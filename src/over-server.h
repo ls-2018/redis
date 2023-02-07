@@ -1,7 +1,7 @@
 #ifndef __REDIS_H
 #define __REDIS_H
 
-#include "fmacros.h"
+#include "over-fmacros.h"
 #include "config.h"
 #include "solarisfixes.h"
 #include "rio.h"
@@ -40,7 +40,7 @@ typedef long long ustime_t; // 微秒
 #include "over-dict.h"    /* Hash tables */
 #include "adlist.h"       /* Linked lists */
 #include "over-zmalloc.h" /* total memory usage aware version of malloc/free */
-#include "anet.h"         /* Networking the easy way */
+#include "over-anet.h"    /* Networking the easy way */
 #include "ziplist.h"      /* Compact list data structure */
 #include "intset.h"       /* Compact integer set structure */
 #include "version.h"      /* Version macro */
@@ -56,7 +56,7 @@ typedef long long ustime_t; // 微秒
 #include "zipmap.h"
 #include "sha1.h"
 #include "over-endianconv.h"
-#include "crc64.h"
+#include "over-crc64.h"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))

@@ -1,4 +1,4 @@
-#include "crcspeed.h"
+#include "over-crcspeed.h"
 
 // 填充crc常量表
 void crcspeed64little_init(crcfn64 crcfn, uint64_t table[8][256]) {

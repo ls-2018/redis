@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "fmacros.h"
+#include "over-fmacros.h"
 #include "version.h"
 
 #include <stdio.h>
@@ -58,7 +58,7 @@
 #include "over-dict.h"
 #include "over-zmalloc.h"
 #include "atomicvar.h"
-#include "crc16_slottable.h"
+#include "over-crc16_slottable.h"
 #include "hdr_histogram.h"
 #include "over-cli_common.h"
 #include "mt19937-64.h"

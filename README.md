@@ -204,18 +204,6 @@ OK
 ```
 
 ``` 
-#define OBJ_ENCODING_RAW 0     // 简单动态字符串
-#define OBJ_ENCODING_INT 1    // long类型的整数
-#define OBJ_ENCODING_HT 2       // 字典
-#define OBJ_ENCODING_ZIPMAP 3  /* Encoded as zipmap */
-#define OBJ_ENCODING_LINKEDLIST 4  //双端链表  弃用
-#define OBJ_ENCODING_ZIPLIST 5 // 压缩列表
-#define OBJ_ENCODING_INTSET 6  // 整数集合
-#define OBJ_ENCODING_SKIPLIST 7  // 跳跃表和字典
-#define OBJ_ENCODING_EMBSTR 8  // embstr编码的简单动态字符串
-#define OBJ_ENCODING_QUICKLIST 9 // listpacks的
-#define OBJ_ENCODING_STREAM 10 // listpacks的前缀树
-#define OBJ_ENCODING_LISTPACK 11 // hash底层实现之一
 - k:v 
   - encoding
     - int
@@ -288,7 +276,7 @@ OK
   - encoding
     - listpack 【内存紧凑】  
       - v,score使用两个entry保存
-    - zset
+    - skiplist
       - dict        v:->score的映射
       - skiplist    按照score从小到大排序
       - 这两种数据结构都会通过指针来共享相同元素的成员和分值

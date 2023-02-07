@@ -12,13 +12,13 @@
  * 或者为当前的校验和查询 rio 对象.
  */
 
-#include "fmacros.h"
+#include "over-fmacros.h"
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 #include "rio.h"
 #include "util.h"
-#include "crc64.h"
+#include "over-crc64.h"
 #include "config.h"
 #include "over-server.h"
 

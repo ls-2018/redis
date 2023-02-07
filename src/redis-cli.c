@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "fmacros.h"
+#include "over-fmacros.h"
 #include "version.h"
 
 #include <stdio.h>
@@ -61,7 +61,7 @@
 #include "over-zmalloc.h"
 #include "linenoise.h"
 #include "help.h" /* Used for backwards-compatibility with pre-7.0 servers that don't support COMMAND DOCS. */
-#include "anet.h"
+#include "over-anet.h"
 #include "over-ae.h"
 #include "over-cli_common.h"
 #include "mt19937-64.h"

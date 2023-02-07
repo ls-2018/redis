@@ -26,8 +26,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE. */
 
-#include "crc64.h"
-#include "crcspeed.h"
+#include "over-crc64.h"
+#include "over-crcspeed.h"
 
 static uint64_t crc64_table[8][256] = {{0}};
 

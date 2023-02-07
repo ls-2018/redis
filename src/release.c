@@ -36,7 +36,7 @@
 
 #include "release.h"
 #include "version.h"
-#include "crc64.h"
+#include "over-crc64.h"
 
 char *redisGitSHA1(void) {
     return REDIS_GIT_SHA1;
