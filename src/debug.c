@@ -32,7 +32,7 @@
 #include "util.h"
 #include "sha1.h" /* SHA1 is used for DEBUG DIGEST */
 #include "crc64.h"
-#include "bio.h"
+#include "over-bio.h"
 #include "quicklist.h"
 
 #include <arpa/inet.h>

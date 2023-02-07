@@ -1,12 +1,11 @@
 #include "over-server.h"
-#include "bio.h"
+#include "over-bio.h"
 // 保存线程描述符的数组
 static pthread_t bio_threads[BIO_NUM_OPS];
 // 保存互斥锁的数组
 static pthread_mutex_t bio_mutex[BIO_NUM_OPS];
 // 保存条件变量的两个数组
 static pthread_cond_t bio_newjob_cond[BIO_NUM_OPS];
-static pthread_cond_t bio_step_cond[BIO_NUM_OPS];
 // 存放每种类型工作的队列
 static list *bio_jobs[BIO_NUM_OPS];
 // 记录每种类型 job 队列里有多少 job 等待执行
@@ -34,7 +33,6 @@ void bioInit(void) {
     for (j = 0; j < BIO_NUM_OPS; j++) {
         pthread_mutex_init(&bio_mutex[j], NULL);
         pthread_cond_init(&bio_newjob_cond[j], NULL); // 用来初始化条件变量的函数
-        pthread_cond_init(&bio_step_cond[j], NULL);   // 用来初始化条件变量的函数
         bio_jobs[j] = listCreate();                   // 给 bio_jobs 这个数组的每个元素创建一个链表,每个链表保存了每个后台线程要处理的任务列表
         bio_pending[j] = 0;                           // 每种任务中,处于等待状态的任务个数.
     }
@@ -160,7 +158,7 @@ void *bioProcessBackgroundJobs(void *arg) {
         /* 现在可以解锁后台系统，因为我们知道有一个独立的作业结构来处理。*/
         pthread_mutex_unlock(&bio_mutex[type]);
 
-        // 执行任务
+        // 执行任务,此时已经释放了锁,因此可以添加任务
         if (type == BIO_CLOSE_FILE) {
             close(job->fd);
         }
@@ -180,7 +178,6 @@ void *bioProcessBackgroundJobs(void *arg) {
             }
         }
         else if (type == BIO_LAZY_FREE) {
-            printf("sleep 1 \r\n");
             // lazyfreeFreeObject
             // lazyfreeFreeDatabase
             // lazyFreeTrackingTable
@@ -201,9 +198,6 @@ void *bioProcessBackgroundJobs(void *arg) {
         listDelNode(bio_jobs[type], ln);
         // 将对应的等待任务个数减一.
         bio_pending[type]--;
-
-        /* Unblock threads blocked on bioWaitStepOfType() if any. */
-        pthread_cond_broadcast(&bio_step_cond[type]);
     }
 }
 
@@ -212,28 +206,6 @@ unsigned long long bioPendingJobsOfType(int type) {
     unsigned long long val;
     pthread_mutex_lock(&bio_mutex[type]);
     val = bio_pending[type];
-    pthread_mutex_unlock(&bio_mutex[type]);
-    return val;
-}
-
-/* If there are pending jobs for the specified type, the function blocks
- * and waits that the next job was processed. Otherwise the function
- * does not block and returns ASAP.
- *
- * The function returns the number of jobs still to process of the
- * requested type.
- *
- * This function is useful when from another thread, we want to wait
- * a bio.c thread to do more work in a blocking way.
- */
-unsigned long long bioWaitStepOfType(int type) {
-    unsigned long long val;
-    pthread_mutex_lock(&bio_mutex[type]);
-    val = bio_pending[type];
-    if (val != 0) {
-        pthread_cond_wait(&bio_step_cond[type], &bio_mutex[type]);
-        val = bio_pending[type];
-    }
     pthread_mutex_unlock(&bio_mutex[type]);
     return val;
 }

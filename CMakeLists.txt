@@ -81,7 +81,7 @@ set(SRC_SERVER_TMP
         src/cluster.c
         src/over-connection.c
         src/function_lua.c
-        src/bio.c
+        src/over-bio.c
         src/over-ae.c
         src/blocked.c
         src/t_string.c
