@@ -9,7 +9,7 @@
 #include "slowlog.h"
 #include "over-bio.h"
 #include "latency.h"
-#include "atomicvar.h"
+#include "over-atomicvar.h"
 #include "over-mt19937-64.h"
 #include "over-functions.h"
 
@@ -5471,7 +5471,7 @@ void usage(void) {
 
 // ok 打印redis logo
 void redisAsciiArt(void) {
-#include "asciilogo.h"
+#include "over-asciilogo.h"
 
     char *buf = zmalloc(1024 * 16);
     char *mode;

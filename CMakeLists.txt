@@ -35,7 +35,7 @@ set(SRC_SERVER_TMP
         src/over-sds.c
         src/over-crcspeed.c
         src/hyperloglog.c
-        src/adlist.c
+        src/over-double_ended_linked_list.c
         src/eval.c
         src/over-lzf_d.c
         src/over-geo.c
@@ -56,18 +56,18 @@ set(SRC_SERVER_TMP
         src/sentinel.c
         src/tracking.c
         src/timeout.c
-        src/networking.c
+        src/over-networking.c
         src/over-pqsort.c
         src/over-sort.c
         src/over-anet.c
         src/module.c
-        src/setproctitle.c
+        src/over-setproctitle.c
         src/over-lzf_c.c
         src/over-sha1.c
         src/t_set.c
         src/childinfo.c
         src/lolwut5.c
-        src/call_reply.c
+        src/over-call_reply.c
         src/redis-check-aof.c
         src/over-localtime.c
         src/rdb.c
@@ -88,18 +88,18 @@ set(SRC_SERVER_TMP
         src/over-config.c
         src/over-endianconv.c
         src/over-crc16.c
-        src/setcpuaffinity.c
+        src/over-setcpuaffinity.c
         src/script.c
         src/bitops.c
         src/ziplist.c
-        src/defrag.c
+        src/over-defrag.c
         src/acl.c
         src/tls.c
-        src/geohash.c
+        src/over-geohash.c
         src/over-sha256.c
-        src/siphash.c
+        src/over-siphash.c
         src/over-crc64.c
-        src/resp_parser.c
+        src/over-resp_parser.c
         src/over-mt19937-64.c
         src/over-zmalloc.c
         src/zipmap.c
@@ -108,7 +108,7 @@ set(SRC_SERVER_TMP
         src/t_zset.c
         src/notify.c
         src/t_hash.c
-        src/evict.c
+        src/over-evict.c
         src/script_lua.c
         src/latency.c
         src/rax.c
@@ -123,7 +123,7 @@ set(SRC_SERVER src/over-server.c ${SRC_SERVER_TMP} ${OPTION} src/over-server.h)
 set(SRC_CLI
         src/over-anet.c
         src/over-sds.c
-        src/adlist.c
+        src/over-double_ended_linked_list.c
         src/redis-cli.c
         src/over-zmalloc.c
         src/over-release.c
@@ -131,7 +131,7 @@ set(SRC_CLI
         src/over-crc64.c
         src/over-crc16.c
         src/over-dict.c
-        src/siphash.c
+        src/over-siphash.c
         src/over-server.h)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     # better not to work with jemalloc

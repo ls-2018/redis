@@ -91,7 +91,7 @@ uint8_t geohashEstimateStepsByRadius(double range_meters, double lat) {
     return step;
 }
 
-/* Return the bounding box of the search area by shape (see geohash.h GeoShape)
+/* Return the bounding box of the search area by shape (see over-geohash.h GeoShape)
  * bounds[0] - bounds[2] is the minimum and maximum longitude
  * while bounds[1] - bounds[3] is the minimum and maximum latitude.
  * since the higher the latitude, the shorter the arc length, the box shape is as follows
@@ -126,7 +126,7 @@ int geohashBoundingBox(GeoShape *shape, double *bounds) {
 }
 
 /* Calculate a set of areas (center + 8) that are able to cover a range query
- * for the specified position and shape (see geohash.h GeoShape).
+ * for the specified position and shape (see over-geohash.h GeoShape).
  * the bounding box saved in shaple.bounds */
 GeoHashRadius geohashCalculateAreasByShapeWGS84(GeoShape *shape) {
     GeoHashRange long_range, lat_range;

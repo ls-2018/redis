@@ -1,6 +1,6 @@
 #include "over-server.h"
-#include "connhelpers.h"
-#include "adlist.h"
+#include "over-connhelpers.h"
+#include "over-double_ended_linked_list.h"
 
 #ifdef USE_OPENSSL // 编译时指定
 

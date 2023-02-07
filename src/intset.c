@@ -34,7 +34,7 @@
 #include "intset.h"
 #include "over-zmalloc.h"
 #include "over-endianconv.h"
-#include "redisassert.h"
+#include "over-redisassert.h"
 
 #define INTSET_ENC_INT16 (sizeof(int16_t))
 #define INTSET_ENC_INT32 (sizeof(int32_t))

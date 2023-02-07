@@ -13,7 +13,7 @@
 
 #include "over-dict.h"
 #include "over-zmalloc.h"
-#include "redisassert.h"
+#include "over-redisassert.h"
 
 // 通过 dictEnableResize() 和 dictDisableResize() 两个函数,
 // 程序可以手动地允许或阻止哈希表进行 rehash ,
@@ -687,9 +687,8 @@ dictEntry *dictGetRandomKey(dict *d) {
     return he;
 }
 
-/* This function samples the dictionary to return a few keys from random
- * locations.
- *
+/*
+ * 这个函数对字典进行采样，以从随机位置返回几个键。
  * It does not guarantee to return all the keys specified in 'count', nor
  * it does guarantee to return non-duplicated elements, however it will make
  * some effort to do both things.

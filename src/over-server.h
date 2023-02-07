@@ -5,7 +5,7 @@
 #include "over-config.h"
 #include "solarisfixes.h"
 #include "rio.h"
-#include "atomicvar.h"
+#include "over-atomicvar.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -35,20 +35,20 @@
 typedef long long mstime_t; // 毫秒
 typedef long long ustime_t; // 微秒
 
-#include "over-ae.h"      /* Event driven programming library */
-#include "over-sds.h"     /* Dynamic safe strings */
-#include "over-dict.h"    /* Hash tables */
-#include "adlist.h"       /* Linked lists */
-#include "over-zmalloc.h" /* total memory usage aware version of malloc/free */
-#include "over-anet.h"    /* Networking the easy way */
-#include "ziplist.h"      /* Compact list data structure */
-#include "intset.h"       /* Compact integer set structure */
-#include "over-version.h" /* Version macro */
-#include "over-util.h"    /* Misc functions useful in many places */
-#include "latency.h"      /* Latency monitor API */
-#include "sparkline.h"    /* ASCII graphs API */
-#include "quicklist.h"    /* Lists are encoded as linked lists of N-elements flat arrays */
-#include "rax.h"          /* Radix tree */
+#include "over-ae.h"         /* Event driven programming library */
+#include "over-sds.h"        /* Dynamic safe strings */
+#include "over-dict.h"       /* Hash tables */
+#include "over-double_ended_linked_list.h" /* Linked lists */
+#include "over-zmalloc.h"    /* total memory usage aware version of malloc/free */
+#include "over-anet.h"       /* Networking the easy way */
+#include "ziplist.h"         /* Compact list data structure */
+#include "intset.h"          /* Compact integer set structure */
+#include "over-version.h"    /* Version macro */
+#include "over-util.h"       /* Misc functions useful in many places */
+#include "latency.h"         /* Latency monitor API */
+#include "sparkline.h"       /* ASCII graphs API */
+#include "quicklist.h"       /* Lists are encoded as linked lists of N-elements flat arrays */
+#include "rax.h"             /* Radix tree */
 #include "over-connection.h" /* Connection abstraction */
 
 #define REDISMODULE_CORE 1
@@ -770,7 +770,7 @@ typedef struct RedisModuleDigest {
     } while (0)
 
 // 对象编码
-//set->[OBJ_ENCODING_INTSET,OBJ_ENCODING_HT]
+// set->[OBJ_ENCODING_INTSET,OBJ_ENCODING_HT]
 #define OBJ_ENCODING_RAW 0        // 大于 44 字节,redisObject 和 SDS 分开存储,需分配 2 次内存
 #define OBJ_ENCODING_INT 1        // 整数存储（小于 10000,使用共享对象池存储,但有个前提：Redis 没有设置淘汰策略,详见 object.c 的 tryObjectEncoding 函数）
 #define OBJ_ENCODING_HT 2         // 字典

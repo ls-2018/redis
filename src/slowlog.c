@@ -83,7 +83,7 @@ slowlogEntry *slowlogCreateEntry(client *c, robj **argv, int argc, long long dur
     return se;
 }
 
-/* 释放慢速日志条目.参数为void,因此该函数的原型与adlist.c中的'free'方法匹配.这个函数将负责释放所有被保留的对象. */
+/* 释放慢速日志条目.参数为void,over-double_ended_linked_list.c中的'free'方法匹配.这个函数将负责释放所有被保留的对象. */
 void slowlogFreeEntry(void *septr) {
     slowlogEntry *se = septr;
     int j;

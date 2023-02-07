@@ -137,7 +137,7 @@ address                                |                          |        |
 #include "ziplist.h"
 #include "over-config.h"
 #include "over-endianconv.h"
-#include "redisassert.h"
+#include "over-redisassert.h"
 
 #define ZIP_END 255         // ziplist的列表尾字节内容
 #define ZIP_BIG_PREVLEN 254 // 特殊的 "zipliZIP_BIG_PREVLEN的结束 - 1是前一条的最大字节数. 前一个条目的最大字节数,为 "prevlen "字段的前缀. 每个条目,只用一个字节来表示. 否则,它表示为FE AA BB CC DD,其中           AA BB CC DD是一个4字节的无符号整数    代表前一个条目的长度."St "条目.
@@ -2000,7 +2000,7 @@ unsigned int ziplistRandomPairsUnique(unsigned char *zl, unsigned int count, zip
 
 #ifdef REDIS_TEST
 #    include <sys/time.h>
-#    include "adlist.h"
+#    include "over-double_ended_linked_list.h"
 #    include "over-sds.h"
 #    include "testhelp.h"
 

@@ -1,7 +1,7 @@
 // 对键值对的新增、查询、修改和删除等操作接口
 #include "over-server.h"
 #include "cluster.h"
-#include "atomicvar.h"
+#include "over-atomicvar.h"
 #include "latency.h"
 #include "script.h"
 #include "over-functions.h"
@@ -283,15 +283,15 @@ static int dbGenericDelete(redisDb *db, robj *key, int async) {
     if (dictSize(db->expires) > 0) {
         dictDelete(db->expires, key->ptr);
     }
-    dictEntry *de = dictUnlink(db->dict, key->ptr);// 异步
+    dictEntry *de = dictUnlink(db->dict, key->ptr); // 异步
     if (de) {
         robj *val = dictGetVal(de);
         moduleNotifyKeyUnlink(key, val, db->id); // 告诉模块该key已从数据库中解除链接。
-        if (val->type == OBJ_STREAM) { // 我们想尝试使用阻塞的 XREADGROUP 解除阻塞任何客户端
+        if (val->type == OBJ_STREAM) {           // 我们想尝试使用阻塞的 XREADGROUP 解除阻塞任何客户端
             signalKeyAsReady(db, key, val->type);
         }
         if (async) {
-            freeObjAsync(key, val, db->id);// 异步释放逻辑  ✈️✈️✈️✈️✈️✈️✈️✈️
+            freeObjAsync(key, val, db->id); // 异步释放逻辑  ✈️✈️✈️✈️✈️✈️✈️✈️
             dictSetVal(db->dict, de, NULL);
         }
         if (server.cluster_enabled) {
@@ -635,14 +635,14 @@ void flushallCommand(client *c) {
 }
 
 // 这个命令实现了DEL和LAZYDEL.
-void delGenericCommand(client *c, int lazy) {// del unlink 决定lazy
+void delGenericCommand(client *c, int lazy) { // del unlink 决定lazy
     int numdel = 0, j;
     // 遍历所有输入键
     for (j = 1; j < c->argc; j++) {
         expireIfNeeded(c->db, c->argv[j], 0);
 
         // 使用不同模式删除
-        int deleted = lazy ? dbAsyncDelete(c->db, c->argv[j]) : dbSyncDelete(c->db, c->argv[j]);// del unlink 决定lazy
+        int deleted = lazy ? dbAsyncDelete(c->db, c->argv[j]) : dbSyncDelete(c->db, c->argv[j]); // del unlink 决定lazy
         // 写命令的传播问题
         if (deleted) {
             // 删除键成功,发送通知

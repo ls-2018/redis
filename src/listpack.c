@@ -7,7 +7,7 @@
 
 #include "listpack.h"
 #include "listpack_malloc.h"
-#include "redisassert.h"
+#include "over-redisassert.h"
 #include "over-util.h"
 
 #define LP_HDR_SIZE 6 // 其中 4 个字节是记录 listpack 的总字节数, 2 个字节是记录 listpack 的元素数量.
@@ -1607,7 +1607,7 @@ void lpRepr(unsigned char *lp) {
 #ifdef REDIS_TEST
 
 #    include <sys/time.h>
-#    include "adlist.h"
+#    include "over-double_ended_linked_list.h"
 #    include "over-sds.h"
 #    include "testhelp.h"
 

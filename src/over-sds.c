@@ -7,7 +7,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include "over-sds.h"
-#include "sdsalloc.h"
+#include "over-sdsalloc.h"
 
 const char *SDS_NOINIT = "SDS_NOINIT";
 

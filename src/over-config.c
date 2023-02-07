@@ -2292,9 +2292,9 @@ static int updateMaxmemory(const char **err) {
             // 如果即将要执行的命令可能占用大量内存
             // 并且前面的内存释放失败的话
             // 那么向客户端返回内存错误
-            serverLog(LL_WARNING, "WARNING: the new maxmemory value set via CONFIG SET (%llu) is smaller than the current memory usage (%zu). This will result in key eviction and/or the inability to accept new write commands depending on the maxmemory-policy.", server.maxmemory, used);
+            serverLog(LL_WARNING, "警告:通过CONFIG set设置的新的maxmemory值(%llu)小于当前内存使用量(%zu)。这将导致键逐出和/或无法接受新的写入命令，具体取决于maxmemory-policy。", server.maxmemory, used);
         }
-        startEvictionTimeProc();
+        startEvictionTimeProc(); // ✅
     }
     return 1;
 }

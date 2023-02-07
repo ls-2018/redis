@@ -24,13 +24,13 @@
 
 // 哈希表
 typedef struct dictEntry {
-    void *key;    // 存储 key 字段内容    redisObject 对象
+    void *key; // 存储 key 字段内容    redisObject 对象
     union
     {
         void *val;    // redisObject对象   值为整数或双精度浮点数时,本身就是64位,就可以不用指针指向了,而是可以直接存在键值对的结构体中,这样就避免了再用一个指针,从而节省了内存空间.
         uint64_t u64; // 无符号64位
-        int64_t s64;// 存储过期时间时使用该字段
-        double d;// 存储 score 时使用
+        int64_t s64;  // 存储过期时间时使用该字段
+        double d;     // 存储 score 时使用
     } v;
     struct dictEntry *next; // 存在hash冲突时，作链表使用
     void *metadata[];       /* An arbitrary number of bytes (starting at a

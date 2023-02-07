@@ -1,6 +1,6 @@
 #include "over-server.h"
 #include "over-bio.h"
-#include "atomicvar.h"
+#include "over-atomicvar.h"
 #include "over-functions.h"
 
 static redisAtomic size_t lazyfree_objects = 0;
@@ -171,14 +171,14 @@ size_t lazyfreeGetFreeEffort(robj *key, robj *obj, int dbid) {
 
 /* 释放一个对象，如果对象足够大，以异步方式释放它。 */
 void freeObjAsync(robj *key, robj *obj, int dbid) {
-    size_t free_effort = lazyfreeGetFreeEffort(key, obj, dbid);// 判断释放的开销
+    size_t free_effort = lazyfreeGetFreeEffort(key, obj, dbid); // 判断释放的开销
     // 如果要淘汰的键值对包含超过64个元素
 
     // 其实异步方法与同步方法的差别在这，即要求 删除的元素影响须大于某阀值(64)
     // 否则按照同步方式直接删除，因为那样代价更小
 
     if (free_effort > LAZYFREE_THRESHOLD && obj->refcount == 1) {
-        atomicIncr(lazyfree_objects, 1);// 异步释放+1，原子操作
+        atomicIncr(lazyfree_objects, 1); // 异步释放+1，原子操作
         // 创建惰性删除的后台任务,交给后台线程执行
         // 将 value 的释放添加到异步线程队列中去，后台处理, 任务类型为 异步释放内存
         bioCreateLazyFreeJob(lazyfreeFreeObject, 1, obj);

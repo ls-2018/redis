@@ -54,10 +54,10 @@
 #    include <hiredis_ssl.h>
 #endif
 
-#include "adlist.h"
+#include "over-double_ended_linked_list.h"
 #include "over-dict.h"
 #include "over-zmalloc.h"
-#include "atomicvar.h"
+#include "over-atomicvar.h"
 #include "over-crc16_slottable.h"
 #include "hdr_histogram.h"
 #include "over-cli_common.h"

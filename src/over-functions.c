@@ -1,8 +1,8 @@
 #include "over-functions.h"
 #include "over-sds.h"
 #include "over-dict.h"
-#include "adlist.h"
-#include "atomicvar.h"
+#include "over-double_ended_linked_list.h"
+#include "over-atomicvar.h"
 
 typedef enum { restorePolicy_Flush, restorePolicy_Append, restorePolicy_Replace } restorePolicy;
 

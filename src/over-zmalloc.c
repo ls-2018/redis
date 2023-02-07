@@ -24,7 +24,7 @@ void zlibc_free(void *ptr) {
 #include <string.h>
 #include <pthread.h>
 #include "over-zmalloc.h"
-#include "atomicvar.h"
+#include "over-atomicvar.h"
 
 #ifdef HAVE_MALLOC_SIZE
 #    define PREFIX_SIZE (0)

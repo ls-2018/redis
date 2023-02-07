@@ -57,10 +57,10 @@
 #include <sdscompat.h> /* Use hiredis' sds compat header that maps sds calls to their hi_ variants */
 #include <over-sds.h>  /* use sds.h from hiredis, so that only one set of sds functions will be present in the binary */
 #include "over-dict.h"
-#include "adlist.h"
+#include "over-double_ended_linked_list.h"
 #include "over-zmalloc.h"
 #include "linenoise.h"
-#include "help.h" /* Used for backwards-compatibility with pre-7.0 servers that don't support COMMAND DOCS. */
+#include "over-redis-cli-help.h" /* Used for backwards-compatibility with pre-7.0 servers that don't support COMMAND DOCS. */
 #include "over-anet.h"
 #include "over-ae.h"
 #include "over-cli_common.h"

@@ -28,7 +28,7 @@
  */
 
 #include "over-server.h"
-#include "atomicvar.h"
+#include "over-atomicvar.h"
 #include "cluster.h"
 #include "script.h"
 #include <sys/socket.h>
