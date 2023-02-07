@@ -770,6 +770,7 @@ typedef struct RedisModuleDigest {
     } while (0)
 
 // 对象编码
+//set->[OBJ_ENCODING_INTSET,OBJ_ENCODING_HT]
 #define OBJ_ENCODING_RAW 0        // 大于 44 字节,redisObject 和 SDS 分开存储,需分配 2 次内存
 #define OBJ_ENCODING_INT 1        // 整数存储（小于 10000,使用共享对象池存储,但有个前提：Redis 没有设置淘汰策略,详见 object.c 的 tryObjectEncoding 函数）
 #define OBJ_ENCODING_HT 2         // 字典

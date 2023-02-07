@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <limits.h>
+#include <unistd.h>
 #include "over-sds.h"
 #include "sdsalloc.h"
 

@@ -1,28 +1,3 @@
-/*
- * Redis 的后台 I/O 服务
- * bio 实现了将工作放在后台执行的功能.
- *
- * 目前在后台执行的只有 close(2) 操作：
- * 因为当服务器是某个文件的最后一个拥有者时,
- * 关闭一个文件代表 unlinking 它,
- * 并且删除文件非常慢,会阻塞系统,
- * 所以我们将 close(2) 放到后台进行.
- *
- * (译注：现在不止 close(2) ,连 AOF 文件的 fsync 也是放到后台执行的）
- *
- * 这个后台服务将来可能会增加更多功能,或者切换到 libeio 上面去.
- * 不过我们可能会长期使用这个文件,以便支持一些 Redis 所特有的后台操作.
- * 比如说,将来我们可能需要一个非阻塞的 FLUSHDB 或者 FLUSHALL 也说不定.
- *
- * 设计很简单：
- * 用一个结构表示要执行的工作,而每个类型的工作有一个队列和线程,
- * 每个线程都顺序地执行队列中的工作.
- *
- * 同一类型的工作按 FIFO 的顺序执行.
- *
- * 目前还没有办法在任务完成时通知执行者,在有需要的时候,会实现这个功能.
- */
-
 #include "over-server.h"
 #include "bio.h"
 // 保存线程描述符的数组
@@ -39,15 +14,13 @@ static unsigned long long bio_pending[BIO_NUM_OPS];
 
 // 表示后台任务的数据结构
 struct bio_job {
-    int fd;                /* Fd for file based background jobs */
+    int fd;                // 用于基于文件的后台job
     lazy_free_fn *free_fn; // 每种后台线程对应的处理函数
     void *free_args[];     // 任务的参数
 };
 
 void *bioProcessBackgroundJobs(void *arg);
 
-/* Make sure we have enough stack to perform all the things we do in the
- * main thread. */
 // 子线程栈大小
 #define REDIS_THREAD_STACK_SIZE (1024 * 1024 * 4)
 
@@ -165,14 +138,13 @@ void *bioProcessBackgroundJobs(void *arg) {
     redisSetCpuAffinity(server.bio_cpulist);
 
     makeThreadKillable();
-
+    // 异步删除， bio正跑着，unlink无法获得锁提交job
     pthread_mutex_lock(&bio_mutex[type]);
-    /* Block SIGALRM so we are sure that only the main thread will
-     * receive the watchdog signal. */
+    /* 阻塞SIGALRM，以确保只有主线程将接收看门狗信号。 */
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGALRM);
     if (pthread_sigmask(SIG_BLOCK, &sigset, NULL))
-        serverLog(LL_WARNING, "Warning: can't mask SIGALRM in bio.c thread: %s", strerror(errno));
+        serverLog(LL_WARNING, "在bio.c线程中不能屏蔽SIGALRM: %s", strerror(errno));
 
     while (1) {
         listNode *ln;
@@ -185,19 +157,14 @@ void *bioProcessBackgroundJobs(void *arg) {
         // 从任务队列中获取任务
         ln = listFirst(bio_jobs[type]);
         job = ln->value;
-        /* It is now possible to unlock the background system as we know have
-         * a stand alone job structure to process.*/
+        /* 现在可以解锁后台系统，因为我们知道有一个独立的作业结构来处理。*/
         pthread_mutex_unlock(&bio_mutex[type]);
 
-        /* Process the job accordingly to its type. */
         // 执行任务
         if (type == BIO_CLOSE_FILE) {
             close(job->fd);
         }
         else if (type == BIO_AOF_FSYNC) {
-            /* The fd may be closed by main thread and reused for another
-             * socket, pipe, or file. We just ignore these errno because
-             * aof fsync did not really fail. */
             // 如果是AOF同步写任务,那就调用redis_fsync函数
             if (redis_fsync(job->fd) == -1 && errno != EBADF && errno != EINVAL) {
                 int last_status;
@@ -205,7 +172,7 @@ void *bioProcessBackgroundJobs(void *arg) {
                 atomicSet(server.aof_bio_fsync_status, C_ERR);
                 atomicSet(server.aof_bio_fsync_errno, errno);
                 if (last_status == C_OK) {
-                    serverLog(LL_WARNING, "Fail to fsync the AOF file: %s", strerror(errno));
+                    serverLog(LL_WARNING, "文件刷盘失败: %s", strerror(errno));
                 }
             }
             else {
@@ -213,19 +180,22 @@ void *bioProcessBackgroundJobs(void *arg) {
             }
         }
         else if (type == BIO_LAZY_FREE) {
-            // lazyfreeFreeObjectFromBioThread
-            // lazyfreeFreeDatabaseFromBioThread
-            // lazyfreeFreeSlotsMapFromBioThread
+            printf("sleep 1 \r\n");
+            // lazyfreeFreeObject
+            // lazyfreeFreeDatabase
+            // lazyFreeTrackingTable
+            // lazyFreeLuaScripts
+            // lazyFreeFunctionsCtx
+            // lazyFreeReplicationBacklogRefMem
             // 如果是惰性删除任务,调用不同的惰性删除函数执行
             job->free_fn(job->free_args);
         }
         else {
-            serverPanic("Wrong job type in bioProcessBackgroundJobs().");
+            serverPanic("错误的job类型 in bioProcessBackgroundJobs().");
         }
         zfree(job);
 
-        /* Lock again before reiterating the loop, if there are no longer
-         * jobs to process we'll block again in pthread_cond_wait(). */
+        /* Lock again before reiterating the loop, if there are no longer jobs to process we'll block again in pthread_cond_wait(). */
         pthread_mutex_lock(&bio_mutex[type]);
         // 任务执行完成后,调用listDelNode在任务队列中删除该任务
         listDelNode(bio_jobs[type], ln);
@@ -237,7 +207,6 @@ void *bioProcessBackgroundJobs(void *arg) {
     }
 }
 
-/* Return the number of pending jobs of the specified type. */
 // 返回等待中的 type 类型的工作的数量
 unsigned long long bioPendingJobsOfType(int type) {
     unsigned long long val;
