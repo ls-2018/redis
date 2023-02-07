@@ -31,7 +31,7 @@
 #include "over-geo.h"
 #include "geohash_helper.h"
 #include "debugmacro.h"
-#include "pqsort.h"
+#include "over-pqsort.h"
 
 /* Things exported from t_zset.c only for geo.c, since it is the only other
  * part of Redis that requires close zset introspection. */

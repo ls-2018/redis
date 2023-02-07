@@ -41,7 +41,7 @@ set(SRC_SERVER_TMP
         src/over-geo.c
         src/lolwut.c
         src/over-lazyfree.c
-        src/rand.c
+        src/over-rand.c
         src/object.c
         src/over-functions.c
         src/lolwut6.c
@@ -57,7 +57,7 @@ set(SRC_SERVER_TMP
         src/tracking.c
         src/timeout.c
         src/networking.c
-        src/pqsort.c
+        src/over-pqsort.c
         src/over-sort.c
         src/over-anet.c
         src/module.c

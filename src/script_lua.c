@@ -31,7 +31,7 @@
 
 #include "over-server.h"
 #include "over-sha1.h"
-#include "rand.h"
+#include "over-rand.h"
 #include "cluster.h"
 #include "over-monotonic.h"
 #include "resp_parser.h"
