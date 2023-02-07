@@ -40,7 +40,7 @@
 #    include <stropts.h>
 #endif
 
-#include "config.h"
+#include "over-config.h"
 
 #if (ULONG_MAX == 4294967295UL)
 #    define MEMTEST_32BIT

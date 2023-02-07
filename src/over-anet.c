@@ -47,7 +47,7 @@
 #include <stdio.h>
 
 #include "over-anet.h"
-#include "config.h"
+#include "over-config.h"
 #include "over-server.h"
 
 // 打印错误信息

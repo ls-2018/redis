@@ -14,7 +14,7 @@
 #include <errno.h>
 
 #include "over-zmalloc.h"
-#include "config.h"
+#include "over-config.h"
 
 // 包括本系统支持的最佳多路复用层。以下按性能顺序，降序排列。
 #ifdef HAVE_EVPORT

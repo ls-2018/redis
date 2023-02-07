@@ -32,7 +32,7 @@
 #include <string.h> /* for memcpy */
 #include "quicklist.h"
 #include "over-zmalloc.h"
-#include "config.h"
+#include "over-config.h"
 #include "listpack.h"
 #include "over-util.h" /* for ll2string */
 #include "over-lzf.h"

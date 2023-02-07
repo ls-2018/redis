@@ -4,7 +4,7 @@
 #include "atomicvar.h"
 #include "latency.h"
 #include "script.h"
-#include "functions.h"
+#include "over-functions.h"
 
 #include <signal.h>
 #include <ctype.h>

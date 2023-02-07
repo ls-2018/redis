@@ -2,7 +2,7 @@
 #define __REDIS_H
 
 #include "over-fmacros.h"
-#include "config.h"
+#include "over-config.h"
 #include "solarisfixes.h"
 #include "rio.h"
 #include "atomicvar.h"

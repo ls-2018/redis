@@ -40,10 +40,10 @@ set(SRC_SERVER_TMP
         src/over-lzf_d.c
         src/over-geo.c
         src/lolwut.c
-        src/lazyfree.c
+        src/over-lazyfree.c
         src/rand.c
         src/object.c
-        src/functions.c
+        src/over-functions.c
         src/lolwut6.c
         src/over-util.c
         src/memtest.c
@@ -85,7 +85,7 @@ set(SRC_SERVER_TMP
         src/over-ae.c
         src/blocked.c
         src/t_string.c
-        src/config.c
+        src/over-config.c
         src/over-endianconv.c
         src/over-crc16.c
         src/setcpuaffinity.c

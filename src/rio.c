@@ -19,7 +19,7 @@
 #include "rio.h"
 #include "over-util.h"
 #include "over-crc64.h"
-#include "config.h"
+#include "over-config.h"
 #include "over-server.h"
 
 /* ------------------------- Buffer I/O implementation ----------------------- */

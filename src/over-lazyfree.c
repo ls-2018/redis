@@ -1,13 +1,11 @@
 #include "over-server.h"
 #include "over-bio.h"
 #include "atomicvar.h"
-#include "functions.h"
+#include "over-functions.h"
 
 static redisAtomic size_t lazyfree_objects = 0;
 static redisAtomic size_t lazyfreed_objects = 0;
 
-/* Release objects from the lazyfree thread. It's just decrRefCount()
- * updating the count of objects to release. */
 void lazyfreeFreeObject(void *args[]) {
     robj *o = (robj *)args[0];
     decrRefCount(o);
@@ -15,9 +13,6 @@ void lazyfreeFreeObject(void *args[]) {
     atomicIncr(lazyfreed_objects, 1);
 }
 
-/* Release a database from the lazyfree thread. The 'db' pointer is the
- * database which was substituted with a fresh one in the main thread
- * when the database was logically deleted. */
 void lazyfreeFreeDatabase(void *args[]) {
     dict *ht1 = (dict *)args[0];
     dict *ht2 = (dict *)args[1];
@@ -29,7 +24,6 @@ void lazyfreeFreeDatabase(void *args[]) {
     atomicIncr(lazyfreed_objects, numkeys);
 }
 
-/* Release the key tracking table. */
 void lazyFreeTrackingTable(void *args[]) {
     rax *rt = args[0];
     size_t len = rt->numele;
@@ -38,7 +32,6 @@ void lazyFreeTrackingTable(void *args[]) {
     atomicIncr(lazyfreed_objects, len);
 }
 
-/* Release the lua_scripts dict. */
 void lazyFreeLuaScripts(void *args[]) {
     dict *lua_scripts = args[0];
     long long len = dictSize(lua_scripts);
@@ -47,7 +40,6 @@ void lazyFreeLuaScripts(void *args[]) {
     atomicIncr(lazyfreed_objects, len);
 }
 
-/* Release the functions ctx. */
 void lazyFreeFunctionsCtx(void *args[]) {
     functionsLibCtx *functions_lib_ctx = args[0];
     size_t len = functionsLibCtxfunctionsLen(functions_lib_ctx);
@@ -56,7 +48,6 @@ void lazyFreeFunctionsCtx(void *args[]) {
     atomicIncr(lazyfreed_objects, len);
 }
 
-/* Release replication backlog referencing memory. */
 void lazyFreeReplicationBacklogRefMem(void *args[]) {
     list *blocks = args[0];
     rax *index = args[1];
@@ -181,10 +172,6 @@ size_t lazyfreeGetFreeEffort(robj *key, robj *obj, int dbid) {
 /* 释放一个对象，如果对象足够大，以异步方式释放它。 */
 void freeObjAsync(robj *key, robj *obj, int dbid) {
     size_t free_effort = lazyfreeGetFreeEffort(key, obj, dbid);// 判断释放的开销
-    /* Note that if the object is shared, to reclaim it now it is not
-     * possible. This rarely happens, however sometimes the implementation
-     * of parts of the Redis core may call incrRefCount() to protect
-     * objects, and then call dbDelete(). */
     // 如果要淘汰的键值对包含超过64个元素
 
     // 其实异步方法与同步方法的差别在这，即要求 删除的元素影响须大于某阀值(64)

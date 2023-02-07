@@ -1,6 +1,6 @@
 // https://zhuanlan.zhihu.com/p/259544853
 #include "over-fmacros.h"
-#include "config.h"
+#include "over-config.h"
 #include "solarisfixes.h"
 
 #include <stdio.h>

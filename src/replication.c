@@ -3,7 +3,7 @@
 #include "over-server.h"
 #include "cluster.h"
 #include "over-bio.h"
-#include "functions.h"
+#include "over-functions.h"
 
 #include <memory.h>
 #include <sys/time.h>

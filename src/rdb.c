@@ -32,7 +32,7 @@
 #include "zipmap.h"
 #include "over-endianconv.h"
 #include "stream.h"
-#include "functions.h"
+#include "over-functions.h"
 
 #include <math.h>
 #include <fcntl.h>

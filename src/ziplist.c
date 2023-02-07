@@ -135,7 +135,7 @@ address                                |                          |        |
 #include "over-zmalloc.h"
 #include "over-util.h"
 #include "ziplist.h"
-#include "config.h"
+#include "over-config.h"
 #include "over-endianconv.h"
 #include "redisassert.h"
 

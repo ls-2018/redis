@@ -39,7 +39,7 @@
  * Uses script_lua.c to run the Lua code.
  */
 
-#include "functions.h"
+#include "over-functions.h"
 #include "script_lua.h"
 #include <lua.h>
 #include <lauxlib.h>

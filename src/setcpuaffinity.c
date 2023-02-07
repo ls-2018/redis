@@ -47,7 +47,7 @@
 #include <sched.h>
 #endif
 
-#include "config.h"
+#include "over-config.h"
 
 #ifdef USE_SETCPUAFFINITY
 static const char *next_token(const char *q, int sep) {

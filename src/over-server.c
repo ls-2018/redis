@@ -11,7 +11,7 @@
 #include "latency.h"
 #include "atomicvar.h"
 #include "over-mt19937-64.h"
-#include "functions.h"
+#include "over-functions.h"
 
 #include <time.h>
 #include <signal.h>

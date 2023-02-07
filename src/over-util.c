@@ -46,7 +46,7 @@
 
 #include "over-util.h"
 #include "over-sha256.h"
-#include "config.h"
+#include "over-config.h"
 
 /* Glob-style pattern matching. */
 int stringmatchlen(const char *pattern, int patternLen, const char *string, int stringLen, int nocase) {
