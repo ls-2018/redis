@@ -1,6 +1,5 @@
 #include "over-server.h"
 
-/* Dictionary type for latency events. */
 int dictStringKeyCompare(dict *d, const void *key1, const void *key2) {
     UNUSED(d);
     return strcmp(key1, key2) == 0;
@@ -230,15 +229,13 @@ sds createLatencyReport(void) {
     int advise_disable_thp = 0;        /* AnonHugePages detected. */
     int advices = 0;
 
-    /* Return ASAP if the latency engine is disabled and it looks like it
-     * was never enabled so far. */
     if (dictSize(server.latency_events) == 0 && server.latency_monitor_threshold == 0) {
-        report = sdscat(report, "I'm sorry, Dave, I can't do that. Latency monitoring is disabled in this Redis instance. You may use \"CONFIG SET latency-monitor-threshold <milliseconds>.\" in order to enable it. If we weren't in a deep space mission I'd suggest to take a look at https://redis.io/topics/latency-monitor.\n");
+        report = sdscat(report, "对不起，戴夫，我做不到。在这个Redis实例中，延迟监控是禁用的.\n"
+                        "你可以使用 \"CONFIG SET latency-monitor-threshold <milliseconds>. 启用");
         return report;
     }
 
-    /* Show all the events stats and add for each event some event-related
-     * comment depending on the values. */
+    /*显示所有事件统计信息，并根据值为每个事件添加一些与事件相关的评论。 */
     dictIterator *di;
     dictEntry *de;
     int eventnum = 0;
@@ -662,7 +659,6 @@ void latencyCommand(client *c) {
     struct latencyTimeSeries *ts;
 
     if (!strcasecmp(c->argv[1]->ptr, "history") && c->argc == 3) {
-        /* LATENCY HISTORY <event> */
         ts = dictFetchValue(server.latency_events, c->argv[2]->ptr);
         if (ts == NULL) {
             addReplyArrayLen(c, 0);
@@ -749,5 +745,5 @@ void latencyCommand(client *c) {
 nodataerr:
     /* Common error when the user asks for an event we have no latency
      * information about. */
-    addReplyErrorFormat(c, "No samples available for event '%s'", (char *)c->argv[2]->ptr);
+    addReplyErrorFormat(c, "没有样本数据 '%s'", (char *)c->argv[2]->ptr);
 }

@@ -39,12 +39,12 @@ set(SRC_SERVER_TMP
         src/eval.c
         src/over-lzf_d.c
         src/over-geo.c
-        src/lolwut.c
+        src/over-lolwut.c
         src/over-lazyfree.c
         src/over-rand.c
         src/object.c
         src/over-functions.c
-        src/lolwut6.c
+        src/over-lolwut6.c
         src/over-util.c
         src/memtest.c
         src/replication.c
@@ -66,7 +66,7 @@ set(SRC_SERVER_TMP
         src/over-sha1.c
         src/t_set.c
         src/childinfo.c
-        src/lolwut5.c
+        src/over-lolwut5.c
         src/over-call_reply.c
         src/redis-check-aof.c
         src/over-localtime.c
