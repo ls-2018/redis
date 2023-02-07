@@ -34,8 +34,8 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "release.h"
-#include "version.h"
+#include "over-release.h"
+#include "over-version.h"
 #include "over-crc64.h"
 
 char *redisGitSHA1(void) {

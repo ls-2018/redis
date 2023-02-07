@@ -1,4 +1,4 @@
-#include "lzfP.h"
+#include "over-lzfP.h"
 
 #if AVOID_ERRNO
 #    define SET_ERRNO(n)

@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "../src/over-crc64.h"
-#include "../src/sha1.h"
+#include "../src/over-sha1.h"
 
 #define TABLE_SIZE (1 << 24)
 int Table[TABLE_SIZE];

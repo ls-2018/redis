@@ -53,7 +53,7 @@
    email: m-mat @ math.sci.hiroshima-u.ac.jp (remove spaces)
 */
 
-#include "mt19937-64.h"
+#include "over-mt19937-64.h"
 #include <stdio.h>
 
 #define NN 312

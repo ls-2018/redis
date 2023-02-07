@@ -17,7 +17,7 @@ redis-server
 doc-tools
 release
 misc/*
-src/release.h
+src/over-release.h
 appendonly.aof*
 appendonlydir
 SHORT_TERM_TODO

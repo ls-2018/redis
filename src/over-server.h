@@ -43,8 +43,8 @@ typedef long long ustime_t; // 微秒
 #include "over-anet.h"    /* Networking the easy way */
 #include "ziplist.h"      /* Compact list data structure */
 #include "intset.h"       /* Compact integer set structure */
-#include "version.h"      /* Version macro */
-#include "util.h"         /* Misc functions useful in many places */
+#include "over-version.h" /* Version macro */
+#include "over-util.h"    /* Misc functions useful in many places */
 #include "latency.h"      /* Latency monitor API */
 #include "sparkline.h"    /* ASCII graphs API */
 #include "quicklist.h"    /* Lists are encoded as linked lists of N-elements flat arrays */
@@ -54,7 +54,7 @@ typedef long long ustime_t; // 微秒
 #define REDISMODULE_CORE 1
 #include "redismodule.h"
 #include "zipmap.h"
-#include "sha1.h"
+#include "over-sha1.h"
 #include "over-endianconv.h"
 #include "over-crc64.h"
 

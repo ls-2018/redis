@@ -28,7 +28,7 @@
  */
 
 #include "over-server.h"
-#include "lzf.h" /* LZF compression library */
+#include "over-lzf.h" /* LZF compression library */
 #include "zipmap.h"
 #include "over-endianconv.h"
 #include "stream.h"

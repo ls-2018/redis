@@ -11,7 +11,7 @@
 ***********************************************************************/
 
 #define LZF_VERSION 0x0105 /* 1.5, API version */
-
+// https://blog.csdn.net/yitouhan/article/details/108035859
 /*
  * Compress in_len bytes stored at the memory block starting at
  * in_data and write the result to out_data, up to a maximum length

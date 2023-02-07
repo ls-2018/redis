@@ -30,12 +30,12 @@
 #include "script_lua.h"
 
 #include "over-server.h"
-#include "sha1.h"
+#include "over-sha1.h"
 #include "rand.h"
 #include "cluster.h"
 #include "over-monotonic.h"
 #include "resp_parser.h"
-#include "version.h"
+#include "over-version.h"
 #include <lauxlib.h>
 #include <lualib.h>
 #include <ctype.h>

@@ -8,7 +8,7 @@
 #include "listpack.h"
 #include "listpack_malloc.h"
 #include "redisassert.h"
-#include "util.h"
+#include "over-util.h"
 
 #define LP_HDR_SIZE 6 // 其中 4 个字节是记录 listpack 的总字节数, 2 个字节是记录 listpack 的元素数量.
 #define LP_HDR_NUMELE_UNKNOWN UINT16_MAX

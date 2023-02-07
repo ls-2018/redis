@@ -133,7 +133,7 @@ address                                |                          |        |
 #include <stdint.h>
 #include <limits.h>
 #include "over-zmalloc.h"
-#include "util.h"
+#include "over-util.h"
 #include "ziplist.h"
 #include "config.h"
 #include "over-endianconv.h"

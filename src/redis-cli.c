@@ -29,7 +29,7 @@
  */
 
 #include "over-fmacros.h"
-#include "version.h"
+#include "over-version.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -64,7 +64,7 @@
 #include "over-anet.h"
 #include "over-ae.h"
 #include "over-cli_common.h"
-#include "mt19937-64.h"
+#include "over-mt19937-64.h"
 
 #define UNUSED(V) ((void)V)
 

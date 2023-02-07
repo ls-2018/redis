@@ -37,7 +37,7 @@ set(SRC_SERVER_TMP
         src/hyperloglog.c
         src/adlist.c
         src/eval.c
-        src/lzf_d.c
+        src/over-lzf_d.c
         src/over-geo.c
         src/lolwut.c
         src/lazyfree.c
@@ -45,7 +45,7 @@ set(SRC_SERVER_TMP
         src/object.c
         src/functions.c
         src/lolwut6.c
-        src/util.c
+        src/over-util.c
         src/memtest.c
         src/replication.c
         src/redis-check-rdb.c
@@ -58,12 +58,12 @@ set(SRC_SERVER_TMP
         src/timeout.c
         src/networking.c
         src/pqsort.c
-        src/sort.c
+        src/over-sort.c
         src/over-anet.c
         src/module.c
         src/setproctitle.c
-        src/lzf_c.c
-        src/sha1.c
+        src/over-lzf_c.c
+        src/over-sha1.c
         src/t_set.c
         src/childinfo.c
         src/lolwut5.c
@@ -100,10 +100,10 @@ set(SRC_SERVER_TMP
         src/siphash.c
         src/over-crc64.c
         src/resp_parser.c
-        src/mt19937-64.c
+        src/over-mt19937-64.c
         src/over-zmalloc.c
         src/zipmap.c
-        src/syncio.c
+        src/over-syncio.c
         src/db.c
         src/t_zset.c
         src/notify.c
@@ -112,7 +112,7 @@ set(SRC_SERVER_TMP
         src/script_lua.c
         src/latency.c
         src/rax.c
-        src/release.c
+        src/over-release.c
         src/commands.c
         src/expire.c
         src/pubsub.c
@@ -126,7 +126,7 @@ set(SRC_CLI
         src/adlist.c
         src/redis-cli.c
         src/over-zmalloc.c
-        src/release.c
+        src/over-release.c
         src/over-ae.c
         src/over-crc64.c
         src/over-crc16.c

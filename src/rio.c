@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "rio.h"
-#include "util.h"
+#include "over-util.h"
 #include "over-crc64.h"
 #include "config.h"
 #include "over-server.h"

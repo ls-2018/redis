@@ -34,8 +34,8 @@
 #include "over-zmalloc.h"
 #include "config.h"
 #include "listpack.h"
-#include "util.h" /* for ll2string */
-#include "lzf.h"
+#include "over-util.h" /* for ll2string */
+#include "over-lzf.h"
 #include "redisassert.h"
 
 #ifndef REDIS_STATIC
