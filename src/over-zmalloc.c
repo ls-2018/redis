@@ -639,9 +639,7 @@ size_t zmalloc_get_smap_bytes_by_field(char *field, long pid) {
 }
 #else
 
-/* Get sum of the specified field from libproc api call.
- * As there are per page value basis we need to convert
- * them accordingly.
+/* 从libproc api调用中获取指定字段的和。由于有每页的价值基础，我们需要相应地转换他们。
  *
  * Note that AnonHugePages is a no-op as THP feature
  * is not supported in this platform
@@ -672,7 +670,7 @@ size_t zmalloc_get_smap_bytes_by_field(char *field, long pid) {
 
 #endif
 
-/* Return the total number bytes in pages marked as Private Dirty.
+/* 返回标记为Private Dirty的页中的总字节数.
  *
  * Note: depending on the platform and memory footprint of the process, this
  * call can be slow, exceeding 1000ms!

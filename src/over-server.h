@@ -45,7 +45,7 @@ typedef long long ustime_t; // 微秒
 #include "intset.h"          /* Compact integer set structure */
 #include "over-version.h"    /* Version macro */
 #include "over-util.h"       /* Misc functions useful in many places */
-#include "latency.h"         /* Latency monitor API */
+#include "over-latency.h"    /* Latency monitor API */
 #include "sparkline.h"       /* ASCII graphs API */
 #include "quicklist.h"       /* Lists are encoded as linked lists of N-elements flat arrays */
 #include "rax.h"             /* Radix tree */
@@ -1692,7 +1692,7 @@ struct redisServer {
                                     * value means fractions of microseconds (on average). */
 
     // 共享管道，用于子进程往父进程写数据
-    int child_info_pipe[2]; // 用于写入child_info_data的管道。  -1 表示没启动
+    int child_info_pipe[2]; // 用于写入child_info_data的管道。  -1 表示没启动  [父<-子,子->父]
     int child_info_nread;   // 最后一次从管道读取的字节数
     // 在AOF/repl 中传播命令
     redisOpArray also_propagate; // 额外的命令要传播

@@ -2418,9 +2418,7 @@ int rewriteAppendOnlyFileRio(rio *aof) {
                     goto werr;
             }
 
-            /* Update info every 1 second (approximately).
-             * in order to avoid calling mstime() on each iteration, we will
-             * check the diff every 1024 keys */
+            /* 大约每1秒更新一次信息。为了避免每次迭代都调用mstime()，我们将每1024个键检查一次差异 */
             if ((key_count++ & 1023) == 0) {
                 long long now = mstime();
                 if (now - updated_time >= 1000) {

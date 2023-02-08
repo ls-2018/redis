@@ -1,6 +1,6 @@
 #include "over-server.h"
 #include "slowlog.h"
-#include "latency.h"
+#include "over-latency.h"
 #include "over-monotonic.h"
 
 void serveClientBlockedOnList(client *receiver, robj *o, robj *key, robj *dstkey, redisDb *db, int wherefrom, int whereto, int *deleted);

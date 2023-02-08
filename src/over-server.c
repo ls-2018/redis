@@ -8,7 +8,7 @@
 #include "cluster.h"
 #include "slowlog.h"
 #include "over-bio.h"
-#include "latency.h"
+#include "over-latency.h"
 #include "over-atomicvar.h"
 #include "over-mt19937-64.h"
 #include "over-functions.h"

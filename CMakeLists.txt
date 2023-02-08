@@ -31,7 +31,7 @@ add_subdirectory(deps)
 add_subdirectory(src/modules)
 set(SRC_SERVER_TMP
         src/over-dict.c
-        src/geohash_helper.c
+        src/over-geohash_helper.c
         src/over-sds.c
         src/over-crcspeed.c
         src/hyperloglog.c
@@ -42,11 +42,11 @@ set(SRC_SERVER_TMP
         src/over-lolwut.c
         src/over-lazyfree.c
         src/over-rand.c
-        src/object.c
+        src/over-object.c
         src/over-functions.c
         src/over-lolwut6.c
         src/over-util.c
-        src/memtest.c
+        src/over-memtest.c
         src/replication.c
         src/redis-check-rdb.c
         src/sparkline.c
@@ -65,7 +65,7 @@ set(SRC_SERVER_TMP
         src/over-lzf_c.c
         src/over-sha1.c
         src/t_set.c
-        src/childinfo.c
+        src/over-childinfo.c
         src/over-lolwut5.c
         src/over-call_reply.c
         src/redis-check-aof.c
@@ -74,13 +74,13 @@ set(SRC_SERVER_TMP
         src/slowlog.c
         src/listpack.c
         src/multi.c
-        src/debug.c
+        src/over-debug.c
         src/over-cli_common.c
         src/t_list.c
         src/rio.c
         src/cluster.c
         src/over-connection.c
-        src/function_lua.c
+        src/over-function_lua.c
         src/over-bio.c
         src/over-ae.c
         src/blocked.c
@@ -110,11 +110,11 @@ set(SRC_SERVER_TMP
         src/t_hash.c
         src/over-evict.c
         src/script_lua.c
-        src/latency.c
+        src/over-latency.c
         src/rax.c
         src/over-release.c
         src/commands.c
-        src/expire.c
+        src/over-expire.c
         src/pubsub.c
         src/over-monotonic.c
         src/quicklist.c

@@ -39,7 +39,7 @@
 #include <signal.h>
 #include <dlfcn.h>
 #ifdef __CYGWIN__
-#    include "win_dlfcn.h"
+#    include "over-win_dlfcn.h"
 #else
 #    include <dlfcn.h>
 #endif

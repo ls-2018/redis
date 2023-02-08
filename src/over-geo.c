@@ -29,8 +29,8 @@
  */
 
 #include "over-geo.h"
-#include "geohash_helper.h"
-#include "debugmacro.h"
+#include "over-geohash_helper.h"
+#include "over-debugmacro.h"
 #include "over-pqsort.h"
 
 /* Things exported from t_zset.c only for geo.c, since it is the only other

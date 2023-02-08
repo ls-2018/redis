@@ -2,7 +2,7 @@
 #include "over-server.h"
 #include "cluster.h"
 #include "over-atomicvar.h"
-#include "latency.h"
+#include "over-latency.h"
 #include "script.h"
 #include "over-functions.h"
 

@@ -3,8 +3,8 @@
 #include <fcntl.h>
 
 typedef struct {
-    size_t keys;
-    size_t cow;
+    size_t keys; //操作了多少key
+    size_t cow;// 写时复制 产生的脏页数据
     monotime cow_updated;
     double progress;
     childInfoType information_type; // 子进程类型
@@ -55,7 +55,7 @@ void sendChildInfoGeneric(childInfoType info_type, size_t keys, double progress,
 
     monotime now = getMonotonicUs();
     if (info_type != CHILD_INFO_TYPE_CURRENT_INFO || !cow_updated || now - cow_updated > cow_update_cost * CHILD_COW_DUTY_CYCLE) {
-        cow = zmalloc_get_private_dirty(-1);
+        cow = zmalloc_get_private_dirty(-1);// 返回标记为Private Dirty的页中的总字节数
         cow_updated = getMonotonicUs();
         cow_update_cost = cow_updated - now;
         if (cow > peak_cow)
@@ -63,7 +63,7 @@ void sendChildInfoGeneric(childInfoType info_type, size_t keys, double progress,
         sum_cow += cow;
         update_count++;
 
-        int cow_info = (info_type != CHILD_INFO_TYPE_CURRENT_INFO);
+        int cow_info = (info_type != CHILD_INFO_TYPE_CURRENT_INFO);// 写时复制信息
         if (cow || cow_info) {
             serverLog(cow_info ? LL_NOTICE : LL_VERBOSE, "Fork CoW for %s: current %zu MB, peak %zu MB, average %llu MB", pname, cow >> 20, peak_cow >> 20, (sum_cow / update_count) >> 20);
         }

@@ -33,17 +33,6 @@ robj *createObject(int type, void *ptr) {
     return o;
 }
 
-/* Set a special refcount in the object to make it "shared":
- * incrRefCount and decrRefCount() will test for this special refcount
- * and will not touch the object. This way it is free to access shared
- * objects such as small integers from different threads without any
- * mutex.
- *
- * A common patter to create shared objects:
- *
- * robj *myobject = makeObjectShared(createObject(...));
- *
- */
 robj *makeObjectShared(robj *o) {
     serverAssert(o->refcount == 1);
     o->refcount = OBJ_SHARED_REFCOUNT;
@@ -530,19 +519,15 @@ void dismissStreamObject(robj *o, size_t size_hint) {
     }
 }
 
-/* When creating a snapshot in a fork child process, the main process and child
- * process share the same physical memory pages, and if / when the parent
- * modifies any keys due to write traffic, it'll cause CoW which consume
- * physical memory. In the child process, after serializing the key and value,
- * the data is definitely not accessed again, so to avoid unnecessary CoW, we
- * try to release their memory back to OS. see dismissMemory().
+/*
+ * 在fork子进程中创建快照时，主进程和子进程共享相同的物理内存页，如果/当父进程由于写流量而修改了任何键，
+ * 就会导致CoW，从而消耗物理内存。在子进程中，在序列化键和值之后，数据肯定不会再被访问，因此为了避免不必要的CoW，
+ * 我们尝试将它们的内存释放回操作系统。看到dismissMemory()。
  *
- * Because of the cost of iterating all node/field/member/entry of complex data
- * types, we iterate and dismiss them only when approximate average we estimate
- * the size of an individual allocation is more than a page size of OS.
- * 'size_hint' is the size of serialized value. This method is not accurate, but
- * it can reduce unnecessary iteration for complex data types that are probably
- * not going to release any memory. */
+ * 由于迭代复杂数据类型的所有节点/字段/成员/条目的成本很高，因此只有当我们估计单个分配的大约平均大小超过操作系统的页面大小时，我们才迭代并丢弃它们。
+ * 'size_hint'是序列化值的大小。这种方法并不准确，但对于可能不会释放任何内存的复杂数据类型，它可以减少不必要的迭代。
+ *
+ * */
 void dismissObject(robj *o, size_t size_hint) {
     /* madvise(MADV_DONTNEED) may not work if Transparent Huge Pages is enabled. */
     if (server.thp_enabled)
