@@ -1147,7 +1147,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     // 如果 BGSAVE 和 BGREWRITEAOF 都没有在执行
     // 并且有一个 BGREWRITEAOF 在等待,那么执行 BGREWRITEAOF
     if (!hasActiveChildProcess() && server.aof_rewrite_scheduled && !aofRewriteLimited()) {
-        rewriteAppendOnlyFileBackground();
+        rewriteAppendOnlyFileBackground(); // serverCron
     }
 
     // 检查 BGSAVE 或者 BGREWRITEAOF 是否已经执行完毕
@@ -1177,7 +1177,6 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
                 break;
             }
         }
-
         // 如果AOF功能启用、没有RDB子进程和AOF重写子进程在执行、AOF文件大小比例设定了阈值,
         // 以及AOF文件大小绝对值超出了阈值,那么,进一步判断AOF文件大小比例是否超出阈值
         if (server.aof_state == AOF_ON &&                         //
@@ -1195,7 +1194,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
                 !aofRewriteLimited()                 // AOF 文件大小绝对值没有超出阈值
             ) {
                 serverLog(LL_NOTICE, "开始自动重写aof %lld%% growth", growth);
-                rewriteAppendOnlyFileBackground();
+                rewriteAppendOnlyFileBackground(); // serverCron
             }
         }
     }
@@ -2770,7 +2769,7 @@ static void propagateNow(int dbid, robj **argv, int argc, int target) {
     // 传播到 AOF
 
     if (server.aof_state != AOF_OFF && target & PROPAGATE_AOF)
-        feedAppendOnlyFile(dbid, argv, argc);
+        feedAppendOnlyFile(dbid, argv, argc);// 记录AOF日志
     // 传播到 slave
     if (target & PROPAGATE_REPL)
         replicationFeedSlaves(server.slaves, dbid, argv, argc);
