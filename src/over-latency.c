@@ -230,8 +230,10 @@ sds createLatencyReport(void) {
     int advices = 0;
 
     if (dictSize(server.latency_events) == 0 && server.latency_monitor_threshold == 0) {
-        report = sdscat(report, "对不起，戴夫，我做不到。在这个Redis实例中，延迟监控是禁用的.\n"
-                        "你可以使用 \"CONFIG SET latency-monitor-threshold <milliseconds>. 启用");
+        report = sdscat(
+            report,
+            "对不起，戴夫，我做不到。在这个Redis实例中，延迟监控是禁用的.\n"
+            "你可以使用 \"CONFIG SET latency-monitor-threshold <milliseconds>. 启用");
         return report;
     }
 

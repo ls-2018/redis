@@ -2769,7 +2769,7 @@ static void propagateNow(int dbid, robj **argv, int argc, int target) {
     // 传播到 AOF
 
     if (server.aof_state != AOF_OFF && target & PROPAGATE_AOF)
-        feedAppendOnlyFile(dbid, argv, argc);// 记录AOF日志
+        feedAppendOnlyFile(dbid, argv, argc); // 记录AOF日志
     // 传播到 slave
     if (target & PROPAGATE_REPL)
         replicationFeedSlaves(server.slaves, dbid, argv, argc);
