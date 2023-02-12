@@ -856,6 +856,7 @@ addACLLogEntry ACLSelectorCheckCmd
 - https://blog.csdn.net/weixin_40785301/article/details/122629052
 - https://blog.csdn.net/cristianoxm/article/details/106860233
 - https://blog.csdn.net/qq_45800640/article/details/119189270
+- https://blog.csdn.net/sinat_14840559/article/details/124433556
 
 PROPAGATE_AOF与PROPAGATE_REPL的区别
 
