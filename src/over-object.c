@@ -1594,28 +1594,34 @@ void memoryCommand(client *c) {
         struct redisMemOverhead *mh = getMemoryOverheadData();
 
         addReplyMapLen(c, 27 + mh->num_dbs);
-
+        addReplyBulkCString(c, "# Redis进程自启动以来消耗内存的峰值");
         addReplyBulkCString(c, "peak.allocated");
         addReplyLongLong(c, mh->peak_allocated);
 
+        addReplyBulkCString(c, "# Redis使用其分配器分配的总字节数，即当前的总内存使用量");
         addReplyBulkCString(c, "total.allocated");
         addReplyLongLong(c, mh->total_allocated);
 
+        addReplyBulkCString(c, "# Redis启动时消耗的初始内存量");
         addReplyBulkCString(c, "startup.allocated");
         addReplyLongLong(c, mh->startup_allocated);
 
+        addReplyBulkCString(c, "# 复制积压缓冲区的大小");
         addReplyBulkCString(c, "replication.backlog");
         addReplyLongLong(c, mh->repl_backlog);
 
+        addReplyBulkCString(c, "# 主从复制中所有从节点的读写缓冲区大小");
         addReplyBulkCString(c, "clients.slaves");
         addReplyLongLong(c, mh->clients_slaves);
 
+        addReplyBulkCString(c, "# 除从节点外，所有其他客户端的读写缓冲区大小");
         addReplyBulkCString(c, "clients.normal");
         addReplyLongLong(c, mh->clients_normal);
 
         addReplyBulkCString(c, "cluster.links");
         addReplyLongLong(c, mh->cluster_links);
 
+        addReplyBulkCString(c, "# AOF持久化使用的缓存和AOF重写时产生的缓存");
         addReplyBulkCString(c, "aof.buffer");
         addReplyLongLong(c, mh->aof_buffer);
 
@@ -1630,12 +1636,14 @@ void memoryCommand(client *c) {
             snprintf(dbname, sizeof(dbname), "db.%zd", mh->db[j].dbid);
             addReplyBulkCString(c, dbname);
             addReplyMapLen(c, 3);
-
+            addReplyBulkCString(c, "# 当前数据库的hash链表开销内存总和，即元数据内存。");
             addReplyBulkCString(c, "overhead.hashtable.main");
             addReplyLongLong(c, mh->db[j].overhead_ht_main);
 
+            addReplyBulkCString(c, "# 用于存储key的过期时间所消耗的内存");
             addReplyBulkCString(c, "overhead.hashtable.expires");
             addReplyLongLong(c, mh->db[j].overhead_ht_expires);
+
 
             addReplyBulkCString(c, "overhead.hashtable.slot-to-keys");
             addReplyLongLong(c, mh->db[j].overhead_ht_slot_to_keys);
@@ -1644,18 +1652,23 @@ void memoryCommand(client *c) {
         addReplyBulkCString(c, "overhead.total");
         addReplyLongLong(c, mh->overhead_total);
 
+        addReplyBulkCString(c, "# 当前Redis实例的key总数");
         addReplyBulkCString(c, "keys.count");
         addReplyLongLong(c, mh->total_keys);
 
+        addReplyBulkCString(c, "# 当前Redis实例每个key的平均大小，计算公式：(total.allocated-startup.allocated)/keys.count。");
         addReplyBulkCString(c, "keys.bytes-per-key");
         addReplyLongLong(c, mh->bytes_per_key);
 
+        addReplyBulkCString(c, "# 纯业务数据占用的内存大小");
         addReplyBulkCString(c, "dataset.bytes");
         addReplyLongLong(c, mh->dataset);
 
+        addReplyBulkCString(c, "# 纯业务数据占用的内存比例，计算公式：dataset.bytes*100/(total.allocated-startup.allocated)");
         addReplyBulkCString(c, "dataset.percentage");
         addReplyDouble(c, mh->dataset_perc);
 
+        addReplyBulkCString(c, "# 当前总内存与历史峰值的比例，计算公式：total.allocated*100/peak.allocated");
         addReplyBulkCString(c, "peak.percentage");
         addReplyDouble(c, mh->peak_perc);
 
@@ -1686,6 +1699,7 @@ void memoryCommand(client *c) {
         addReplyBulkCString(c, "rss-overhead.bytes");
         addReplyLongLong(c, mh->rss_extra_bytes);
 
+        addReplyBulkCString(c, "# 内存的碎片率");
         addReplyBulkCString(c, "fragmentation"); /* this is the total RSS overhead, including fragmentation */
         addReplyDouble(c, mh->total_frag);       /* it is kept here for backwards compatibility */
 
