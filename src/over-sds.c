@@ -214,11 +214,11 @@ void sdsclear(sds s) {
     s[0] = '\0';
 }
 
-// 扩大sds字符串末尾的空闲空间，以便调用者确保在调用此函数后可以覆盖字符串末尾后最多addlen字节，再加上一个字节用于nul项。
-// 如果已经有足够的空闲空间，这个函数不做任何操作就返回，如果没有足够的空闲空间，它会分配缺少的部分，甚至更多:
-// 当greedy为1时，放大超过所需，以避免未来对增量增长的重新分配。
-// 当greedy为0时，放大到足够大，以便为'addlen'留出自由空间。
-// 注意:这不会改变sdslen()返回的sds字符串的长度，而只改变我们拥有的空闲缓冲区空间
+// 扩大sds字符串末尾的空闲空间,以便调用者确保在调用此函数后可以覆盖字符串末尾后最多addlen字节,再加上一个字节用于nul项.
+// 如果已经有足够的空闲空间,这个函数不做任何操作就返回,如果没有足够的空闲空间,它会分配缺少的部分,甚至更多:
+// 当greedy为1时,放大超过所需,以避免未来对增量增长的重新分配.
+// 当greedy为0时,放大到足够大,以便为'addlen'留出自由空间.
+// 注意:这不会改变sdslen()返回的sds字符串的长度,而只改变我们拥有的空闲缓冲区空间
 sds _sdsMakeRoomFor(sds s, size_t addlen, int greedy) {
     void *sh, *newsh;
     size_t avail = sdsavail(s);
@@ -395,7 +395,7 @@ size_t sdsAllocSize(sds s) {
     return sdsHdrSize(s[-1]) + alloc + 1;
 }
 
-// 返回实际SDS分配的指针(通常SDS字符串由字符串缓冲区的开始引用)。
+// 返回实际SDS分配的指针(通常SDS字符串由字符串缓冲区的开始引用).
 void *sdsAllocPtr(sds s) {
     return (void *)(s - sdsHdrSize(s[-1]));
 }
@@ -966,8 +966,8 @@ void sdsfreesplitres(sds *tokens, int count) {
     s_free(tokens);
 }
 
-// 在sds字符串"s"中添加一个转义字符串表示，其中所有不可打印的字符(用isprint()测试)都转换为转义，形式为"\n\r\a...."或"\x&lt;hex-number&gt;"
-// 调用后，修改后的sds字符串不再有效，所有引用必须用调用返回的新指针代替。
+// 在sds字符串"s"中添加一个转义字符串表示,其中所有不可打印的字符(用isprint()测试)都转换为转义,形式为"\n\r\a...."或"\x&lt;hex-number&gt;"
+// 调用后,修改后的sds字符串不再有效,所有引用必须用调用返回的新指针代替.
 sds sdscatrepr(sds s, const char *p, size_t len) {
     s = sdscatlen(s, "\"", 1);
     while (len--) {

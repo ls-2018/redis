@@ -278,7 +278,7 @@ void *zrealloc_usable(void *ptr, size_t size, size_t *usable) {
     return ptr;
 }
 
-// malloc本身不提供该函数的系统提供zmalloc_size()，因为在这种情况下，我们将此信息作为每次分配的第一个字节存储一个头文件。
+// malloc本身不提供该函数的系统提供zmalloc_size(),因为在这种情况下,我们将此信息作为每次分配的第一个字节存储一个头文件.
 #ifndef HAVE_MALLOC_SIZE
 
 size_t zmalloc_size(void *ptr) {
@@ -639,7 +639,7 @@ size_t zmalloc_get_smap_bytes_by_field(char *field, long pid) {
 }
 #else
 
-/* 从libproc api调用中获取指定字段的和。由于有每页的价值基础，我们需要相应地转换他们。
+/* 从libproc api调用中获取指定字段的和.由于有每页的价值基础,我们需要相应地转换他们.
  *
  * Note that AnonHugePages is a no-op as THP feature
  * is not supported in this platform

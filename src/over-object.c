@@ -520,12 +520,12 @@ void dismissStreamObject(robj *o, size_t size_hint) {
 }
 
 /*
- * 在fork子进程中创建快照时，主进程和子进程共享相同的物理内存页，如果/当父进程由于写流量而修改了任何键，
- * 就会导致CoW，从而消耗物理内存。在子进程中，在序列化键和值之后，数据肯定不会再被访问，因此为了避免不必要的CoW，
- * 我们尝试将它们的内存释放回操作系统。看到dismissMemory()。
+ * 在fork子进程中创建快照时,主进程和子进程共享相同的物理内存页,如果/当父进程由于写流量而修改了任何键,
+ * 就会导致CoW,从而消耗物理内存.在子进程中,在序列化键和值之后,数据肯定不会再被访问,因此为了避免不必要的CoW,
+ * 我们尝试将它们的内存释放回操作系统.看到dismissMemory().
  *
- * 由于迭代复杂数据类型的所有节点/字段/成员/条目的成本很高，因此只有当我们估计单个分配的大约平均大小超过操作系统的页面大小时，我们才迭代并丢弃它们。
- * 'size_hint'是序列化值的大小。这种方法并不准确，但对于可能不会释放任何内存的复杂数据类型，它可以减少不必要的迭代。
+ * 由于迭代复杂数据类型的所有节点/字段/成员/条目的成本很高,因此只有当我们估计单个分配的大约平均大小超过操作系统的页面大小时,我们才迭代并丢弃它们.
+ * 'size_hint'是序列化值的大小.这种方法并不准确,但对于可能不会释放任何内存的复杂数据类型,它可以减少不必要的迭代.
  *
  * */
 void dismissObject(robj *o, size_t size_hint) {
@@ -666,7 +666,7 @@ robj *tryObjectEncoding(robj *o) {
     return o;
 }
 
-// 获取已编码对象的解码版本(作为新对象返回)。如果对象已经是原始编码，则增加ref计数。
+// 获取已编码对象的解码版本(作为新对象返回).如果对象已经是原始编码,则增加ref计数.
 robj *getDecodedObject(robj *o) {
     robj *dec;
 
@@ -1598,7 +1598,7 @@ void memoryCommand(client *c) {
         addReplyBulkCString(c, "peak.allocated");
         addReplyLongLong(c, mh->peak_allocated);
 
-        addReplyBulkCString(c, "# Redis使用其分配器分配的总字节数，即当前的总内存使用量");
+        addReplyBulkCString(c, "# Redis使用其分配器分配的总字节数,即当前的总内存使用量");
         addReplyBulkCString(c, "total.allocated");
         addReplyLongLong(c, mh->total_allocated);
 
@@ -1614,7 +1614,7 @@ void memoryCommand(client *c) {
         addReplyBulkCString(c, "clients.slaves");
         addReplyLongLong(c, mh->clients_slaves);
 
-        addReplyBulkCString(c, "# 除从节点外，所有其他客户端的读写缓冲区大小");
+        addReplyBulkCString(c, "# 除从节点外,所有其他客户端的读写缓冲区大小");
         addReplyBulkCString(c, "clients.normal");
         addReplyLongLong(c, mh->clients_normal);
 
@@ -1636,7 +1636,7 @@ void memoryCommand(client *c) {
             snprintf(dbname, sizeof(dbname), "db.%zd", mh->db[j].dbid);
             addReplyBulkCString(c, dbname);
             addReplyMapLen(c, 3);
-            addReplyBulkCString(c, "# 当前数据库的hash链表开销内存总和，即元数据内存。");
+            addReplyBulkCString(c, "# 当前数据库的hash链表开销内存总和,即元数据内存.");
             addReplyBulkCString(c, "overhead.hashtable.main");
             addReplyLongLong(c, mh->db[j].overhead_ht_main);
 
@@ -1656,7 +1656,7 @@ void memoryCommand(client *c) {
         addReplyBulkCString(c, "keys.count");
         addReplyLongLong(c, mh->total_keys);
 
-        addReplyBulkCString(c, "# 当前Redis实例每个key的平均大小，计算公式：(total.allocated-startup.allocated)/keys.count。");
+        addReplyBulkCString(c, "# 当前Redis实例每个key的平均大小,计算公式：(total.allocated-startup.allocated)/keys.count.");
         addReplyBulkCString(c, "keys.bytes-per-key");
         addReplyLongLong(c, mh->bytes_per_key);
 
@@ -1664,11 +1664,11 @@ void memoryCommand(client *c) {
         addReplyBulkCString(c, "dataset.bytes");
         addReplyLongLong(c, mh->dataset);
 
-        addReplyBulkCString(c, "# 纯业务数据占用的内存比例，计算公式：dataset.bytes*100/(total.allocated-startup.allocated)");
+        addReplyBulkCString(c, "# 纯业务数据占用的内存比例,计算公式：dataset.bytes*100/(total.allocated-startup.allocated)");
         addReplyBulkCString(c, "dataset.percentage");
         addReplyDouble(c, mh->dataset_perc);
 
-        addReplyBulkCString(c, "# 当前总内存与历史峰值的比例，计算公式：total.allocated*100/peak.allocated");
+        addReplyBulkCString(c, "# 当前总内存与历史峰值的比例,计算公式：total.allocated*100/peak.allocated");
         addReplyBulkCString(c, "peak.percentage");
         addReplyDouble(c, mh->peak_perc);
 

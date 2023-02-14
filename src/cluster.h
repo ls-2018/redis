@@ -81,19 +81,19 @@ typedef struct clusterLink {
 #define CLUSTER_TODO_FSYNC_CONFIG (1 << 3)
 #define CLUSTER_TODO_HANDLE_MANUALFAILOVER (1 << 4)
 
-// 注意，PING 、 PONG 和 MEET 实际上是同一种消息。
-// PONG 是对 PING 的回复，它的实际格式也为 PING 消息，
-// 而 MEET 则是一种特殊的 PING 消息，用于强制消息的接收者将消息的发送者添加到集群中（如果节点尚未在节点列表中的话）
+// 注意,PING 、 PONG 和 MEET 实际上是同一种消息.
+// PONG 是对 PING 的回复,它的实际格式也为 PING 消息,
+// 而 MEET 则是一种特殊的 PING 消息,用于强制消息的接收者将消息的发送者添加到集群中（如果节点尚未在节点列表中的话）
 // 通过宏定义定义的节点间通信的消息类型,
 #define CLUSTERMSG_TYPE_PING 0                  // Ping 消息
 #define CLUSTERMSG_TYPE_PONG 1                  // Pong 用于回复Ping
 #define CLUSTERMSG_TYPE_MEET 2                  // Meet 请求将某个节点添加到集群中
 #define CLUSTERMSG_TYPE_FAIL 3                  // Fail 将某个节点标记为 FAIL
 #define CLUSTERMSG_TYPE_PUBLISH 4               // 通过发布与订阅功能广播消息
-#define CLUSTERMSG_TYPE_FAILOVER_AUTH_REQUEST 5 // 请求进行故障转移操作，要求消息的接收者通过投票来支持消息的发送者
+#define CLUSTERMSG_TYPE_FAILOVER_AUTH_REQUEST 5 // 请求进行故障转移操作,要求消息的接收者通过投票来支持消息的发送者
 #define CLUSTERMSG_TYPE_FAILOVER_AUTH_ACK 6     // 消息的接收者同意向消息的发送者投票
-#define CLUSTERMSG_TYPE_UPDATE 7                // slots 已经发生变化，消息发送者要求消息接收者进行相应的更新
-#define CLUSTERMSG_TYPE_MFSTART 8               // 为了进行手动故障转移，暂停各个客户端
+#define CLUSTERMSG_TYPE_UPDATE 7                // slots 已经发生变化,消息发送者要求消息接收者进行相应的更新
+#define CLUSTERMSG_TYPE_MFSTART 8               // 为了进行手动故障转移,暂停各个客户端
 #define CLUSTERMSG_TYPE_MODULE 9                // 消息总数
 #define CLUSTERMSG_TYPE_PUBLISHSHARD 10         // /* Pub/Sub Publish shard propagation */
 #define CLUSTERMSG_TYPE_COUNT 11                // /* Total number of message types. */
@@ -112,7 +112,7 @@ typedef struct clusterNodeFailReport {
 typedef struct clusterNode {
     mstime_t ctime;                         // 创建节点的时间
     char name[CLUSTER_NAMELEN];             // 节点的名字
-    int flags;                              // 节点标识，标记节点角色或者状态，比如主节点从节点或者在线和下线
+    int flags;                              // 节点标识,标记节点角色或者状态,比如主节点从节点或者在线和下线
     uint64_t configEpoch;                   // 当前节点已知的集群统一epoch
     unsigned char slots[CLUSTER_SLOTS / 8]; /* slots handled by this node */
     uint16_t *slot_info_pairs;              /* Slots info represented as (start/end) pair (consecutive index). */
@@ -137,7 +137,7 @@ typedef struct clusterNode {
     int port;                               //
     int pport;                              /* Latest known clients plaintext port. Only used
                                                if the main clients port is for TLS. */
-    int cport;                              // 集群通信端口，一般是端口+1000
+    int cport;                              // 集群通信端口,一般是端口+1000
     clusterLink *link;                      // 和该节点的 tcp 连接
     clusterLink *inbound_link;              /* TCP/IP link accepted from this node */
     list *fail_reports;                     // 下线记录列表
@@ -155,7 +155,7 @@ struct clusterSlotToKeyMapping {
     slotToKeys by_slot[CLUSTER_SLOTS];
 };
 
-// 用于集群模式的Dict条目元数据，用于Slot to Key API，以形成属于同一插槽的条目的链表。
+// 用于集群模式的Dict条目元数据,用于Slot to Key API,以形成属于同一插槽的条目的链表.
 typedef struct clusterDictEntryMetadata {
     dictEntry *prev;
     dictEntry *next;
@@ -208,8 +208,8 @@ typedef struct clusterState {
  * to the first node, using the getsockname() function. Then we'll use this
  * address for all the next messages. */
 typedef struct {
-    char nodename[CLUSTER_NAMELEN]; // 节点的名字，默认是随机的，MEET消息发送并得到回复后，集群会为该节点设置正式的名称
-    uint32_t ping_sent;             // 发送节点最后一次给接收节点发送 PING 消息的时间戳，收到对应 PONG 回复后会被赋值为0
+    char nodename[CLUSTER_NAMELEN]; // 节点的名字,默认是随机的,MEET消息发送并得到回复后,集群会为该节点设置正式的名称
+    uint32_t ping_sent;             // 发送节点最后一次给接收节点发送 PING 消息的时间戳,收到对应 PONG 回复后会被赋值为0
     uint32_t pong_received;         // 发送节点最后一次收到接收节点发送 PONG 消息的时间戳
     char ip[NET_IP_STR_LEN];        /* IP address last time it was seen */
     uint16_t port;                  /* base port last time it was seen */
@@ -269,7 +269,7 @@ typedef struct {
 
 union clusterMsgData
 {
-    // PING, MEET 或者 PONG 消息时，ping 字段被赋值
+    // PING, MEET 或者 PONG 消息时,ping 字段被赋值
     struct {
         /* Array of N clusterMsgDataGossip structures */
         clusterMsgDataGossip gossip[1];
@@ -278,7 +278,7 @@ union clusterMsgData
          * the gossip array isn't the real length of the gossip data. */
     } ping;
 
-    // FAIL 消息时，fail 被赋值
+    // FAIL 消息时,fail 被赋值
     struct {
         clusterMsgDataFail about;
     } fail;
@@ -302,26 +302,26 @@ union clusterMsgData
 #define CLUSTER_PROTO_VER 1 /* Cluster bus protocol version. */
 
 typedef struct {
-    char sig[4];                              // 标志位，"RCmb" (Redis Cluster message bus).
+    char sig[4];                              // 标志位,"RCmb" (Redis Cluster message bus).
     uint32_t totlen;                          // 消息总长度
     uint16_t ver;                             // 消息协议版本,当前为1
     uint16_t port;                            // 端口
     uint16_t type;                            // 消息类型
     uint16_t count;                           /* Only used for some kind of messages. */
-    uint64_t currentEpoch;                    // 表示本节点当前记录的整个集群的统一的epoch，用来决策选举投票等，与configEpoch不同的是：configEpoch表示的是master节点的唯一标志，currentEpoch是集群的唯一标志。
-    uint64_t configEpoch;                     // 每个master节点都有一个唯一的configEpoch做标志，如果和其他master节点冲突，会强制自增使本节点在集群中唯一
-    uint64_t offset;                          // 主从复制偏移相关信息，主节点和从节点含义不同
+    uint64_t currentEpoch;                    // 表示本节点当前记录的整个集群的统一的epoch,用来决策选举投票等,与configEpoch不同的是：configEpoch表示的是master节点的唯一标志,currentEpoch是集群的唯一标志.
+    uint64_t configEpoch;                     // 每个master节点都有一个唯一的configEpoch做标志,如果和其他master节点冲突,会强制自增使本节点在集群中唯一
+    uint64_t offset;                          // 主从复制偏移相关信息,主节点和从节点含义不同
     char sender[CLUSTER_NAMELEN];             // 发送节点的名称
-    unsigned char myslots[CLUSTER_SLOTS / 8]; // 本节点负责的slots信息,16384/8个char数组，一共为16384bit
-    char slaveof[CLUSTER_NAMELEN];            // master信息，假如本节点是slave节点的话，协议带有master信息
+    unsigned char myslots[CLUSTER_SLOTS / 8]; // 本节点负责的slots信息,16384/8个char数组,一共为16384bit
+    char slaveof[CLUSTER_NAMELEN];            // master信息,假如本节点是slave节点的话,协议带有master信息
     char myip[NET_IP_STR_LEN];                // 发送方的IP
     uint16_t extensions;                      /* Number of extensions sent along with this packet. */
     char notused1[30];                        // 30 bytes    保留字段
     uint16_t pport;                           /* Sender TCP plaintext port, if base port is TLS */
     uint16_t cport;                           // 集群的通信端口
-    uint16_t flags;                           // 本节点当前的状态，比如 CLUSTER_NODE_HANDSHAKE、CLUSTER_NODE_MEET
+    uint16_t flags;                           // 本节点当前的状态,比如 CLUSTER_NODE_HANDSHAKE、CLUSTER_NODE_MEET
     unsigned char state;                      /* Cluster state from the POV of the sender */
-    unsigned char mflags[3];                  // 本条消息的类型，目前只有两类：CLUSTERMSG_FLAG0_PAUSED、CLUSTERMSG_FLAG0_FORCEACK
+    unsigned char mflags[3];                  // 本条消息的类型,目前只有两类：CLUSTERMSG_FLAG0_PAUSED、CLUSTERMSG_FLAG0_FORCEACK
     union clusterMsgData data;
 } clusterMsg;
 

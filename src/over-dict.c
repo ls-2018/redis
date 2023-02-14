@@ -150,7 +150,7 @@ int _dictExpand(dict *d, unsigned long size, int *malloc_failed) {
 
     new_ht_used = 0;
 
-    /*这是第一次初始化吗?如果是这样，它就不是真正的重哈希我们只是设置了第一个哈希表以便它可以接受键。*/
+    /*这是第一次初始化吗?如果是这样,它就不是真正的重哈希我们只是设置了第一个哈希表以便它可以接受键.*/
     if (d->ht_table[0] == NULL) {
         d->ht_size_exp[0] = new_ht_size_exp;
         d->ht_used[0] = new_ht_used;
@@ -411,7 +411,7 @@ dictEntry *dictUnlink(dict *ht, const void *key) {
     return dictGenericDelete(ht, key, 1);
 }
 
-/* 在调用dictUnlink()之后，需要调用这个函数来真正释放条目。用'he' = NULL来调用这个函数是安全的。 */
+/* 在调用dictUnlink()之后,需要调用这个函数来真正释放条目.用'he' = NULL来调用这个函数是安全的. */
 void dictFreeUnlinkedEntry(dict *d, dictEntry *he) {
     if (he == NULL)
         return;
@@ -688,7 +688,7 @@ dictEntry *dictGetRandomKey(dict *d) {
 }
 
 /*
- * 这个函数对字典进行采样，以从随机位置返回几个键。
+ * 这个函数对字典进行采样,以从随机位置返回几个键.
  * It does not guarantee to return all the keys specified in 'count', nor
  * it does guarantee to return non-duplicated elements, however it will make
  * some effort to do both things.

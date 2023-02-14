@@ -45,7 +45,7 @@ struct luaCtx {
     unsigned long long lua_scripts_mem; /* Cached scripts' memory + oh */
 } lctx;
 
-// 调试器共享状态存储在此全局结构中。
+// 调试器共享状态存储在此全局结构中.
 #define LDB_BREAKPOINTS_MAX 64  // 最大断点数量
 #define LDB_MAX_LEN_DEFAULT 256 /* Default len limit for replies / var dumps. */
 struct ldbState {
@@ -775,7 +775,7 @@ void ldbEndSession(client *c) {
     ldb.active = 0;
 }
 
-// 如果指定的pid在为forked调试会话生成的子列表中，则它将从子列表中删除。如果发现pid非零则返回。
+// 如果指定的pid在为forked调试会话生成的子列表中,则它将从子列表中删除.如果发现pid非零则返回.
 int ldbRemoveChild(pid_t pid) {
     listNode *ln = listSearchKey(ldb.children, (void *)(unsigned long)pid);
     if (ln) {
@@ -785,7 +785,7 @@ int ldbRemoveChild(pid_t pid) {
     return 0;
 }
 
-// 返回我们仍然没有收到终止确认的子进程的数量。 在父进程中通过wait()
+// 返回我们仍然没有收到终止确认的子进程的数量. 在父进程中通过wait()
 int ldbPendingChildren(void) {
     return listLength(ldb.children);
 }

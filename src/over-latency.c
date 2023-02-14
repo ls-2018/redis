@@ -232,12 +232,12 @@ sds createLatencyReport(void) {
     if (dictSize(server.latency_events) == 0 && server.latency_monitor_threshold == 0) {
         report = sdscat(
             report,
-            "对不起，戴夫，我做不到。在这个Redis实例中，延迟监控是禁用的.\n"
+            "对不起,戴夫,我做不到.在这个Redis实例中,延迟监控是禁用的.\n"
             "你可以使用 \"CONFIG SET latency-monitor-threshold <milliseconds>. 启用");
         return report;
     }
 
-    /*显示所有事件统计信息，并根据值为每个事件添加一些与事件相关的评论。 */
+    /*显示所有事件统计信息,并根据值为每个事件添加一些与事件相关的评论. */
     dictIterator *di;
     dictEntry *de;
     int eventnum = 0;

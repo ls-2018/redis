@@ -161,6 +161,7 @@ static const rio rioFileIO = {
     0,            //        /* read/write chunk size */
     {{NULL, 0}}   /* union for io-specific vars */
 };
+
 // 初始化文件流
 void rioInitWithFile(rio *r, FILE *fp) {
     *r = rioFileIO;

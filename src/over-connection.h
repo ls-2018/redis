@@ -25,7 +25,7 @@ typedef enum {
 
 typedef void (*ConnectionCallbackFunc)(struct connection *conn);
 
-// 这个结构是核心，后续的各种网络操作，都是通过ConnectionType中的指针调用的
+// 这个结构是核心,后续的各种网络操作,都是通过ConnectionType中的指针调用的
 typedef struct ConnectionType {
     void (*ae_handler)(struct aeEventLoop *el, int fd, void *clientData, int mask);
     int (*connect)(struct connection *conn, const char *addr, int port, const char *source_addr, ConnectionCallbackFunc connect_handler);
@@ -68,18 +68,18 @@ static inline int connConnect(connection *conn, const char *addr, int port, cons
 }
 
 // 阻塞链接
-// 实现这一点是为了简化到抽象连接的转换，但是可能应该从cluster.c和replication.c中重构出来，以支持纯异步实现。
+// 实现这一点是为了简化到抽象连接的转换,但是可能应该从cluster.c和replication.c中重构出来,以支持纯异步实现.
 static inline int connBlockingConnect(connection *conn, const char *addr, int port, long long timeout) {
     return conn->type->blocking_connect(conn, addr, port, timeout);
 }
 
-// 写入连接，行为与Write(2)相同。
+// 写入连接,行为与Write(2)相同.
 static inline int connWrite(connection *conn, const void *data, size_t data_len) {
     return conn->type->write(conn, data, data_len);
 }
 
 // 从iov成员指定的iovcnt缓冲区中收集输出数据
-// 测试类似eagain的条件，使用connGetState()查看连接状态是否仍然为CONN_STATE_CONNECTED。
+// 测试类似eagain的条件,使用connGetState()查看连接状态是否仍然为CONN_STATE_CONNECTED.
 static inline int connWritev(connection *conn, const struct iovec *iov, int iovcnt) {
     // 返回值-1表示错误
     return conn->type->writev(conn, iov, iovcnt);
@@ -101,8 +101,8 @@ static inline int connSetReadHandler(connection *conn, ConnectionCallbackFunc fu
     return conn->type->set_read_handler(conn, func);
 }
 
-// 设置一个写处理程序，并可能启用一个写障碍，
-// 当您希望在发送回复之前将内容持久化到磁盘，并且希望以组的方式执行此操作时非常有用。
+// 设置一个写处理程序,并可能启用一个写障碍,
+// 当您希望在发送回复之前将内容持久化到磁盘,并且希望以组的方式执行此操作时非常有用.
 static inline int connSetWriteHandlerWithBarrier(connection *conn, ConnectionCallbackFunc func, int barrier) {
     // 创建可写事件的监听,以及设置回调函数
     return conn->type->set_write_handler(conn, func, barrier);
@@ -112,7 +112,7 @@ static inline void connClose(connection *conn) {
     conn->type->close(conn);
 }
 
-// 以字符串形式返回连接遇到的最后一个错误。如果没有错误，返回NULL
+// 以字符串形式返回连接遇到的最后一个错误.如果没有错误,返回NULL
 static inline const char *connGetLastError(connection *conn) {
     return conn->type->get_last_error(conn);
 }

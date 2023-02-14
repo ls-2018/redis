@@ -7,24 +7,16 @@ void serveClientBlockedOnList(client *receiver, robj *o, robj *key, robj *dstkey
 
 int getListPositionFromObjectOrReply(client *c, robj *arg, int *position);
 
-/* This structure represents the blocked key information that we store
- * in the client structure. Each client blocked on keys, has a
- * client->bpop.keys hash table. The keys of the hash table are Redis
- * keys pointers to 'robj' structures. The value is this structure.
- * The structure has two goals: firstly we store the list node that this
- * client uses to be listed in the database "blocked clients for this key"
- * list, so we can later unblock in O(1) without a list scan.
- * Secondly for certain blocking types, we have additional info. Right now
- * the only use for additional info we have is when clients are blocked
- * on streams, as we have to remember the ID it blocked for. */
+// 这个结构表示我们存储在客户端结构中的阻塞key信息.每个客户端都有一个client.bpop.keys的dict.
+// 哈希表的键是指向“robj”结构的Redis键指针.值就是这个结构.
 typedef struct bkinfo {
-    listNode *listnode; /* List node for db->blocking_keys[key] list. */
-    streamID stream_id; /* Stream ID if we blocked in a stream. */
+    listNode *listnode; // db->blocking_keys[key]        c->db->blocking_keys   维护了双向的对应关系
+    streamID stream_id; // 如果在流中阻塞,流ID
 } bkinfo;
 
-// 对给定的客户端进行阻塞
+// 对给定的客户端进行阻塞,btype 客户端类型
 void blockClient(client *c, int btype) {
-    // 主客户端永远不应该被阻塞，除非暂停或模块
+    // 主客户端永远不应该被阻塞,除非暂停或模块
     serverAssert(!(c->flags & CLIENT_MASTER && btype != BLOCKED_MODULE && btype != BLOCKED_POSTPONE));
 
     c->flags |= CLIENT_BLOCKED;
@@ -39,25 +31,22 @@ void blockClient(client *c, int btype) {
     }
 }
 
-/* This function is called after a client has finished a blocking operation
- * in order to update the total command duration, log the command into
- * the Slow log if needed, and log the reply duration event if needed. */
+// 在客户端完成阻塞操作后调用此函数,以便更新总命令持续时间,如果需要将命令记录到Slow日志中,如果需要则记录回复持续时间事件.
 void updateStatsOnUnblock(client *c, long blocked_us, long reply_us, int had_errors) {
     const ustime_t total_cmd_duration = c->duration + blocked_us + reply_us;
     c->lastcmd->microseconds += total_cmd_duration;
-    if (had_errors)
+    if (had_errors) {
         c->lastcmd->failed_calls++;
-    if (server.latency_tracking_enabled)
+    }
+    if (server.latency_tracking_enabled) {
         updateCommandLatencyHistogram(&(c->lastcmd->latency_histogram), total_cmd_duration * 1000);
-    /* Log the command into the Slow log if needed. */
+    }
+    // 如果需要,将该命令记录到Slow日志中.
     slowlogPushCurrentCommand(c, c->lastcmd, total_cmd_duration);
-    /* Log the reply duration event. */
+    // 记录回复持续时间事件.
     latencyAddSampleIfNeeded("command-unblocking", reply_us / 1000);
 }
 
-/* This function is called in the beforeSleep() function of the event loop
- * in order to process the pending input buffer of clients that were
- * unblocked after a blocking operation. */
 // 取消所有在 unblocked_clients 链表中的客户端的阻塞状态
 void processUnblockedClients(void) {
     listNode *ln;
@@ -70,42 +59,15 @@ void processUnblockedClients(void) {
         listDelNode(server.unblocked_clients, ln);
         c->flags &= ~CLIENT_UNBLOCKED;
 
-        /* Process remaining data in the input buffer, unless the client
-         * is blocked again. Actually processInputBuffer() checks that the
-         * client is not blocked before to proceed, but things may change and
-         * the code is conceptually more correct this way. */
+        // 处理输入缓冲区中的剩余数据,除非客户端再次阻塞.
+        // 实际上,processInputBuffer()在继续之前检查客户端是否被阻塞,但情况可能会发生变化,并且这种方法在概念上更正确.
         if (!(c->flags & CLIENT_BLOCKED)) {
-            /* If we have a queued command, execute it now. */
+            // 如果我们有一个排队命令,现在就执行它.
             if (processPendingCommandAndInputBuffer(c) == C_ERR) {
                 c = NULL;
             }
         }
         beforeNextClient(c);
-    }
-}
-
-/* This function will schedule the client for reprocessing at a safe time.
- *
- * This is useful when a client was blocked for some reason (blocking operation,
- * CLIENT PAUSE, or whatever), because it may end with some accumulated query
- * buffer that needs to be processed ASAP:
- *
- * 1. When a client is blocked, its readable handler is still active.
- * 2. However in this case it only gets data into the query buffer, but the
- *    query is not parsed or executed once there is enough to proceed as
- *    usually (because the client is blocked... so we can't execute commands).
- * 3. When the client is unblocked, without this function, the client would
- *    have to write some query in order for the readable handler to finally
- *    call processQueryBuffer*() on it.
- * 4. With this function instead we can put the client in a queue that will
- *    process it for queries ready to be executed at a safe time.
- */
-void queueClientForReprocessing(client *c) {
-    /* The client may already be into the unblocked list because of a previous
-     * blocking operation, don't add back it into the list multiple times. */
-    if (!(c->flags & CLIENT_UNBLOCKED)) {
-        c->flags |= CLIENT_UNBLOCKED;
-        listAddNodeTail(server.unblocked_clients, c);
     }
 }
 
@@ -151,9 +113,20 @@ void unblockClient(client *c) {
     queueClientForReprocessing(c);
 }
 
-/* This function gets called when a blocked client timed out in order to
- * send it a reply of some kind. After this function is called,
- * unblockClient() will be called with the same client as argument. */
+// 该函数将安排客户端在安全的时间进行重新处理.
+// 当客户端由于某些原因(阻塞操作,client PAUSE或其他原因)被阻塞时,这很有用,因为它可能会以一些累积的需要尽快处理的查询缓冲区结束:
+//     1. 当一个客户端被阻塞时,它的可读处理程序仍然是活动的.
+//     2. 然而,在这种情况下,它只将数据放入查询缓冲区,但查询不会被解析或执行,一旦有足够的数据继续进行(因为客户端被阻塞…所以我们不能执行命令).
+//     3. 当客户端被解除阻塞时,如果没有这个函数,客户端将不得不编写一些查询,以便可读处理程序最终调用processQueryBuffer*().
+//     4. 使用这个函数,我们可以将客户端放在一个队列中,以便在安全的时间执行查询.
+void queueClientForReprocessing(client *c) {
+// 由于之前的阻塞操作,客户端可能已经进入未阻塞列表,不要多次将其添加回列表.
+    if (!(c->flags & CLIENT_UNBLOCKED)) {
+        c->flags |= CLIENT_UNBLOCKED;
+        listAddNodeTail(server.unblocked_clients, c);
+    }
+}
+
 // 等待超时,向被阻塞的客户端返回通知
 void replyToBlockedClientTimedOut(client *c) {
     if (c->btype == BLOCKED_LIST || c->btype == BLOCKED_ZSET || c->btype == BLOCKED_STREAM) {
@@ -170,7 +143,7 @@ void replyToBlockedClientTimedOut(client *c) {
     }
 }
 
-// 如果一个或多个客户端在SHUTDOWN命令上被阻塞，该函数将向它们发送错误应答并解除阻塞。
+// 如果一个或多个客户端在SHUTDOWN命令上被阻塞,该函数将向它们发送错误应答并解除阻塞.
 void replyToClientsBlockedOnShutdown(void) {
     if (server.blocked_clients_by_type[BLOCKED_SHUTDOWN] == 0) // shutdown次数
         return;
@@ -180,19 +153,13 @@ void replyToClientsBlockedOnShutdown(void) {
     while ((ln = listNext(&li))) {
         client *c = listNodeValue(ln);
         if (c->flags & CLIENT_BLOCKED && c->btype == BLOCKED_SHUTDOWN) {
-            addReplyError(c, "试图关闭错误。检查日志。");
+            addReplyError(c, "试图关闭错误.检查日志.");
             unblockClient(c);
         }
     }
 }
 
-/* Mass-unblock clients because something changed in the instance that makes
- * blocking no longer safe. For example clients blocked in list operations
- * in an instance which turns from master to slave is unsafe, so this function
- * is called when a master turns into a slave.
- *
- * The semantics is to send an -UNBLOCKED error to the client, disconnecting
- * it at the same time. */
+// 断开所有阻塞的链接
 void disconnectAllBlockedClients(void) {
     listNode *ln;
     listIter li;
@@ -211,25 +178,17 @@ void disconnectAllBlockedClients(void) {
 
             addReplyError(
                 c,
-                "-UNBLOCKED force unblock from blocking operation, "
-                "instance state changed (master -> replica?)");
+                "-UNBLOCKED force unblock from blocking operation, instance state changed (master -> replica?)");
             unblockClient(c);
             c->flags |= CLIENT_CLOSE_AFTER_REPLY;
         }
     }
 }
-
-/* Helper function for handleClientsBlockedOnKeys(). This function is called
- * when there may be clients blocked on a list key, and there may be new
- * data to fetch (the key is ready). */
+// handleclientsblockedonkey()的辅助函数.当列表键上可能阻塞了客户端,并且可能有新的数据要获取(键已经准备好了)时,将调用此函数.
 void serveClientsBlockedOnListKey(robj *o, readyList *rl) {
-    /* Optimization: If no clients are in type BLOCKED_LIST,
-     * we can skip this loop. */
-    if (!server.blocked_clients_by_type[BLOCKED_LIST])
+    if (!server.blocked_clients_by_type[BLOCKED_LIST]) // 如果list阻塞类型的计数器为0 ,直接返回
         return;
 
-    /* We serve clients in the same order they blocked for
-     * this key, from the first blocked to the last. */
     dictEntry *de = dictFind(rl->db->blocking_keys, rl->key);
     if (de) {
         list *clients = dictGetVal(de);
@@ -669,17 +628,12 @@ void handleClientsBlockedOnKeys(void) {
  *   to the number of elements we have in the ready list.
  */
 
-/* Set a client in blocking mode for the specified key (list, zset or stream),
- * with the specified timeout. The 'type' argument is BLOCKED_LIST,
- * BLOCKED_ZSET or BLOCKED_STREAM depending on the kind of operation we are
- * waiting for an empty key in order to awake the client. The client is blocked
- * for all the 'numkeys' keys as in the 'keys' argument. When we block for
- * stream keys, we also provide an array of streamID structures: clients will
- * be unblocked only when items with an ID greater or equal to the specified
- * one is appended to the stream.
- *
- * 'count' for those commands that support the optional count argument.
- * Otherwise the value is 0. */
+// 设置客户端为指定键的阻塞模式(list,zset或stream),
+// 使用指定的超时时间.'type'参数是BLOCKED_LIST,BLOCKED_ZSET或BLOCKED_STREAM
+//*等待一个空键来唤醒客户端.客户端被阻塞为所有的'numkeys'键在'keys'参数.当我们为
+//*流键,我们还提供了一组streamID结构:客户端将仅当项目的ID大于或等于指定时才被取消阻塞
+//* 1被追加到流中.'count'用于支持可选count参数的命令.
+//*其他值为0.* /
 void blockForKeys(client *c, int btype, robj **keys, int numkeys, long count, mstime_t timeout, robj *target, struct blockPos *blockpos, streamID *ids) {
     dictEntry *de;
     list *l;
@@ -696,25 +650,24 @@ void blockForKeys(client *c, int btype, robj **keys, int numkeys, long count, ms
         incrRefCount(target);
 
     for (j = 0; j < numkeys; j++) {
-        /* Allocate our bkinfo structure, associated to each key the client
-         * is blocked for. */
+        /* 分配我们的bkinfo结构,关联到客户端阻塞的每个键.*/
         bkinfo *bki = zmalloc(sizeof(*bki));
         if (btype == BLOCKED_STREAM)
             bki->stream_id = ids[j];
 
-        /* If the key already exists in the dictionary ignore it. */
+        /* 如果键已经存在于字典中,忽略它.*/
         if (dictAdd(c->bpop.keys, keys[j], bki) != DICT_OK) {
             zfree(bki);
             continue;
         }
         incrRefCount(keys[j]);
 
-        /* And in the other "side", to map keys -> clients */
+        // 在另一侧   keys->clients 的映射
         de = dictFind(c->db->blocking_keys, keys[j]);
         if (de == NULL) {
             int retval;
 
-            /* For every key we take a list of clients blocked for it */
+            // 对于每个key,我们获取一个为它阻塞的客户端列表
             l = listCreate();
             retval = dictAdd(c->db->blocking_keys, keys[j], l);
             incrRefCount(keys[j]);

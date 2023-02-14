@@ -67,7 +67,7 @@ static void cancelShutdown(void) {
     server.shutdown_flags = 0;         // 传递给prepareForShutdown()的标志.
     server.shutdown_mstime = 0;        // 优雅关闭限制的时间
     server.last_sig_received = 0;      // 最近一次收到的信号
-    replyToClientsBlockedOnShutdown(); // 如果一个或多个客户端在SHUTDOWN命令上被阻塞，该函数将向它们发送错误应答并解除阻塞。
+    replyToClientsBlockedOnShutdown(); // 如果一个或多个客户端在SHUTDOWN命令上被阻塞,该函数将向它们发送错误应答并解除阻塞.
     unpauseClients(PAUSE_DURING_SHUTDOWN);
 }
 
@@ -78,7 +78,7 @@ static inline int isShutdownInitiated(void) {
 }
 int isReadyToShutdown(void);
 
-// 如果有任何副本在复制中滞后，我们需要在关闭之前等待，则返回0。如果现在准备关闭，则返回1。
+// 如果有任何副本在复制中滞后,我们需要在关闭之前等待,则返回0.如果现在准备关闭,则返回1.
 int isReadyToShutdown(void) {
     if (listLength(server.slaves) == 0)
         return 1;
@@ -109,8 +109,8 @@ const char *replstateToString(int replstate) {
     }
 }
 
-// 关闭序列的最后一步。
-// 如果关闭序列成功并且可以调用exit()，则返回C_OK。如果返回C_ERR，调用exit()是不安全的。
+// 关闭序列的最后一步.
+// 如果关闭序列成功并且可以调用exit(),则返回C_OK.如果返回C_ERR,调用exit()是不安全的.
 int finishShutdown(void);
 int finishShutdown(void) {
     // todo
@@ -118,7 +118,7 @@ int finishShutdown(void) {
     int nosave = server.shutdown_flags & SHUTDOWN_NOSAVE;
     int force = server.shutdown_flags & SHUTDOWN_FORCE;
 
-    // 为每个滞后的副本记录一个警告。
+    // 为每个滞后的副本记录一个警告.
     listIter replicas_iter;
     listNode *replicas_list_node;
     int num_replicas = 0;
@@ -131,7 +131,7 @@ int finishShutdown(void) {
             num_lagging_replicas++;
             long lag = replica->replstate == SLAVE_STATE_ONLINE ? time(NULL) - replica->repl_ack_time : 0;
             serverLog(
-                LL_WARNING, "滞后副本:%s,报告偏移量%lld落后于主副本，滞后=%ld，状态=%s。", //
+                LL_WARNING, "滞后副本:%s,报告偏移量%lld落后于主副本,滞后=%ld,状态=%s.", //
                 replicationGetSlaveName(replica),                                          //
                 server.master_repl_offset - replica->repl_ack_off,                         //
                 lag,                                                                       //
@@ -258,7 +258,7 @@ error:
 
 /*============================ 效用函数 ============================ */
 
-// 我们使用一个私有的本地时间实现，它是fork-safe的。Redis的日志功能可以从其他线程调用。
+// 我们使用一个私有的本地时间实现,它是fork-safe的.Redis的日志功能可以从其他线程调用.
 void nolocks_localtime(struct tm *tmp, time_t t, time_t tz, int dst);
 
 // 低水平日志记录.只用于非常大的消息,否则最好使用serverLog().
@@ -369,7 +369,7 @@ mstime_t mstime(void) { // 返回毫秒
     return ustime() / 1000;
 }
 
-// 在RDB转储或AOF重写之后，我们使用_exit()而不是exit()退出子进程，因为后者可能与父进程使用的相同文件对象交互。但是，如果我们正在测试覆盖率，则使用正常的exit()来获得正确的覆盖率信息。
+// 在RDB转储或AOF重写之后,我们使用_exit()而不是exit()退出子进程,因为后者可能与父进程使用的相同文件对象交互.但是,如果我们正在测试覆盖率,则使用正常的exit()来获得正确的覆盖率信息.
 void exitFromChild(int retcode) {
 #ifdef COVERAGE_TEST
     exit(retcode);
@@ -379,7 +379,7 @@ void exitFromChild(int retcode) {
 }
 
 /*====================== 哈希表类型实现 ==================== */
-// 这是一个哈希表类型，使用SDS动态字符串库作为键，redis对象作为值(对象可以保存SDS字符串，列表，集)。
+// 这是一个哈希表类型,使用SDS动态字符串库作为键,redis对象作为值(对象可以保存SDS字符串,列表,集).
 
 void dictVanillaFree(dict *d, void *val) {
     UNUSED(d);
@@ -394,7 +394,7 @@ void dictListDestructor(dict *d, void *val) {
 void dictObjectDestructor(dict *d, void *val) {
     UNUSED(d);
     if (val == NULL)
-        return; // 惰性释放会将值设置为NULL。
+        return; // 惰性释放会将值设置为NULL.
     decrRefCount(val);
 }
 
@@ -453,8 +453,8 @@ int dictEncObjKeyCompare(dict *d, const void *key1, const void *key2) {
     if (o1->encoding == OBJ_ENCODING_INT && o2->encoding == OBJ_ENCODING_INT)
         return o1->ptr == o2->ptr;
 
-    // 由于OBJ_STATIC_REFCOUNT，我们避免在没有充分理由的情况下调用getDecodedObject()，因为它会incrRefCount()对象，这是无效的。
-    // 因此，我们检查dictFind()是否也适用于静态对象。
+    // 由于OBJ_STATIC_REFCOUNT,我们避免在没有充分理由的情况下调用getDecodedObject(),因为它会incrRefCount()对象,这是无效的.
+    // 因此,我们检查dictFind()是否也适用于静态对象.
     if (o1->refcount != OBJ_STATIC_REFCOUNT) // 在堆栈中分配的对象
         o1 = getDecodedObject(o1);
     if (o2->refcount != OBJ_STATIC_REFCOUNT)
@@ -477,7 +477,7 @@ int dictSdsKeyCompare(dict *d, const void *key1, const void *key2) {
         return 0;
     return memcmp(key1, key2, l1) == 0;
 }
-// 不区分大小写的版本，用于命令查找表和其他需要不区分大小写的非二进制安全比较的地方。,keys是char*
+// 不区分大小写的版本,用于命令查找表和其他需要不区分大小写的非二进制安全比较的地方.,keys是char*
 int dictSdsKeyCaseCompare(dict *d, const void *key1, const void *key2) {
     UNUSED(d);
     return strcasecmp(key1, key2) == 0;
@@ -487,7 +487,7 @@ int dictObjKeyCompare(dict *d, const void *key1, const void *key2) {
     const robj *o1 = key1, *o2 = key2;
     return dictSdsKeyCompare(d, o1->ptr, o2->ptr);
 }
-// 字典不区分大小写的比较函数，用于空终止的字符串 keys是char*
+// 字典不区分大小写的比较函数,用于空终止的字符串 keys是char*
 int distCStrKeyCaseCompare(dict *d, const void *key1, const void *key2) {
     UNUSED(d);
     return strcasecmp(key1, key2) == 0;
@@ -503,43 +503,43 @@ int dictExpandAllowed(size_t moreMem, double usedRatio) {
     }
 }
 
-// 以字节为单位返回DB dict条目元数据的大小。在集群模式下，元数据用于构造属于同一集群插槽的dict条目的双链表。请参见集群中的槽位到密钥API。
+// 以字节为单位返回DB dict条目元数据的大小.在集群模式下,元数据用于构造属于同一集群插槽的dict条目的双链表.请参见集群中的槽位到密钥API.
 size_t dictEntryMetadataSize(dict *d) {
     UNUSED(d);
-    // NOTICE: 这也会影响getMemoryOverheadData中的overhead_ht_slot_to_keys。
-    // 如果我们在这里添加非集群相关的数据，代码也必须修改。
+    // NOTICE: 这也会影响getMemoryOverheadData中的overhead_ht_slot_to_keys.
+    // 如果我们在这里添加非集群相关的数据,代码也必须修改.
     return server.cluster_enabled ? sizeof(clusterDictEntryMetadata) : 0;
 }
 
-// 通用哈希表类型，其中键是Redis对象，值是虚拟指针。
+// 通用哈希表类型,其中键是Redis对象,值是虚拟指针.
 dictType objectKeyPointerValueDictType = {dictEncObjHash, NULL, NULL, dictEncObjKeyCompare, dictObjectDestructor, NULL, NULL};
-// 通用哈希表类型，其中键是Redis对象，值是虚拟指针, 并且值可以被销毁。
+// 通用哈希表类型,其中键是Redis对象,值是虚拟指针, 并且值可以被销毁.
 dictType objectKeyHeapPointerValueDictType = {dictEncObjHash, NULL, NULL, dictEncObjKeyCompare, dictObjectDestructor, dictVanillaFree, NULL};
-// set字典类型。键是SDS字符串，不使用值。
+// set字典类型.键是SDS字符串,不使用值.
 dictType setDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, dictSdsDestructor, NULL};
 // 有序集合字典类型
 dictType zsetDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, NULL, NULL, NULL};
-// Db->dict, key是sds字符串，val是Redis对象。
+// Db->dict, key是sds字符串,val是Redis对象.
 dictType dbDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, dictSdsDestructor, dictObjectDestructor, dictExpandAllowed, dictEntryMetadataSize};
 // Db->expires 的dict结构
 dictType dbExpiresDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, NULL, NULL, dictExpandAllowed};
 // sds->command 的dict结构
 dictType commandTableDictType = {dictSdsCaseHash, NULL, NULL, dictSdsKeyCaseCompare, dictSdsDestructor, NULL, NULL};
-// 哈希类型哈希表(注意，小哈希表是用列表包表示的)
+// 哈希类型哈希表(注意,小哈希表是用列表包表示的)
 dictType hashDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, dictSdsDestructor, dictSdsDestructor, NULL};
 // 字典类型没有析构函数
 dictType sdsReplyDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, NULL, NULL, NULL};
-// Keylist哈希表类型有未编码的redis对象作为键和列表作为值。它用于阻塞操作(BLPOP)，并将交换的键映射到等待加载此键的客户端列表。
+// Keylist哈希表类型有未编码的redis对象作为键和列表作为值.它用于阻塞操作(BLPOP),并将交换的键映射到等待加载此键的客户端列表.
 dictType keylistDictType = {dictObjHash, NULL, NULL, dictObjKeyCompare, dictObjectDestructor, dictListDestructor, NULL};
-// 模块系统字典类型。键是模块名，值是RedisModule结构的指针。
+// 模块系统字典类型.键是模块名,值是RedisModule结构的指针.
 dictType modulesDictType = {dictSdsCaseHash, NULL, NULL, dictSdsKeyCaseCompare, dictSdsDestructor, NULL, NULL};
 // 缓存迁移的dict类型.
 dictType migrateCacheDictType = {dictSdsHash, NULL, NULL, dictSdsKeyCompare, dictSdsDestructor, NULL, NULL};
-// 字典用于使用空终止的C字符串进行不区分大小写的搜索。不过，dict中存储的密钥是sds。
+// 字典用于使用空终止的C字符串进行不区分大小写的搜索.不过,dict中存储的密钥是sds.
 dictType stringSetDictType = {distCStrCaseHash, NULL, NULL, distCStrKeyCaseCompare, dictSdsDestructor, NULL, NULL};
-// 字典用于使用空终止的C字符串进行不区分大小写的搜索。键和值没有析构函数。
+// 字典用于使用空终止的C字符串进行不区分大小写的搜索.键和值没有析构函数.
 dictType externalStringType = {distCStrCaseHash, NULL, NULL, distCStrKeyCaseCompare, NULL, NULL, NULL};
-// 使用zmalloc分配对象作为值的sds对象进行不区分大小写的搜索。
+// 使用zmalloc分配对象作为值的sds对象进行不区分大小写的搜索.
 dictType sdsHashDictType = {dictSdsCaseHash, NULL, NULL, dictSdsKeyCaseCompare, dictSdsDestructor, dictVanillaFree, NULL};
 
 // 检查字典的使用率是否低于系统允许的最小比率
@@ -550,7 +550,7 @@ int htNeedsResize(dict *dict) {
     return (size > DICT_HT_INITIAL_SIZE && (used * 100 / size < HASHTABLE_MIN_FILL));
 }
 
-// 如果HT中已使用插槽的百分比达到HASHTABLE_MIN_FILL，否则调整哈希表的大小以节省内存
+// 如果HT中已使用插槽的百分比达到HASHTABLE_MIN_FILL,否则调整哈希表的大小以节省内存
 void tryResizeHashTables(int dbid) {
     // 16个数据库是否应该调整大小
     if (htNeedsResize(server.db[dbid].dict)) {
@@ -614,12 +614,12 @@ int hasActiveChildProcess() {
 void resetChildState() {
     server.child_type = CHILD_TYPE_NONE;
     server.child_pid = -1;
-    server.stat_current_cow_peak = 0;                                                                // 写入字节时拷贝的峰值大小。
-    server.stat_current_cow_bytes = 0;                                                               // 当子节点处于活动状态时，在写字节上复制。
+    server.stat_current_cow_peak = 0;                                                                // 写入字节时拷贝的峰值大小.
+    server.stat_current_cow_bytes = 0;                                                               // 当子节点处于活动状态时,在写字节上复制.
     server.stat_current_cow_updated = 0;                                                             // stat_current_cow_bytes最近一次更新时间
-    server.stat_current_save_keys_processed = 0;                                                     // 当子节点处于活动状态时，已处理键。
+    server.stat_current_save_keys_processed = 0;                                                     // 当子节点处于活动状态时,已处理键.
     server.stat_module_progress = 0;                                                                 // 模块保存进度
-    server.stat_current_save_keys_total = 0;                                                         // 子程序开始时的键数。
+    server.stat_current_save_keys_total = 0;                                                         // 子程序开始时的键数.
     updateDictResizePolicy();                                                                        // 更新是否允许dict rehash状态
     closeChildInfoPipe();                                                                            // 关闭子进程管道
     moduleFireServerEvent(REDISMODULE_EVENT_FORK_CHILD, REDISMODULE_SUBEVENT_FORK_CHILD_DIED, NULL); // 触发一些事件,由模块捕获,然后执行相应的逻辑
@@ -630,14 +630,14 @@ int isMutuallyExclusiveChildType(int type) {
     return type == CHILD_TYPE_RDB || type == CHILD_TYPE_AOF || type == CHILD_TYPE_MODULE;
 }
 
-// 如果此实例的持久性完全关闭，则返回true: RDB和AOF都被禁用。
+// 如果此实例的持久性完全关闭,则返回true: RDB和AOF都被禁用.
 int allPersistenceDisabled(void) {
     return server.saveparamslen == 0 && server.aof_state == AOF_OFF;
 }
 
 /* ======================= 定时任务: 每100ms调用一次 ======================== */
 
-// 每秒操作样本数组中添加一个指标样本。
+// 每秒操作样本数组中添加一个指标样本.
 void trackInstantaneousMetric(int metric, long long current_reading) {
     // 指标
     long long now = mstime();                                                       // 毫秒
@@ -649,12 +649,12 @@ void trackInstantaneousMetric(int metric, long long current_reading) {
 
     server.inst_metric[metric].samples[server.inst_metric[metric].idx] = ops_sec;
     server.inst_metric[metric].idx++;                       // 往后移一个
-    server.inst_metric[metric].idx %= STATS_METRIC_SAMPLES; // 到达末尾，回到开始
+    server.inst_metric[metric].idx %= STATS_METRIC_SAMPLES; // 到达末尾,回到开始
     server.inst_metric[metric].last_sample_time = now;
     server.inst_metric[metric].last_sample_count = current_reading;
 }
 
-// 返回所有样本的均值。
+// 返回所有样本的均值.
 long long getInstantaneousMetric(int metric) {
     int j;
     long long sum = 0;
@@ -667,7 +667,7 @@ long long getInstantaneousMetric(int metric) {
 // 函数总是返回 0 ,因为它不会中止客户端.
 int clientsCronResizeQueryBuffer(client *c) {
     size_t querybuf_size = sdsalloc(c->querybuf);
-    time_t idletime = server.unixtime - c->lastinteraction; // 空闲时间，秒
+    time_t idletime = server.unixtime - c->lastinteraction; // 空闲时间,秒
 
     // 只有在缓冲区实际上至少浪费了几千bytes时才调整查询缓冲区的大小
     if (sdsavail(c->querybuf) > 1024 * 4) {
@@ -689,7 +689,7 @@ int clientsCronResizeQueryBuffer(client *c) {
 
     // 重置峰值
     c->querybuf_peak = sdslen(c->querybuf);
-    // todo 我们重置为当前使用的或当前处理的批量大小，后者会更大。
+    // todo 我们重置为当前使用的或当前处理的批量大小,后者会更大.
     if (c->bulklen != -1 && (size_t)c->bulklen > c->querybuf_peak)
         c->querybuf_peak = c->bulklen;
     return 0;
@@ -703,11 +703,11 @@ int clientsCronResizeOutputBuffer(client *c, mstime_t now_ms) {
     const size_t buffer_target_shrink_size = c->buf_usable_size / 2;
     const size_t buffer_target_expand_size = c->buf_usable_size * 2;
 
-    // 如果调整大小被禁用，立即返回
+    // 如果调整大小被禁用,立即返回
     if (!server.reply_buffer_resizing_enabled)
         return 0;
     if (buffer_target_shrink_size >= PROTO_REPLY_MIN_BYTES && c->buf_peak < buffer_target_shrink_size) {
-        //  如果最后观察到的缓冲区峰值大小小于缓冲区大小的一半-我们缩小一半。
+        //  如果最后观察到的缓冲区峰值大小小于缓冲区大小的一半-我们缩小一半.
         new_buffer_size = max(PROTO_REPLY_MIN_BYTES, c->buf_peak + 1);
         server.stat_reply_buffer_shrinks++;
     }
@@ -717,7 +717,7 @@ int clientsCronResizeOutputBuffer(client *c, mstime_t now_ms) {
         server.stat_reply_buffer_expands++;
     }
 
-    // 每台服务器重新设置峰值。reply_buffer_peak_reset_time 秒。在客户端空闲的情况下，它将开始收缩。
+    // 每台服务器重新设置峰值.reply_buffer_peak_reset_time 秒.在客户端空闲的情况下,它将开始收缩.
     if (server.reply_buffer_peak_reset_time >= 0 && now_ms - c->buf_peak_last_reset_time >= server.reply_buffer_peak_reset_time) {
         c->buf_peak = c->bufpos; // 记录了buf数组目前已使用的字节数量
         c->buf_peak_last_reset_time = now_ms;
@@ -733,18 +733,18 @@ int clientsCronResizeOutputBuffer(client *c, mstime_t now_ms) {
 }
 
 // 定时追踪 使用大内存的 clients
-// 在INFO输出(客户端部分)，而不必做O(N)扫所有clients。
-// 这就是它的工作原理。我们有一个CLIENTS_PEAK_MEM_USAGE_SLOTS槽数组
-// 我们跟踪每个插槽中最大的客户端输出和输入缓冲区。每个槽都对应最近的一秒，因为数组是通过执行 UNIXTIME % CLIENTS_PEAK_MEM_USAGE_SLOTS 进行索引的。
-// 当我们想要知道最近的内存使用峰值是多少时，我们只需扫描这几个插槽来搜索最大值。
-#define CLIENTS_PEAK_MEM_USAGE_SLOTS 8 // 8个槽位，对应最近8秒钟
+// 在INFO输出(客户端部分),而不必做O(N)扫所有clients.
+// 这就是它的工作原理.我们有一个CLIENTS_PEAK_MEM_USAGE_SLOTS槽数组
+// 我们跟踪每个插槽中最大的客户端输出和输入缓冲区.每个槽都对应最近的一秒,因为数组是通过执行 UNIXTIME % CLIENTS_PEAK_MEM_USAGE_SLOTS 进行索引的.
+// 当我们想要知道最近的内存使用峰值是多少时,我们只需扫描这几个插槽来搜索最大值.
+#define CLIENTS_PEAK_MEM_USAGE_SLOTS 8 // 8个槽位,对应最近8秒钟
 size_t ClientsPeakMemInput[CLIENTS_PEAK_MEM_USAGE_SLOTS] = {0};
 size_t ClientsPeakMemOutput[CLIENTS_PEAK_MEM_USAGE_SLOTS] = {0};
 
 int clientsCronTrackExpansiveClients(client *c, int time_idx) {
     size_t in_usage = sdsZmallocSize(c->querybuf) + c->argv_len_sum + (c->argv ? zmalloc_size(c->argv) : 0);
     size_t out_usage = getClientOutputBufferMemoryUsage(c); // client仍然需要的大小
-    // 跟踪到目前为止在这个槽中观察到的最大值。
+    // 跟踪到目前为止在这个槽中观察到的最大值.
     if (in_usage > ClientsPeakMemInput[time_idx])
         ClientsPeakMemInput[time_idx] = in_usage;
     if (out_usage > ClientsPeakMemOutput[time_idx])
@@ -752,11 +752,11 @@ int clientsCronTrackExpansiveClients(client *c, int time_idx) {
     return 0;
 }
 
-// 所有正常的客户端根据它们当前使用的内存大小被放置在一个“内存使用桶”中。
-// 我们使用这个函数根据给定的内存使用值找到合适的存储桶。
-// 该算法简单地执行log2(mem)来获取桶。这意味着，例如，如果一个客户端的内存使用翻倍，
-// 它就会移动到下一个存储桶，如果它减半，我们就会移动到下一个存储桶。
-// 有关详细信息，请参阅server.h中的CLIENT_MEM_USAGE_BUCKETS文档。
+// 所有正常的客户端根据它们当前使用的内存大小被放置在一个“内存使用桶”中.
+// 我们使用这个函数根据给定的内存使用值找到合适的存储桶.
+// 该算法简单地执行log2(mem)来获取桶.这意味着,例如,如果一个客户端的内存使用翻倍,
+// 它就会移动到下一个存储桶,如果它减半,我们就会移动到下一个存储桶.
+// 有关详细信息,请参阅server.h中的CLIENT_MEM_USAGE_BUCKETS文档.
 static inline clientMemUsageBucket *getMemUsageBucket(size_t mem) {
     int size_in_bits = 8 * (int)sizeof(mem); // 是用多少个字节
     // __builtin_clzl   返回\(x\) 二进制下前导 \(0\) 的个数
@@ -770,16 +770,16 @@ static inline clientMemUsageBucket *getMemUsageBucket(size_t mem) {
     return &server.client_mem_usage_buckets[bucket_idx]; // 内存使用使用大致相同的一个桶集合
 }
 
-// 将客户端添加到内存使用桶中。每个桶包含所有具有大致相同内存的客户端。
-// 通过这种方式，我们将消耗相同数量内存的客户端分组在一起，
-// 并且可以在达到maxmemory-clients(驱逐客户端)时快速释放它们。
+// 将客户端添加到内存使用桶中.每个桶包含所有具有大致相同内存的客户端.
+// 通过这种方式,我们将消耗相同数量内存的客户端分组在一起,
+// 并且可以在达到maxmemory-clients(驱逐客户端)时快速释放它们.
 int updateClientMemUsage(client *c) {
     // https://www.cnblogs.com/luoming1224/articles/16838470.html
     serverAssert(io_threads_op == IO_THREADS_OP_IDLE);
     size_t mem = getClientMemoryUsage(c, NULL); // 获取客户端连接使用的内存
     int type = getClientType(c);
 
-    // 从旧类别中删除客户端使用的内存的旧值，并将其添加回来。
+    // 从旧类别中删除客户端使用的内存的旧值,并将其添加回来.
     if (type != c->last_memory_type) {
         // 之前得记录过
         // 之前类型的 内存使用情况 减少 当前client的内存
@@ -797,11 +797,11 @@ int updateClientMemUsage(client *c) {
                              type == CLIENT_TYPE_NORMAL || type == CLIENT_TYPE_PUBSUB) && //
                          !(c->flags & CLIENT_NO_EVICT);
 
-    // 连接的类型可能发生变化，所以
+    // 连接的类型可能发生变化,所以
     if (c->mem_usage_bucket) {
         // 先在该连接原来所属bucket中减去其之前使用的内存
         c->mem_usage_bucket->mem_usage_sum -= c->last_memory_usage;
-        // 如果不再属于可以被驱逐的类型，则从bucket中删掉
+        // 如果不再属于可以被驱逐的类型,则从bucket中删掉
         if (!allow_eviction) {
             listDelNode(c->mem_usage_bucket->clients, c->mem_usage_bucket_node);
             c->mem_usage_bucket = NULL;
@@ -812,7 +812,7 @@ int updateClientMemUsage(client *c) {
         // 计算当前使用的内存在连接驱逐池中所属bucket
         clientMemUsageBucket *bucket = getMemUsageBucket(mem);
         bucket->mem_usage_sum += mem; // 在所属bucket中加上该连接所使用的内存
-        // 如果该连接所属bucket发生变化，则先从原来的bucket中删掉，再加入新的bucket
+        // 如果该连接所属bucket发生变化,则先从原来的bucket中删掉,再加入新的bucket
         if (bucket != c->mem_usage_bucket) {
             if (c->mem_usage_bucket)
                 listDelNode(c->mem_usage_bucket->clients, c->mem_usage_bucket_node);
@@ -821,28 +821,28 @@ int updateClientMemUsage(client *c) {
             c->mem_usage_bucket_node = listLast(bucket->clients);
         }
     }
-    // 记住我们添加了什么，下次再删除它。
+    // 记住我们添加了什么,下次再删除它.
     c->last_memory_usage = mem;
     return 0;
 }
 
-// 从serverCron和cronUpdateMemoryStats调用来更新缓存的内存指标。
+// 从serverCron和cronUpdateMemoryStats调用来更新缓存的内存指标.
 void cronUpdateMemoryStats() {
-    // 记录自服务器启动以来所使用的最大内存。
+    // 记录自服务器启动以来所使用的最大内存.
     if (zmalloc_used_memory() > server.stat_peak_memory)
         server.stat_peak_memory = zmalloc_used_memory();
 
     run_with_period(100) { // 100毫秒执行一次
-                           // 这里对RSS和其他指标进行抽样，因为这是一个相对较慢的调用。
-                           //*我们必须采样zmalloc_used的同时，我们采取rss，否则碎片比率计算可能会关闭(两个样本在不同时间的比率)
+                           // 这里对RSS和其他指标进行抽样,因为这是一个相对较慢的调用.
+                           //*我们必须采样zmalloc_used的同时,我们采取rss,否则碎片比率计算可能会关闭(两个样本在不同时间的比率)
         server.cron_malloc_stats.process_rss = zmalloc_get_rss();
         server.cron_malloc_stats.zmalloc_used = zmalloc_used_memory();
-        // 对分配器信息进行采样可能很慢。
-        //*它将显示的碎片率可能更准确，它排除了其他RSS页面，如:共享库，LUA和其他非zmalloc分配，和分配器保留页面，可以被占用(所有不是实际的碎片)
+        // 对分配器信息进行采样可能很慢.
+        //*它将显示的碎片率可能更准确,它排除了其他RSS页面,如:共享库,LUA和其他非zmalloc分配,和分配器保留页面,可以被占用(所有不是实际的碎片)
         zmalloc_get_allocator_info(&server.cron_malloc_stats.allocator_allocated, &server.cron_malloc_stats.allocator_active, &server.cron_malloc_stats.allocator_resident);
-        // 如果分配器没有提供这些统计数据，伪造它们，这样碎片信息仍然显示一些(不准确的指标)
+        // 如果分配器没有提供这些统计数据,伪造它们,这样碎片信息仍然显示一些(不准确的指标)
         if (!server.cron_malloc_stats.allocator_resident) {
-            // LUA内存不是zmalloc_used的一部分，但它是进程RSS的一部分，所以我们必须扣除它，以便能够计算正确的“分配器碎片”比率
+            // LUA内存不是zmalloc_used的一部分,但它是进程RSS的一部分,所以我们必须扣除它,以便能够计算正确的“分配器碎片”比率
             size_t lua_memory = evalMemory();
             server.cron_malloc_stats.allocator_resident = server.cron_malloc_stats.process_rss - lua_memory;
         }
@@ -853,7 +853,7 @@ void cronUpdateMemoryStats() {
     }
 }
 
-// 返回 跟踪中的客户端内存使用的最大样本。[输入、输出缓冲区]
+// 返回 跟踪中的客户端内存使用的最大样本.[输入、输出缓冲区]
 void getExpansiveClientsInfo(size_t *in_usage, size_t *out_usage) {
     size_t i = 0, o = 0;
     for (int j = 0; j < CLIENTS_PEAK_MEM_USAGE_SLOTS; j++) {
@@ -866,10 +866,10 @@ void getExpansiveClientsInfo(size_t *in_usage, size_t *out_usage) {
     *out_usage = o;
 }
 
-// 该函数由serverCron()调用，用于在客户端上执行需要经常执行的重要操作。
-// 例如，我们使用这个函数来在超时后断开客户端，包括在某些阻塞命令中阻塞的客户端，超时时间为非零。
-// 该函数努力每秒处理所有客户端，即使这不能严格保证，因为调用serverCron()的实际频率可能低于server。Hz的情况下延迟事件，如缓慢的命令。
-// 对于这个函数和它调用的函数来说，非常重要的是要非常快:有时Redis有几十个连接的客户端，以及默认的服务器。Hz值为10，因此有时我们需要每秒处理数千个客户端，将此函数转换为延迟的来源。
+// 该函数由serverCron()调用,用于在客户端上执行需要经常执行的重要操作.
+// 例如,我们使用这个函数来在超时后断开客户端,包括在某些阻塞命令中阻塞的客户端,超时时间为非零.
+// 该函数努力每秒处理所有客户端,即使这不能严格保证,因为调用serverCron()的实际频率可能低于server.Hz的情况下延迟事件,如缓慢的命令.
+// 对于这个函数和它调用的函数来说,非常重要的是要非常快:有时Redis有几十个连接的客户端,以及默认的服务器.Hz值为10,因此有时我们需要每秒处理数千个客户端,将此函数转换为延迟的来源.
 #define CLIENTS_CRON_MIN_ITERATIONS 5
 
 void clientsCron(void) {
@@ -881,7 +881,7 @@ void clientsCron(void) {
 
     mstime_t now = mstime();
 
-    // 处理至少几个客户端，即使我们需要处理少于CLIENTS_CRON_MIN_ITERATIONS来满足每秒处理每个客户端一次的约定。
+    // 处理至少几个客户端,即使我们需要处理少于CLIENTS_CRON_MIN_ITERATIONS来满足每秒处理每个客户端一次的约定.
     if (iterations < CLIENTS_CRON_MIN_ITERATIONS) // 至少要处理 5 个客户端
         iterations = (numclients < CLIENTS_CRON_MIN_ITERATIONS) ? numclients : CLIENTS_CRON_MIN_ITERATIONS;
 
@@ -906,7 +906,7 @@ void clientsCron(void) {
             continue;
         if (updateClientMemUsage(c)) // 针对client   更新每种类型client 所有内存的使用情况
             continue;
-        if (closeClientOnOutputBufferLimitReached(c, 0)) // 如果达到输出缓冲区大小的软限制或硬限制，异步关闭客户端。
+        if (closeClientOnOutputBufferLimitReached(c, 0)) // 如果达到输出缓冲区大小的软限制或硬限制,异步关闭客户端.
             continue;
     }
 }
@@ -916,25 +916,25 @@ void databasesCron(void) {
     if (server.active_expire_enabled) { // 是否启用自动过期
         if (iAmMaster()) {              // 如果服务器不是从服务器,那么执行主动过期键清除
             // 清除模式为 CYCLE_SLOW ,这个模式会尽量多清除过期键
-            activeExpireCycle(ACTIVE_EXPIRE_CYCLE_SLOW); // 清理主实例的过期键。
+            activeExpireCycle(ACTIVE_EXPIRE_CYCLE_SLOW); // 清理主实例的过期键.
         }
         else {
-            expireSlaveKeys(); // 清理从实例上的过期键。
+            expireSlaveKeys(); // 清理从实例上的过期键.
         }
     }
 
     // 逐步清理keys
     activeDefragCycle();
 
-    // 如果需要，执行哈希表重哈希，但仅当没有其他进程将DB保存在磁盘上时。
-    // 否则重哈希是不好的，因为会导致大量内存页的写时复制。
+    // 如果需要,执行哈希表重哈希,但仅当没有其他进程将DB保存在磁盘上时.
+    // 否则重哈希是不好的,因为会导致大量内存页的写时复制.
 
     // 在没有 BGSAVE 或者 BGREWRITEAOF 执行时,对哈希表进行 rehash
     if (!hasActiveChildProcess()) {
-        // 我们使用全局计数器，因此如果我们在给定的DB处停止计算，我们将能够在下一个cron循环迭代中从连续的开始。
+        // 我们使用全局计数器,因此如果我们在给定的DB处停止计算,我们将能够在下一个cron循环迭代中从连续的开始.
         static unsigned int resize_db = 0;
         static unsigned int rehash_db = 0;
-        int dbs_per_call = CRON_DBS_PER_CALL; // 每次调用，处理的数据量
+        int dbs_per_call = CRON_DBS_PER_CALL; // 每次调用,处理的数据量
         int j;
 
         if (dbs_per_call > server.dbnum)
@@ -942,7 +942,7 @@ void databasesCron(void) {
 
         // 调整字典的大小
         for (j = 0; j < dbs_per_call; j++) {
-            // 如果HT中已使用插槽的百分比达到HASHTABLE_MIN_FILL，否则调整哈希表的大小以节省内存
+            // 如果HT中已使用插槽的百分比达到HASHTABLE_MIN_FILL,否则调整哈希表的大小以节省内存
             tryResizeHashTables(resize_db % server.dbnum);
             resize_db++;
         }
@@ -952,7 +952,7 @@ void databasesCron(void) {
             for (j = 0; j < dbs_per_call; j++) {
                 int work_done = incrementallyRehash(rehash_db); // 主动触发rehash
                 if (work_done) {
-                    // 如果函数做了一些工作，那么就到此为止，我们将在下一个cron循环中做更多工作。
+                    // 如果函数做了一些工作,那么就到此为止,我们将在下一个cron循环中做更多工作.
                     break;
                 }
                 else {
@@ -997,8 +997,8 @@ void checkChildrenDone(void) {
     pid_t pid;
     // waitpid主要用于根据进程ID号等待指定的子进程
     if ((pid = waitpid(-1, &statloc, WNOHANG)) != 0) {
-        // WIFEXITED(status) 若此值为非0 表明进程正常结束。
-        // WIFSIGNALED(status)为非0 表明进程异常终止。
+        // WIFEXITED(status) 若此值为非0 表明进程正常结束.
+        // WIFSIGNALED(status)为非0 表明进程异常终止.
         // WEXITSTATUS(status)获取进程退出状态(exit时参数)
         int exitcode = WIFEXITED(statloc) ? WEXITSTATUS(statloc) : -1;
         int bysignal = 0;
@@ -1007,7 +1007,7 @@ void checkChildrenDone(void) {
             bysignal = WTERMSIG(statloc);
         }
 
-        // sigKillChildHandler捕获信号并调用exit()，但我们必须确保不要错误地标记lastbgsave_status等。我们可以直接通过SIGUSR1终止子进程，而不处理它
+        // sigKillChildHandler捕获信号并调用exit(),但我们必须确保不要错误地标记lastbgsave_status等.我们可以直接通过SIGUSR1终止子进程,而不处理它
         if (exitcode == SERVER_CHILD_NOERROR_RETVAL) {
             bysignal = SIGUSR1;
             exitcode = 1;
@@ -1020,8 +1020,8 @@ void checkChildrenDone(void) {
             if (server.child_type == CHILD_TYPE_RDB) { // BGSAVE 执行完毕
                 backgroundSaveDoneHandler(exitcode, bysignal);
             }
-            else if (server.child_type == CHILD_TYPE_AOF) { // BGREWRITEAOF 执行完毕
-                backgroundRewriteDoneHandler(exitcode, bysignal);
+            else if (server.child_type == CHILD_TYPE_AOF) {       // BGREWRITEAOF 执行完毕
+                backgroundRewriteDoneHandler(exitcode, bysignal); // rewriteAppendOnlyFile  ->  [rdbSaveRio、rewriteAppendOnlyFileRio]
             }
             else if (server.child_type == CHILD_TYPE_MODULE) { // module 子进程
                 ModuleForkDoneHandler(exitcode, bysignal);
@@ -1036,11 +1036,11 @@ void checkChildrenDone(void) {
         }
         else {
             if (!ldbRemoveChild(pid)) {
-                serverLog(LL_WARNING, "警告，检测到子pid不匹配: %ld", (long)pid);
+                serverLog(LL_WARNING, "警告,检测到子pid不匹配: %ld", (long)pid);
             }
         }
 
-        // 立即启动任何挂起的fork。
+        // 立即启动任何挂起的fork.
         replicationStartPendingFork();
     }
 }
@@ -1069,7 +1069,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     updateCachedTime(1);
 
     server.hz = server.config_hz;
-    // 调整服务器。Hz值为已配置的客户端数量。如果我们有很多客户端，我们希望以更高的频率调用serverCron()。
+    // 调整服务器.Hz值为已配置的客户端数量.如果我们有很多客户端,我们希望以更高的频率调用serverCron().
     if (server.dynamic_hz) {
         while (listLength(server.clients) / server.hz > MAX_CLIENTS_PER_CLOCK_TICK) {
             server.hz *= 2;
@@ -1080,7 +1080,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
         }
     }
 
-    // 出于调试目的:如果pause_cron打开，则跳过实际的cron工作
+    // 出于调试目的:如果pause_cron打开,则跳过实际的cron工作
     if (server.pause_cron) {
         return 1000 / server.hz;
     }
@@ -1100,7 +1100,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     cronUpdateMemoryStats();
 
     // 如果收到进程结束信号,则执行server关闭操作
-    if (server.shutdown_asap && !isShutdownInitiated()) { // 有shutdown的标志，但还没shutdown
+    if (server.shutdown_asap && !isShutdownInitiated()) { // 有shutdown的标志,但还没shutdown
         int shutdownFlags = SHUTDOWN_NOFLAGS;
         if (server.last_sig_received == SIGINT && server.shutdown_on_sigint)
             shutdownFlags = server.shutdown_on_sigint;
@@ -1194,11 +1194,11 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
                 !aofRewriteLimited()                 // AOF 文件大小绝对值没有超出阈值
             ) {
                 serverLog(LL_NOTICE, "开始自动重写aof %lld%% growth", growth);
-                rewriteAppendOnlyFileBackground(); // serverCron
+                rewriteAppendOnlyFileBackground(); // serverCron   重写AOF
             }
         }
     }
-    // 只是为了进行防御性编程，避免在需要时忘记调用此函数。
+    // 只是为了进行防御性编程,避免在需要时忘记调用此函数.
 
     updateDictResizePolicy();
 
@@ -1218,7 +1218,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
         }
     }
 
-    // 如果需要，清除暂停的客户端状态。
+    // 如果需要,清除暂停的客户端状态.
     checkClientPauseTimeoutAndReturnIfPaused();
 
     // 重新连接主服务器、向主服务器发送 ACK 、判断数据发送失败情况、断开本服务器超时的从服务器,等等
@@ -1231,7 +1231,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
         run_with_period(1000) replicationCron();
     }
 
-    // 每100ms执行一次，集群模式下  就向一个随机节点发送 gossip 信息
+    // 每100ms执行一次,集群模式下  就向一个随机节点发送 gossip 信息
     run_with_period(100) {
         if (server.cluster_enabled) {
             // 如果服务器运行在集群模式下,那么执行集群操作
@@ -1245,22 +1245,22 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     }
 
     run_with_period(1000) {
-        migrateCloseTimedoutSockets(); // 集群: 清除过期的MIGRATE cached socket。
+        migrateCloseTimedoutSockets(); // 集群: 清除过期的MIGRATE cached socket.
     }
 
     // 如果没有阻塞的工作,停止子线程
     stopThreadedIOIfNeeded();
 
-    // 如果需要，调整跟踪键表的大小。
-    // 这也是在每个命令执行时执行的，但是我们希望确保如果最后执行的命令通过CONFIG SET改变了值，即使完全空闲，服务器也会执行该操作。
+    // 如果需要,调整跟踪键表的大小.
+    // 这也是在每个命令执行时执行的,但是我们希望确保如果最后执行的命令通过CONFIG SET改变了值,即使完全空闲,服务器也会执行该操作.
     if (server.tracking_clients) {
         trackingLimitUsedSlots();
     }
 
-    // 如果设置了相应标志位，则启动定时BGSAVE。
-    // 当我们因为AOF重写正在进行而被迫推迟BGSAVE时，这很有用。
-    // 注意:这段代码必须在上面的replicationCron()调用之后，所以在重构这个文件时确保保持这个顺序。
-    // 这很有用，因为我们希望优先考虑用于复制的RDB。
+    // 如果设置了相应标志位,则启动定时BGSAVE.
+    // 当我们因为AOF重写正在进行而被迫推迟BGSAVE时,这很有用.
+    // 注意:这段代码必须在上面的replicationCron()调用之后,所以在重构这个文件时确保保持这个顺序.
+    // 这很有用,因为我们希望优先考虑用于复制的RDB.
     if (!hasActiveChildProcess() &&                                                                               //
         server.rdb_bgsave_scheduled &&                                                                            //
         (server.unixtime - server.lastbgsave_try > CONFIG_BGSAVE_RETRY_DELAY || server.lastbgsave_status == C_OK) //
@@ -1277,7 +1277,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
         }
     }
 
-    // 触发cron循环模块事件。
+    // 触发cron循环模块事件.
     RedisModuleCronLoopV1 ei = {REDISMODULE_CRON_LOOP_VERSION, server.hz};
     moduleFireServerEvent(REDISMODULE_EVENT_CRON_LOOP, 0, &ei);
 
@@ -1300,11 +1300,11 @@ void blockingOperationEnds() {
     }
 }
 
-// 这个函数在RDB或AOF运行过程中，以及在阻塞的脚本过程中 填补了serverCron的作用。
-// 它试图以与配置的服务器相似的速度完成其职责，并更新 cronloops 变量，以便与serverCron相似，可以使用run_with_period。
+// 这个函数在RDB或AOF运行过程中,以及在阻塞的脚本过程中 填补了serverCron的作用.
+// 它试图以与配置的服务器相似的速度完成其职责,并更新 cronloops 变量,以便与serverCron相似,可以使用run_with_period.
 void whileBlockedCron() { //
-    // 在这里，我们可能想执行一些cron作业（通常是每秒做server.hz次）。
-    // 由于这个函数依赖于对blockingOperationStarts的调用，让我们确保它被完成。
+    // 在这里,我们可能想执行一些cron作业（通常是每秒做server.hz次）.
+    // 由于这个函数依赖于对blockingOperationStarts的调用,让我们确保它被完成.
     serverAssert(server.blocked_last_cron);
 
     if (server.blocked_last_cron >= server.mstime)
@@ -1313,9 +1313,9 @@ void whileBlockedCron() { //
     mstime_t latency;
     latencyStartMonitor(latency);
 
-    // 在某些情况下，我们可能会被调用大的时间间隔，所以我们可能需要在这里做额外的工作。
-    // 这是因为serverCron中的一些函数依赖于每10毫秒左右执行一次的事实。
-    // 例如，如果activeDefragCycle需要利用25%的cpu，它将利用2.5ms，所以我们 需要多次调用它。
+    // 在某些情况下,我们可能会被调用大的时间间隔,所以我们可能需要在这里做额外的工作.
+    // 这是因为serverCron中的一些函数依赖于每10毫秒左右执行一次的事实.
+    // 例如,如果activeDefragCycle需要利用25%的cpu,它将利用2.5ms,所以我们 需要多次调用它.
     long hz_ms = 1000 / server.hz;
     while (server.blocked_last_cron < server.mstime) {
         // 逐步整理keys,没有逻辑
@@ -1332,14 +1332,14 @@ void whileBlockedCron() { //
     latencyEndMonitor(latency);
     latencyAddSampleIfNeeded("while-blocked-cron", latency);
 
-    // 我们在加载过程中收到了一个SIGTERM，在这里以安全的方式关闭，因为在信号处理程序中这样做是不正确的。
+    // 我们在加载过程中收到了一个SIGTERM,在这里以安全的方式关闭,因为在信号处理程序中这样做是不正确的.
     if (server.shutdown_asap && server.loading) {
         // 尝试关闭服务器
         if (prepareForShutdown(SHUTDOWN_NOSAVE) == C_OK) {
             exit(0);
         }
         // 如果关闭失败,那么打印 LOG ,并移除关闭标识
-        serverLog(LL_WARNING, "已收到SIGTERM，但试图关闭服务器时出错，请检查日志以获取更多信息");
+        serverLog(LL_WARNING, "已收到SIGTERM,但试图关闭服务器时出错,请检查日志以获取更多信息");
         server.shutdown_asap = 0;
         server.last_sig_received = 0;
     }
@@ -1473,7 +1473,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
 void afterSleep(struct aeEventLoop *eventLoop) {
     UNUSED(eventLoop);
 
-    // 获取模块GIL，这样它们的线程就不会触及任何东西。
+    // 获取模块GIL,这样它们的线程就不会触及任何东西.
     if (!ProcessingEventsWhileBlocked) { //
         if (moduleCount()) {
             mstime_t latency;
@@ -1525,7 +1525,7 @@ void createSharedObjects(void) {
     shared.noreplicaserr = createObject(OBJ_STRING, sdsnew("-NOREPLICAS 没有足够好的副本可以写.\r\n"));
     shared.busykeyerr = createObject(OBJ_STRING, sdsnew("-BUSYKEY 目标key已经存在.\r\n"));
 
-    // 共享NULL取决于协议版本。
+    // 共享NULL取决于协议版本.
     shared.null[0] = NULL;
     shared.null[1] = NULL;
     shared.null[2] = createObject(OBJ_STRING, sdsnew("$-1\r\n"));
@@ -1624,9 +1624,9 @@ void createSharedObjects(void) {
         shared.maphdr[j] = createObject(OBJ_STRING, sdscatprintf(sdsempty(), "%%%d\r\n", j));
         shared.sethdr[j] = createObject(OBJ_STRING, sdscatprintf(sdsempty(), "~%d\r\n", j));
     }
-    // 下面两个共享对象，minstring和maxstring，实际上不是用于它们的值，而是作为一个特殊对象，分别表示
+    // 下面两个共享对象,minstring和maxstring,实际上不是用于它们的值,而是作为一个特殊对象,分别表示
     // 最小的字符串和最大的字符串
-    // ZRANGEBYLEX命令的字符串比较中的字符串。
+    // ZRANGEBYLEX命令的字符串比较中的字符串.
     shared.minstring = sdsnew("minstring");
     shared.maxstring = sdsnew("maxstring");
 }
@@ -1743,7 +1743,7 @@ void initServerConfig(void) {
     // 初始化命令表
     // 在这里初始化是因为接下来读取 .conf 文件时可能会用到这些命令
     server.commands = dictCreate(&commandTableDictType);      // 大小写不敏感哈希   创建、析构   ,这个数据可以被配置文件中修改
-    server.orig_commands = dictCreate(&commandTableDictType); // 支持的命令，原生的，不支持修改
+    server.orig_commands = dictCreate(&commandTableDictType); // 支持的命令,原生的,不支持修改
 
     populateCommandTable(); // 开始填充Redis命令表.  redisCommandTable
 
@@ -1753,17 +1753,17 @@ void initServerConfig(void) {
 
 extern char **environ;
 
-// 重新启动服务器，使用相同的参数和配置文件执行启动此实例的相同可执行文件。
-// 该函数被设计为直接调用execve()，以便新的服务器实例将保留前一个实例的PID。
-// 标记列表，可以按位or排列在一起，改变这个函数的行为:
-// RESTART_SERVER_NONE无标志。
-// 在重新启动之前适当地关闭。
-// RESTART_SERVER_CONFIG_REWRITE重启前重新编写配置文件。
-// 如果成功，该函数将不返回，因为该进程将变成另一个进程。错误时返回C_ERR。
+// 重新启动服务器,使用相同的参数和配置文件执行启动此实例的相同可执行文件.
+// 该函数被设计为直接调用execve(),以便新的服务器实例将保留前一个实例的PID.
+// 标记列表,可以按位or排列在一起,改变这个函数的行为:
+// RESTART_SERVER_NONE无标志.
+// 在重新启动之前适当地关闭.
+// RESTART_SERVER_CONFIG_REWRITE重启前重新编写配置文件.
+// 如果成功,该函数将不返回,因为该进程将变成另一个进程.错误时返回C_ERR.
 int restartServer(int flags, mstime_t delay) {
     int j;
 
-    // 检查我们是否仍然可以访问启动这个服务器实例的可执行文件。
+    // 检查我们是否仍然可以访问启动这个服务器实例的可执行文件.
     if (access(server.executable, X_OK) == -1) {
         serverLog(LL_WARNING, "无法重新启动:此进程没有执行权限%s", server.executable);
         return C_ERR;
@@ -1774,22 +1774,22 @@ int restartServer(int flags, mstime_t delay) {
         serverLog(LL_WARNING, "不能重新启动:配置重写过程失败: %s", strerror(errno));
         return C_ERR;
     }
-    // 执行正确的关机操作。但我们不会等待滞后的副本。
+    // 执行正确的关机操作.但我们不会等待滞后的副本.
     if (flags & RESTART_SERVER_GRACEFULLY && prepareForShutdown(SHUTDOWN_NOW) != C_OK) {
         serverLog(LL_WARNING, "无法重新启动:准备关机时出错");
         return C_ERR;
     }
 
-    // 关闭所有的文件描述符，除了stdin, stdout, stderr，如果我们重新启动一个没有守护的Redis服务器是有用的。
+    // 关闭所有的文件描述符,除了stdin, stdout, stderr,如果我们重新启动一个没有守护的Redis服务器是有用的.
     for (j = 3; j < (int)server.maxclients + 1024; j++) {
-        // 在关闭描述符之前测试它的有效性，否则Valgrind会对close()发出警告。
-        // 取得close-on-exec flag。若此 flag 的FD_CLOEXEC位为0，代表在调用exec()相关函数时文件将不会关闭。
+        // 在关闭描述符之前测试它的有效性,否则Valgrind会对close()发出警告.
+        // 取得close-on-exec flag.若此 flag 的FD_CLOEXEC位为0,代表在调用exec()相关函数时文件将不会关闭.
         if (fcntl(j, F_GETFD) != -1) {
             close(j);
         }
     }
 
-    // 使用原始命令行执行服务器。
+    // 使用原始命令行执行服务器.
     if (delay) {
         usleep(delay * 1000);
     }
@@ -1798,7 +1798,7 @@ int restartServer(int flags, mstime_t delay) {
     server.exec_argv[0] = zstrdup(server.executable);
     execve(server.executable, server.exec_argv, environ);
 
-    // 如果这里发生错误，我们什么也做不了，只能退出。
+    // 如果这里发生错误,我们什么也做不了,只能退出.
     _exit(1);
 
     return C_ERR;
@@ -1911,20 +1911,20 @@ void adjustOpenFilesLimit(void) {
                     break;
                 setrlimit_error = errno;
 
-                // 我们未能将文件限制设置为“bestlimit”。尝试使用较小的限制，每次迭代减少几个fd。
+                // 我们未能将文件限制设置为“bestlimit”.尝试使用较小的限制,每次迭代减少几个fd.
                 if (bestlimit < decr_step)
                     break;
                 bestlimit -= decr_step;
             }
 
-            // 假设我们最初得到的极限仍然有效如果我们最后一次尝试更低。
+            // 假设我们最初得到的极限仍然有效如果我们最后一次尝试更低.
             if (bestlimit < oldlimit)
                 bestlimit = oldlimit;
 
             if (bestlimit < maxfiles) {
                 unsigned int old_maxclients = server.maxclients;
                 server.maxclients = bestlimit - CONFIG_MIN_RESERVED_FDS;
-                // Maxclients是无符号的，所以可能溢出:为了检查Maxclients现在逻辑上是否小于1，我们通过bestlimit间接测试。
+                // Maxclients是无符号的,所以可能溢出:为了检查Maxclients现在逻辑上是否小于1,我们通过bestlimit间接测试.
                 if (bestlimit <= CONFIG_MIN_RESERVED_FDS) {
                     serverLog(LL_WARNING, "你目前的'ulimit -n'为%llu,不足以让服务器启动.请将你的打开文件限制增加到至少%llu.退出.", (unsigned long long)oldlimit, (unsigned long long)maxfiles);
                     exit(1);
@@ -1964,7 +1964,7 @@ void checkTcpBacklogSettings(void) {
 
     if (sysctl(mib, 3, &somaxconn, &len, NULL, 0) == 0) {
         if (somaxconn > 0 && somaxconn < server.tcp_backlog) {
-            serverLog(LL_WARNING, "警告：由于 kern.ipc.somaxconn 被设置为较低的值%d，所以无法执行设置TCP backlog: %d [全连接队列数量=min(backlog,somaxconn)]。", server.tcp_backlog, somaxconn);
+            serverLog(LL_WARNING, "警告：由于 kern.ipc.somaxconn 被设置为较低的值%d,所以无法执行设置TCP backlog: %d [全连接队列数量=min(backlog,somaxconn)].", server.tcp_backlog, somaxconn);
         }
     }
 #elif defined(HAVE_SYSCTL_KERN_SOMAXCONN)
@@ -1976,7 +1976,7 @@ void checkTcpBacklogSettings(void) {
 
     if (sysctl(mib, 2, &somaxconn, &len, NULL, 0) == 0) {
         if (somaxconn > 0 && somaxconn < server.tcp_backlog) {
-            serverLog(LL_WARNING, "警告：由于 kern.ipc.somaxconn 被设置为较低的值%d，所以无法执行设置TCP backlog: %d [全连接队列数量=min(backlog,somaxconn)]。", server.tcp_backlog, somaxconn);
+            serverLog(LL_WARNING, "警告：由于 kern.ipc.somaxconn 被设置为较低的值%d,所以无法执行设置TCP backlog: %d [全连接队列数量=min(backlog,somaxconn)].", server.tcp_backlog, somaxconn);
         }
     }
 #elif defined(SOMAXCONN)
@@ -2775,9 +2775,9 @@ static void propagateNow(int dbid, robj **argv, int argc, int target) {
         replicationFeedSlaves(server.slaves, dbid, argv, argc);
 }
 
-// 在命令内部使用，用于在当前命令传播到AOF / Replication之后安排其他命令的传播。
-// dbid是命令应该传播到的数据库ID。要传播的命令的参数作为len 'argc'的redis对象指针数组传递，使用'argv'向量。
-// 该函数不接受传递的'argv'向量的引用，因此由调用者释放传递的argv(但它通常是堆栈分配的)。该函数自动增加传递对象的ref计数，因此调用者不需要这样做。
+// 在命令内部使用,用于在当前命令传播到AOF / Replication之后安排其他命令的传播.
+// dbid是命令应该传播到的数据库ID.要传播的命令的参数作为len 'argc'的redis对象指针数组传递,使用'argv'向量.
+// 该函数不接受传递的'argv'向量的引用,因此由调用者释放传递的argv(但它通常是堆栈分配的).该函数自动增加传递对象的ref计数,因此调用者不需要这样做.
 void alsoPropagate(int dbid, robj **argv, int argc, int target) {
     robj **argvcopy;
     int j;
@@ -2793,7 +2793,7 @@ void alsoPropagate(int dbid, robj **argv, int argc, int target) {
     redisOpArrayAppend(&server.also_propagate, dbid, argvcopy, argc, target);
 }
 
-// 可以在Redis命令实现中调用函数 forceCommandPropagation()，以强制将特定命令的执行传播到AOF/Replication中。
+// 可以在Redis命令实现中调用函数 forceCommandPropagation(),以强制将特定命令的执行传播到AOF/Replication中.
 void forceCommandPropagation(client *c, int flags) {
     serverAssert(c->cmd->flags & (CMD_WRITE | CMD_MAY_REPLICATE));
     if (flags & PROPAGATE_REPL)
@@ -2802,7 +2802,7 @@ void forceCommandPropagation(client *c, int flags) {
         c->flags |= CLIENT_FORCE_AOF;
 }
 
-// 完全避免传播所执行的命令。这样我们就可以使用alsoPropagate() API自由地传播我们想要的东西。
+// 完全避免传播所执行的命令.这样我们就可以使用alsoPropagate() API自由地传播我们想要的东西.
 void preventCommandPropagation(client *c) {
     c->flags |= CLIENT_PREVENT_PROP; // 阻止命令传播到aof、repl
 }
@@ -2832,7 +2832,7 @@ void updateCommandLatencyHistogram(struct hdr_histogram **latency_histogram, int
     hdr_record_value(*latency_histogram, duration_hist);
 }
 
-// 处理alsoPropagate() API来处理想要传播多个分离命令的命令。注意，alsoPropagate()不受CLIENT_PREVENT_PROP标志的影响。
+// 处理alsoPropagate() API来处理想要传播多个分离命令的命令.注意,alsoPropagate()不受CLIENT_PREVENT_PROP标志的影响.
 void propagatePendingCommands() {
     if (server.also_propagate.numops == 0)
         return;
@@ -2841,11 +2841,11 @@ void propagatePendingCommands() {
     redisOp *rop;
     int multi_emitted = 0;
 
-    // 在服务器中包装命令。但如果我们已经在MULTI上下文中，就不要包装它，以防嵌套的MULTI/EXEC。
-    // 如果数组只包含一个命令，则不需要对其进行换行，因为单个命令是原子的。
+    // 在服务器中包装命令.但如果我们已经在MULTI上下文中,就不要包装它,以防嵌套的MULTI/EXEC.
+    // 如果数组只包含一个命令,则不需要对其进行换行,因为单个命令是原子的.
     if (server.also_propagate.numops > 1 && !server.propagate_no_multi) { // 允许传播事务
 
-        // 我们使用第一个传播命令来为MULTI设置dbid，这样SELECT将提前传播
+        // 我们使用第一个传播命令来为MULTI设置dbid,这样SELECT将提前传播
         int multi_dbid = server.also_propagate.ops[0].dbid;
         propagateNow(multi_dbid, &shared.multi, 1, PROPAGATE_AOF | PROPAGATE_REPL);
         multi_emitted = 1;
@@ -3051,7 +3051,7 @@ void call(client *c, int flags) {
             propagate_flags |= PROPAGATE_AOF;
         }
 
-        /* 但是，如果命令实现调用preventCommandPropagation()或类似的方法，或者如果我们没有call()标志来这样做，则防止AOF / replication传播。 */
+        /* 但是,如果命令实现调用preventCommandPropagation()或类似的方法,或者如果我们没有call()标志来这样做,则防止AOF / replication传播. */
         if (c->flags & CLIENT_PREVENT_REPL_PROP || !(flags & CMD_CALL_PROPAGATE_REPL)) {
             propagate_flags &= ~PROPAGATE_REPL;
         }
@@ -3144,19 +3144,19 @@ void rejectCommandFormat(client *c, const char *fmt, ...) {
     rejectCommandSds(c, s);
 }
 
-// 这是在call命令后调用的，我们可以在其中做一些维护工作。
+// 这是在call命令后调用的,我们可以在其中做一些维护工作.
 void afterCommand(client *c) {
     UNUSED(c);
     if (!server.in_nested_call) {
-        // 如果我们在最顶端的call()，我们可以传播我们积累的东西。应该在trackingHandlePendingKeyInvalidations之前完成，以便我们在无效缓存之前回复客户端(更有意义)
+        // 如果我们在最顶端的call(),我们可以传播我们积累的东西.应该在trackingHandlePendingKeyInvalidations之前完成,以便我们在无效缓存之前回复客户端(更有意义)
         if (server.core_propagates)
             propagatePendingCommands();
-        /* 仅当不在嵌套调用时刷新挂起的无效消息。因此消息不会与事务响应交织。*/
+        /* 仅当不在嵌套调用时刷新挂起的无效消息.因此消息不会与事务响应交织.*/
         trackingHandlePendingKeyInvalidations();
     }
 }
 
-// 对于参数中可能包含键名的命令，返回1，但传统范围规范没有涵盖所有这些命令。
+// 对于参数中可能包含键名的命令,返回1,但传统范围规范没有涵盖所有这些命令.
 void populateCommandMovableKeys(struct redisCommand *cmd) {
     int movablekeys = 0;
     if (cmd->getkeys_proc && !(cmd->flags & CMD_MODULE)) {
@@ -3166,10 +3166,10 @@ void populateCommandMovableKeys(struct redisCommand *cmd) {
         movablekeys = 1;
     }
     else {
-        /* Redis命令没有getkeys过程，但可能有可移动的键，因为键规范。 */
+        /* Redis命令没有getkeys过程,但可能有可移动的键,因为键规范. */
         for (int i = 0; i < cmd->key_specs_num; i++) {
             if (cmd->key_specs[i].begin_search_type != KSPEC_BS_INDEX || cmd->key_specs[i].find_keys_type != KSPEC_FK_RANGE) {
-                /* 如果我们有一个非范围规格，这意味着我们有可移动的键*/
+                /* 如果我们有一个非范围规格,这意味着我们有可移动的键*/
                 movablekeys = 1;
                 break;
             }
@@ -3205,18 +3205,18 @@ int commandCheckExistence(client *c, sds *err) {
         *err = sdscatprintf(*err, "未知的命令 '%.128s', with args beginning with: %s", (char *)c->argv[0]->ptr, args);
         sdsfree(args);
     }
-    // 确保字符串中没有换行符，否则将发出无效协议(args来自用户，它们可能包含任何字符)。
+    // 确保字符串中没有换行符,否则将发出无效协议(args来自用户,它们可能包含任何字符).
     sdsmapchars(*err, "\r\n", "  ", 2);
     return 0;
 }
 
 // 参数个数检查
 int commandCheckArity(client *c, sds *err) {
-    // arity 命令执行需要的 参数个数 规定好的  ， 可以用 -N 表示 >= N
+    // arity 命令执行需要的 参数个数 规定好的  , 可以用 -N 表示 >= N
     if ((c->cmd->arity > 0 && c->cmd->arity != c->argc) || (c->argc < -c->cmd->arity)) {
         if (err) {
             *err = sdsnew(NULL);
-            *err = sdscatprintf(*err, "错误的参数个数，命令： '%s'", c->cmd->fullname);
+            *err = sdscatprintf(*err, "错误的参数个数,命令： '%s'", c->cmd->fullname);
         }
         return 0;
     }
@@ -3266,13 +3266,13 @@ int processCommand(client *c) {
         return C_OK;
     }
 
-    if (c->cmd->flags & CMD_PROTECTED) {                                                             // 命令被标记为受保护状态，只允许在本地连接
+    if (c->cmd->flags & CMD_PROTECTED) {                                                             // 命令被标记为受保护状态,只允许在本地连接
         if ((c->cmd->proc == debugCommand && !allowProtectedAction(server.enable_debug_cmd, c))      // debug命令集  且 server不允许启用Protected命令
             || (c->cmd->proc == moduleCommand && !allowProtectedAction(server.enable_module_cmd, c)) // module命令集 且 server不允许启用Protected命令
         ) {
             rejectCommandFormat(
                 c,                                                                                                                           //
-                "不允许%s命令。如果%s选项被设置为\"local\"，您可以从本地连接运行它，否则您需要在配置文件中设置此选项，然后重新启动服务器。", //
+                "不允许%s命令.如果%s选项被设置为\"local\",您可以从本地连接运行它,否则您需要在配置文件中设置此选项,然后重新启动服务器.", //
                 c->cmd->proc == debugCommand ? "DEBUG" : "MODULE",                                                                           //
                 c->cmd->proc == debugCommand ? "enable-debug-command" : "enable-module-command"                                              //
             );
@@ -3427,7 +3427,7 @@ int processCommand(client *c) {
                 const mstime_t log_interval_ms = 10000;
                 if (server.mstime > last_log_time_ms + log_interval_ms) {
                     last_log_time_ms = server.mstime;
-                    serverLog(LL_WARNING, "副本正在应用命令，即使它不能写入磁盘。");
+                    serverLog(LL_WARNING, "副本正在应用命令,即使它不能写入磁盘.");
                 }
             }
         }
@@ -3565,26 +3565,26 @@ void closeListeningSockets(int unlink_unix_socket) {
     if (server.cluster_enabled)
         for (j = 0; j < server.cfd.count; j++) close(server.cfd.fd[j]);
     if (unlink_unix_socket && server.unixsocket) {
-        serverLog(LL_NOTICE, "删除unix socket文件。 ");
+        serverLog(LL_NOTICE, "删除unix socket文件. ");
         if (unlink(server.unixsocket) != 0)
             serverLog(LL_WARNING, "删除unix套接字文件时出错: %s", strerror(errno));
     }
 }
 
-// 准备关闭服务器。flag:
-// —SHUTDOWN_SAVE:保存数据库，即使服务器配置为不保存任何 dump。
-// -SHUTDOWN_NOSAVE:不保存任何数据库 dump，即使服务器配置为保存。
+// 准备关闭服务器.flag:
+// —SHUTDOWN_SAVE:保存数据库,即使服务器配置为不保存任何 dump.
+// -SHUTDOWN_NOSAVE:不保存任何数据库 dump,即使服务器配置为保存.
 // -SHUTDOWN_NOW:  关闭之前 不要等待副本赶上
-// —SHUTDOWN_FORCE:忽略在磁盘上写入AOF和RDB文件的错误，这通常会阻止关机。
-// 除非设置了SHUTDOWN_NOW，并且如果有任何副本滞后，则返回C_ERR。Shutdown_mstime被设置为一个时间戳，以允许副本有一个宽限期。这由serverCron()检查和处理，它会尽快完成关闭。
-// 如果由于RDB或AOF文件写入错误导致关机失败，则返回C_ERR并记录错误。如果设置了标志SHUTDOWN_FORCE，则记录这些错误，但忽略这些错误并返回C_OK。
-// 如果成功，这个函数返回C_OK，然后调用exit(0)。
+// —SHUTDOWN_FORCE:忽略在磁盘上写入AOF和RDB文件的错误,这通常会阻止关机.
+// 除非设置了SHUTDOWN_NOW,并且如果有任何副本滞后,则返回C_ERR.Shutdown_mstime被设置为一个时间戳,以允许副本有一个宽限期.这由serverCron()检查和处理,它会尽快完成关闭.
+// 如果由于RDB或AOF文件写入错误导致关机失败,则返回C_ERR并记录错误.如果设置了标志SHUTDOWN_FORCE,则记录这些错误,但忽略这些错误并返回C_OK.
+// 如果成功,这个函数返回C_OK,然后调用exit(0).
 int prepareForShutdown(int flags) {
     if (isShutdownInitiated()) // 优雅关闭限制的时间
         return C_ERR;
 
-    // 当服务器在内存中加载数据集时调用SHUTDOWN，我们需要确保在关机时没有尝试保存数据集(否则它可能会用半读数据覆盖当前DB)。
-    // 另外，在哨兵模式下，清除SAVE标志并强制NOSAVE。
+    // 当服务器在内存中加载数据集时调用SHUTDOWN,我们需要确保在关机时没有尝试保存数据集(否则它可能会用半读数据覆盖当前DB).
+    // 另外,在哨兵模式下,清除SAVE标志并强制NOSAVE.
     if (server.loading || server.sentinel_mode)
         flags = (flags & ~SHUTDOWN_SAVE) | SHUTDOWN_NOSAVE;
 
@@ -3594,7 +3594,7 @@ int prepareForShutdown(int flags) {
     if (server.supervised_mode == SUPERVISED_SYSTEMD)
         redisCommunicateSystemd("STOPPING=1\n");
 
-    // 如果我们有任何副本，在关闭之前让它们赶上复制偏移量，以避免数据丢失。
+    // 如果我们有任何副本,在关闭之前让它们赶上复制偏移量,以避免数据丢失.
     if (!(flags & SHUTDOWN_NOW) && server.shutdown_timeout != 0 && !isReadyToShutdown()) {
         server.shutdown_mstime = server.mstime + server.shutdown_timeout * 1000;
         if (!areClientsPaused()) {
@@ -3602,26 +3602,26 @@ int prepareForShutdown(int flags) {
             sendGetackToReplicas(); // 恢复slave状态
         }
         pauseClients(PAUSE_DURING_SHUTDOWN, LLONG_MAX, CLIENT_PAUSE_WRITE); // 暂停所有clients
-        serverLog(LL_NOTICE, "在关闭之前等待副本同步。");
+        serverLog(LL_NOTICE, "在关闭之前等待副本同步.");
         return C_ERR;
     }
 
     return finishShutdown();
 }
 
-// 如果关闭被中止，返回C_OK，如果关闭没有进行，返回C_ERR。
+// 如果关闭被中止,返回C_OK,如果关闭没有进行,返回C_ERR.
 int abortShutdown(void) {
     if (isShutdownInitiated()) {
         cancelShutdown();
     }
     else if (server.shutdown_asap) {
-        /* 信号处理程序已经请求关闭，但还没有启动。只需清除该标志。*/
+        /* 信号处理程序已经请求关闭,但还没有启动.只需清除该标志.*/
         server.shutdown_asap = 0;
     }
     else {
         return C_ERR;
     }
-    serverLog(LL_NOTICE, "手动中止关闭。");
+    serverLog(LL_NOTICE, "手动中止关闭.");
     return C_OK;
 }
 
@@ -3664,9 +3664,9 @@ sds writeCommandsGetDiskErrorMessage(int error_code) {
     return ret;
 }
 
-/* PING命令。如果客户端处于Pub/Sub模式，它的工作方式就不同。*/
+/* PING命令.如果客户端处于Pub/Sub模式,它的工作方式就不同.*/
 void pingCommand(client *c) {
-    /* 该命令需要0个或1个参数。 */
+    /* 该命令需要0个或1个参数. */
     if (c->argc > 2) {
         addReplyErrorArity(c);
         return;
@@ -4428,7 +4428,7 @@ sds fillPercentileDistributionLatencies(sds info, const char *histogram_name, st
     return info;
 }
 
-/* 我们对INFO输出进行净化以保持预期格式的字符。*/
+/* 我们对INFO输出进行净化以保持预期格式的字符.*/
 static char unsafe_info_chars[] = "#:\n\r";
 static char unsafe_info_chars_substs[] = "____"; /* Must be same length as above */
 
@@ -4673,7 +4673,7 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         info = sdscatprintf(info, "connected_clients:%lu\r\n", listLength(server.clients) - listLength(server.slaves));
         info = sdscatprintf(info, "# 集群总线使用的套接字数量的近似值\r\n");
         info = sdscatprintf(info, "cluster_connections:%lu\r\n", getClusterConnectionsCount());
-        info = sdscatprintf(info, "# connected_clients，connected_slaves和 cluster_connections的总和\r\n");
+        info = sdscatprintf(info, "# connected_clients,connected_slaves和 cluster_connections的总和\r\n");
         info = sdscatprintf(info, "maxclients:%u\r\n", server.maxclients);
         info = sdscatprintf(info, "client_recent_max_input_buffer:%zu\r\n", maxin);
         info = sdscatprintf(info, "client_recent_max_output_buffer:%zu\r\n", maxout);
@@ -4900,9 +4900,9 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         info = sdscatprintf(info, "total_commands_processed:%lld\r\n", server.stat_numcommands);
         info = sdscatprintf(info, "# 平均每秒处理命令数\r\n");
         info = sdscatprintf(info, "instantaneous_ops_per_sec:%lld\r\n", getInstantaneousMetric(STATS_METRIC_COMMAND));
-        info = sdscatprintf(info, "# 每秒网络的读取速率，以KB /秒为单位\r\n");
+        info = sdscatprintf(info, "# 每秒网络的读取速率,以KB /秒为单位\r\n");
         info = sdscatprintf(info, "total_net_input_bytes:%lld\r\n", stat_net_input_bytes);
-        info = sdscatprintf(info, "# 每秒的网络写入速率，以KB /秒为单位\r\n");
+        info = sdscatprintf(info, "# 每秒的网络写入速率,以KB /秒为单位\r\n");
         info = sdscatprintf(info, "total_net_output_bytes:%lld\r\n", stat_net_output_bytes);
         info = sdscatprintf(info, "instantaneous_input_kbps:%.2f\r\n", (float)getInstantaneousMetric(STATS_METRIC_NET_INPUT) / 1024);
         info = sdscatprintf(info, "instantaneous_output_kbps:%.2f\r\n", (float)getInstantaneousMetric(STATS_METRIC_NET_OUTPUT) / 1024);
@@ -4910,7 +4910,7 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         info = sdscatprintf(info, "rejected_connections:%lld\r\n", server.stat_rejected_conn);
         info = sdscatprintf(info, "sync_full:%lld\r\n", server.stat_sync_full);
         info = sdscatprintf(info, "sync_partial_ok:%lld\r\n", server.stat_sync_partial_ok);
-        // 通过查看sync_partial_err变量的次数来决定是否需要扩大积压缓冲区，它表示主从半同步复制失败的次数
+        // 通过查看sync_partial_err变量的次数来决定是否需要扩大积压缓冲区,它表示主从半同步复制失败的次数
         info = sdscatprintf(info, "# 主从半同步复制失败的次数\r\n");
         info = sdscatprintf(info, "sync_partial_err:%lld\r\n", server.stat_sync_partial_err);
         info = sdscatprintf(info, "# key过期事件总数\r\n");
@@ -5053,7 +5053,7 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         info = sdscatprintf(info, "master_repl_offset:%lld\r\n", server.master_repl_offset);
         info = sdscatprintf(info, "second_repl_offset:%lld\r\n", server.second_replid_offset);
         info = sdscatprintf(info, "repl_backlog_active:%d\r\n", server.repl_backlog != NULL);
-        // 复制积压缓冲区如果设置得太小，会导致里面的指令被覆盖掉找不到偏移量，从而触发全量同步
+        // 复制积压缓冲区如果设置得太小,会导致里面的指令被覆盖掉找不到偏移量,从而触发全量同步
         info = sdscatprintf(info, "复制积压缓冲区\r\n");
         info = sdscatprintf(info, "repl_backlog_size:%lld\r\n", server.repl_backlog_size);
         info = sdscatprintf(info, "repl_backlog_first_byte_offset:%lld\r\n", server.repl_backlog ? server.repl_backlog->offset : 0);
@@ -5172,8 +5172,8 @@ sds genRedisInfoString(dict *section_dict, int all_sections, int everything) {
         }
     }
 
-    /*从模块中获取信息。
-如果用户要求“一切”或“模块”，或尚未找到的特定部分。
+    /*从模块中获取信息.
+如果用户要求“一切”或“模块”,或尚未找到的特定部分.
   */
     if (everything || dictFind(section_dict, "modules") != NULL || sections < (int)dictSize(section_dict)) {
         info = modulesCollectInfo(
@@ -5200,7 +5200,7 @@ void infoCommand(client *c) {
 
 void monitorCommand(client *c) {
     if (c->flags & CLIENT_DENY_BLOCKING) {
-        /** 具有CLIENT_DENY_BLOCKING标志的客户端期望每个命令都有应答，因此不能执行MONITOR。 * */
+        /** 具有CLIENT_DENY_BLOCKING标志的客户端期望每个命令都有应答,因此不能执行MONITOR. * */
         addReplyError(c, "MONITOR不允许DENY BLOCKING客户端");
         return;
     }
@@ -5515,10 +5515,10 @@ int changeBindAddr(void) {
 
     /* Create TCP and TLS event handlers */
     if (createSocketAcceptHandler(&server.ipfd, acceptTcpHandler) != C_OK) {
-        serverPanic("创建TCP套接字接受处理程序时出现不可恢复的错误。");
+        serverPanic("创建TCP套接字接受处理程序时出现不可恢复的错误.");
     }
     if (createSocketAcceptHandler(&server.tlsfd, acceptTLSHandler) != C_OK) {
-        serverPanic("创建TLS套接字接受处理程序时出现不可恢复的错误。");
+        serverPanic("创建TLS套接字接受处理程序时出现不可恢复的错误.");
     }
 
     if (server.set_proc_title)
@@ -5572,8 +5572,8 @@ static void sigShutdownHandler(int sig) {
             msg = "收到了 shutdown signal, scheduling shutdown...";
     };
 
-    /* SIGINT通常在交互会话中通过Ctrl+C传递。
-    如果我们第二次接收到信号，我们将其解释为用户真的想要尽快退出，而不需要等待磁盘上的持久化，也不需要等待滞后的副本。
+    /* SIGINT通常在交互会话中通过Ctrl+C传递.
+    如果我们第二次接收到信号,我们将其解释为用户真的想要尽快退出,而不需要等待磁盘上的持久化,也不需要等待滞后的副本.
   */
     if (server.shutdown_asap && sig == SIGINT) {
         serverLogFromHandler(LL_WARNING, "You insist... exiting now.");
@@ -5624,8 +5624,8 @@ void removeSignalHandlers(void) {
     sigaction(SIGABRT, &act, NULL);
 }
 
-// 这是子进程的信号处理程序。它目前用于跟踪SIGUSR1，我们将SIGUSR1发送给子进程，
-// 以便以一种干净的方式终止它，而父进程不会检测到错误并因为写入错误条件而停止接受写入。
+// 这是子进程的信号处理程序.它目前用于跟踪SIGUSR1,我们将SIGUSR1发送给子进程,
+// 以便以一种干净的方式终止它,而父进程不会检测到错误并因为写入错误条件而停止接受写入.
 static void sigKillChildHandler(int sig) {
     UNUSED(sig);
     int level = server.in_fork_child == CHILD_TYPE_MODULE ? LL_VERBOSE : LL_WARNING;
@@ -5641,14 +5641,14 @@ void setupChildSignalHandlers(void) {
     sigaction(SIGUSR1, &act, NULL);
 }
 
-/* fork之后，子进程将继承父进程的资源，例如fd(socket或flock)等。
-应该关闭子进程未使用的资源，以便在父进程重新启动时可以绑定/锁定子进程，尽管子进程可能仍在运行。 */
+/* fork之后,子进程将继承父进程的资源,例如fd(socket或flock)等.
+应该关闭子进程未使用的资源,以便在父进程重新启动时可以绑定/锁定子进程,尽管子进程可能仍在运行. */
 void closeChildUnusedResourceAfterFork() {
     closeListeningSockets(0);
     if (server.cluster_enabled && server.cluster_config_file_lock_fd != -1)
         close(server.cluster_config_file_lock_fd);
 
-    /* 清除server.pid_file，这是父级pid_file，子级不应该触及（或删除）（退出/崩溃时）。*/
+    /* 清除server.pid_file,这是父级pid_file,子级不应该触及（或删除）（退出/崩溃时）.*/
     zfree(server.pid_file);
     server.pid_file = NULL;
 }
@@ -5670,7 +5670,7 @@ int redisFork(int purpose) {
     // 非阻塞指的是 rdb 过程不阻塞主进程,但是 从开始fork到fork完成这段时间仍然是阻塞的
     if (childpid == 0) { // 子进程
         /* Child.
-         *设置的顺序遵循一些推理:首先设置信号处理程序，因为信号可能随时触发。如果内存资源不足，首先调整OOM分数以帮助OOM杀手。
+         *设置的顺序遵循一些推理:首先设置信号处理程序,因为信号可能随时触发.如果内存资源不足,首先调整OOM分数以帮助OOM杀手.
          */
         server.in_fork_child = purpose;
         setupChildSignalHandlers();
@@ -5694,10 +5694,10 @@ int redisFork(int purpose) {
         latencyAddSampleIfNeeded("fork", server.stat_fork_time / 1000);
 
         /*
-        child_pid和child_type仅用于互斥子节点。其他子类型应该在专用变量中处理和存储它们的pid。
-        今天，我们允许CHILD_TYPE_LDB与其他fork类型并行运行:
-        - 没有用于生产，所以不会降低服务器的效率
-        - 用于调试，我们不想在其他fork正在运行时阻止它运行(比如RDB和AOF)
+        child_pid和child_type仅用于互斥子节点.其他子类型应该在专用变量中处理和存储它们的pid.
+        今天,我们允许CHILD_TYPE_LDB与其他fork类型并行运行:
+        - 没有用于生产,所以不会降低服务器的效率
+        - 用于调试,我们不想在其他fork正在运行时阻止它运行(比如RDB和AOF)
          */
         if (isMutuallyExclusiveChildType(purpose)) {
             server.child_pid = childpid;
@@ -5726,22 +5726,22 @@ void sendChildInfo(childInfoType info_type, size_t keys, char *pname) {
     sendChildInfoGeneric(info_type, keys, -1, pname);
 }
 
-// 尝试直接将页面释放回操作系统(绕过分配器)，以减少fork期间的CoW【写时拷贝】。
-// 对于小的分配，我们不能释放任何完整的页面，因此为了避免从分配器(malloc_size)获取分配的大小，
-// 当我们已经知道它很小时，我们检查size_hint。如果size还不知道，则传递size_hint为0将导致检查分配的实际大小。
-// 另外请注意，大小可能不准确，所以为了使这个解决方案有效，对于释放内存页的判断不要太严格。
+// 尝试直接将页面释放回操作系统(绕过分配器),以减少fork期间的CoW【写时拷贝】.
+// 对于小的分配,我们不能释放任何完整的页面,因此为了避免从分配器(malloc_size)获取分配的大小,
+// 当我们已经知道它很小时,我们检查size_hint.如果size还不知道,则传递size_hint为0将导致检查分配的实际大小.
+// 另外请注意,大小可能不准确,所以为了使这个解决方案有效,对于释放内存页的判断不要太严格.
 void dismissMemory(void *ptr, size_t size_hint) {
     if (ptr == NULL)
         return;
 
-    /*如果内存太小，madvise(MADV_DONTNEED)不能释放页面，我们尝试只释放超过页面大小一半的内存。*/
+    /*如果内存太小,madvise(MADV_DONTNEED)不能释放页面,我们尝试只释放超过页面大小一半的内存.*/
     if (size_hint && size_hint <= server.page_size / 2)
         return;
 
     zmadvise_dontneed(ptr);
 }
 
-/* 解散客户端结构中的大块内存，参见dismismemory () */
+/* 解散客户端结构中的大块内存,参见dismismemory () */
 void dismissClientMemory(client *c) {
     dismissMemory(c->buf, c->buf_usable_size);
     dismissSds(c->querybuf);
@@ -5767,11 +5767,11 @@ void dismissClientMemory(client *c) {
 
 /* 立即释放一些资源 */
 void dismissMemoryInChild(void) {
-    /* madvise(MADV_DONTNEED)可能不工作，如果透明大页启用。 */
+    /* madvise(MADV_DONTNEED)可能不工作,如果透明大页启用. */
     if (server.thp_enabled)
         return;
 
-        /* 目前，我们只在Linux中使用jemalloc时使用zmadvise_dontneed。所以我们避免了这些无意义的循环当它们什么都不会做的时候。 */
+        /* 目前,我们只在Linux中使用jemalloc时使用zmadvise_dontneed.所以我们避免了这些无意义的循环当它们什么都不会做的时候. */
 #if defined(USE_JEMALLOC) && defined(__linux__)
     listIter li;
     listNode *ln;
@@ -5926,7 +5926,7 @@ static sds redisProcTitleGetVariable(const sds varname, void *arg) {
         return NULL; /* Unknown variable name */
 }
 
-// 展开指定的proc-title-template字符串并返回一个新分配的sds或NULL。
+// 展开指定的proc-title-template字符串并返回一个新分配的sds或NULL.
 static sds expandProcTitleTemplate(const char *template, const char *title) {
     sds res = sdstemplate(template, redisProcTitleGetVariable, (void *)title);
     if (!res)
@@ -6002,7 +6002,7 @@ static int redisSupervisedUpstart(void) {
     return 1;
 }
 
-// 尝试设置systemd 管理，成功返回1
+// 尝试设置systemd 管理,成功返回1
 static int redisSupervisedSystemd(void) {
 #ifndef HAVE_LIBSYSTEMD
     serverLog(LL_WARNING, "主动或自动使用systemd管理 失败, redis没有与libsystemd一起编译");
@@ -6010,7 +6010,7 @@ static int redisSupervisedSystemd(void) {
 #else
     if (redisCommunicateSystemd("STATUS=Redis is loading...\n") <= 0)
         return 0;
-    serverLog(LL_NOTICE, "由systemd监督。请确保在serivce.unit中为TimeoutStartSec和TimeoutStopSec设置了适当的值。");
+    serverLog(LL_NOTICE, "由systemd监督.请确保在serivce.unit中为TimeoutStartSec和TimeoutStopSec设置了适当的值.");
     return 1;
 #endif
 }

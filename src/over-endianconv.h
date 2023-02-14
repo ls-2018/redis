@@ -33,7 +33,7 @@ uint64_t intrev64(uint64_t v);
 #    define intrev64ifbe(v) intrev64(v)
 #endif
 
-// 函数htonu64()和ntohu64()将指定的值转换为网络字节顺序和反向。在大型终端系统中，它们是无操作的。
+// 函数htonu64()和ntohu64()将指定的值转换为网络字节顺序和反向.在大型终端系统中,它们是无操作的.
 #if (BYTE_ORDER == BIG_ENDIAN)
 #    define htonu64(v) (v)
 #    define ntohu64(v) (v)

@@ -42,7 +42,7 @@ int postponeClientRead(client *c);
 
 int ProcessingEventsWhileBlocked = 0; /* See processEventsWhileBlocked(). */
 
-// 返回指定SDS字符串从分配器消耗的大小，包括内部碎片。这个函数用于计算客户端输出缓冲区大小。
+// 返回指定SDS字符串从分配器消耗的大小,包括内部碎片.这个函数用于计算客户端输出缓冲区大小.
 size_t sdsZmallocSize(sds s) {
     void *sh = sdsAllocPtr(s);
     return zmalloc_size(sh);
@@ -423,7 +423,7 @@ void addReply(client *c, robj *obj) {
         _addReplyToBufferOrList(c, obj->ptr, sdslen(obj->ptr));
     }
     else if (obj->encoding == OBJ_ENCODING_INT) {
-        // 对于整数编码的字符串，我们只需使用优化的函数将其转换为字符串，并将生成的字符串附加到输出缓冲区。
+        // 对于整数编码的字符串,我们只需使用优化的函数将其转换为字符串,并将生成的字符串附加到输出缓冲区.
         char buf[32];
         size_t len = ll2string(buf, sizeof(buf), (long)obj->ptr);
         _addReplyToBufferOrList(c, buf, len);
@@ -1333,7 +1333,7 @@ void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
     UNUSED(privdata);
 
     while (max--) {
-        // neterr 传进入指针，存储错误,
+        // neterr 传进入指针,存储错误,
         // fd 一般是listen监听的描述符
         cfd = anetTcpAccept(server.neterr, fd, cip, sizeof(cip), &cport); // 还没加入到epoll里
         // 获取不到链接 会返回错误
@@ -2006,7 +2006,7 @@ int handleClientsWithPendingWrites(void) {
     // 遍历每一个待写回的客户端
 
     while ((ln = listNext(&li))) {
-        // 遍历server.clients_pending_write链表，对链表中的每个client执行写数据操作
+        // 遍历server.clients_pending_write链表,对链表中的每个client执行写数据操作
         client *c = listNodeValue(ln);
         c->flags &= ~CLIENT_PENDING_WRITE;
         listDelNode(server.clients_pending_write, ln);
@@ -2048,7 +2048,7 @@ void resetClient(client *c) {
     }
     c->deferred_reply_errors = NULL;
 
-    // 如果我们不在MULTI中，如果我们刚刚执行的不是ask命令本身，我们也会清除ask标志。
+    // 如果我们不在MULTI中,如果我们刚刚执行的不是ask命令本身,我们也会清除ask标志.
     if (!(c->flags & CLIENT_MULTI) && prevcmd != askingCommand)
         c->flags &= ~CLIENT_ASKING;
 
@@ -2575,14 +2575,14 @@ int processInputBuffer(client *c) {
     }
     // 客户端有 CLIENT_MASTER 标记
     if (c->flags & CLIENT_MASTER) {
-        // 如果客户端是主客户端，则将querybuf修剪为repl_applied，因为主客户端非常特殊，它的querybuf不仅用于解析命令，还可以代理到子副本。
+        // 如果客户端是主客户端,则将querybuf修剪为repl_applied,因为主客户端非常特殊,它的querybuf不仅用于解析命令,还可以代理到子副本.
         // 下面是一些我们不能修剪到qb_pos的场景:
-        //* 1。我们没有收到主人的完整命令
-        //* 2。主客户端被阻塞导致客户端暂停
-        //* 3。io线程操作读，主客户端标记为CLIENT_PENDING_COMMAND
-        //       在这些场景中，qb_pos指向当前命令的部分
-        //*或下一个命令的开头，当前命令还没有应用，
-        //*因此repl_applied不等于qb_pos。
+        //* 1.我们没有收到主人的完整命令
+        //* 2.主客户端被阻塞导致客户端暂停
+        //* 3.io线程操作读,主客户端标记为CLIENT_PENDING_COMMAND
+        //       在这些场景中,qb_pos指向当前命令的部分
+        //*或下一个命令的开头,当前命令还没有应用,
+        //*因此repl_applied不等于qb_pos.
         if (c->repl_applied) {
             sdsrange(c->querybuf, c->repl_applied, -1);
             c->qb_pos -= c->repl_applied;
@@ -2608,7 +2608,7 @@ void readQueryFromClient(connection *conn) {
     client *c = connGetPrivateData(conn);
     int nread, big_arg = 0;
     size_t qblen;     // 缓冲区中存在的数据长度
-    size_t old_qblen; // 缓冲区中存在的数据长度，备份
+    size_t old_qblen; // 缓冲区中存在的数据长度,备份
     size_t readlen;   // 缓冲区长度
 
     //  主线程将 待读客户端 添加到Read任务队列（生产者）
@@ -2669,7 +2669,7 @@ void readQueryFromClient(connection *conn) {
         c->querybuf = sdsMakeRoomFor(c->querybuf, readlen); // 为查询缓冲区分配空间
         readlen = sdsavail(c->querybuf);                    // 从套接字读取尽可能多的数据以保存Read(2)系统调用.
     }
-    // 读入内容到查询缓存，从qblen开始存储数据,
+    // 读入内容到查询缓存,从qblen开始存储数据,
     nread = connRead(c->conn, c->querybuf + qblen, readlen); // "*2\r\n$7\r\nCOMMAND\r\n$4\r\nDOCS\r\n\001"
     if (nread == -1) {                                       // 读入出错
         if (connGetState(conn) == CONN_STATE_CONNECTED) {
@@ -2834,7 +2834,7 @@ sds catClientInfoString(sds s, client *client) {
     *p = '\0';
 
     size_t obufmem = 0;
-    // 计算此客户端消耗的总内存。
+    // 计算此客户端消耗的总内存.
     size_t total_mem = getClientMemoryUsage(client, &obufmem);
 
     size_t used_blocks_of_repl_buf = 0;
@@ -3733,8 +3733,8 @@ void rewriteClientCommandArgument(client *c, int i, robj *newval) {
     }
 }
 
-// 这个函数返回Redis用来存储客户端还没有读取的要回复的字节数。
-// 注意:这个函数非常快。这个函数目前的主要用途是强制客户端输出长度限制。
+// 这个函数返回Redis用来存储客户端还没有读取的要回复的字节数.
+// 注意:这个函数非常快.这个函数目前的主要用途是强制客户端输出长度限制.
 size_t getClientOutputBufferMemoryUsage(client *c) {
     if (getClientType(c) == CLIENT_TYPE_SLAVE) { // 从节点
         size_t repl_buf_size = 0;
@@ -3742,7 +3742,7 @@ size_t getClientOutputBufferMemoryUsage(client *c) {
         size_t repl_node_size = sizeof(listNode) + sizeof(replBufBlock);
         if (c->ref_repl_buf_node) {                                                  // 复制缓冲区块的引用节点
             replBufBlock *last = listNodeValue(listLast(server.repl_buffer_blocks)); // server端最新的数据
-            // server端的复制日志，是用链表存储，每个节点都有一定量的数据
+            // server端的复制日志,是用链表存储,每个节点都有一定量的数据
             replBufBlock *cur = listNodeValue(c->ref_repl_buf_node);           // 从节点要发送的数据
             repl_buf_size = last->repl_offset + last->size - cur->repl_offset; // 从节点距离最新的数据  的一个差值
             repl_node_num = last->id - cur->id + 1;                            // 节点数
@@ -3876,10 +3876,10 @@ int checkClientOutputBufferLimits(client *c) {
     return soft || hard;
 }
 
-// 如果达到输出缓冲区大小的软限制或硬限制，异步关闭客户端。调用者可以检查客户机是否将被关闭，检查客户机CLIENT_CLOSE_ASAP标志是否被设置。
-// 注意:我们需要异步关闭客户端，因为这个函数是在客户端不能安全释放的情况下调用的，即从较低级别的函数在客户端输出缓冲区中推送数据。
-// 当 'async' 被设置为0时，我们立即关闭客户端，这在从cron调用时非常有用。
-// 如果客户端被(标记)关闭，返回1。
+// 如果达到输出缓冲区大小的软限制或硬限制,异步关闭客户端.调用者可以检查客户机是否将被关闭,检查客户机CLIENT_CLOSE_ASAP标志是否被设置.
+// 注意:我们需要异步关闭客户端,因为这个函数是在客户端不能安全释放的情况下调用的,即从较低级别的函数在客户端输出缓冲区中推送数据.
+// 当 'async' 被设置为0时,我们立即关闭客户端,这在从cron调用时非常有用.
+// 如果客户端被(标记)关闭,返回1.
 int closeClientOnOutputBufferLimitReached(client *c, int async) {
     if (!c->conn)
         return 0; /* It is unsafe to free fake clients. */
@@ -3987,12 +3987,12 @@ void unblockPostponedClients() {
     }
 }
 
-// 对于给定类型的命令，将客户端暂停到指定的unixtime(毫秒)。
-// 此功能的一个主要用例是允许暂停复制流量，以便在不发生数据丢失的情况下进行故障转移。副本将继续接收流量以促进此功能。
-// 此功能也被Redis集群内部用于由Cluster failover实现的手动故障转移过程。
-// 函数总是成功的，即使在进程中已经有一个暂停。在这种情况下，将持续时间设置为最大和新的结束时间，并将类型设置为更严格的暂停类型。
+// 对于给定类型的命令,将客户端暂停到指定的unixtime(毫秒).
+// 此功能的一个主要用例是允许暂停复制流量,以便在不发生数据丢失的情况下进行故障转移.副本将继续接收流量以促进此功能.
+// 此功能也被Redis集群内部用于由Cluster failover实现的手动故障转移过程.
+// 函数总是成功的,即使在进程中已经有一个暂停.在这种情况下,将持续时间设置为最大和新的结束时间,并将类型设置为更严格的暂停类型.
 void pauseClients(pause_purpose purpose, mstime_t end, pause_type type) {
-    // 管理每个暂停目的的暂停类型和结束时间。
+    // 管理每个暂停目的的暂停类型和结束时间.
     if (server.client_pause_per_purpose[purpose] == NULL) {
         server.client_pause_per_purpose[purpose] = zmalloc(sizeof(pause_event));
         server.client_pause_per_purpose[purpose]->type = type;
@@ -4363,7 +4363,7 @@ int handleClientsWithPendingWritesUsingThreads(void) {
 int postponeClientRead(client *c) {
     // 延迟读,不能是master,不能是slave,不能是阻塞的客户端
     if (server.io_threads_active &&
-        // 多线程 IO 是否在开启状态，在待处理请求较少时会停止 IO多线程
+        // 多线程 IO 是否在开启状态,在待处理请求较少时会停止 IO多线程
         server.io_threads_do_reads && // 读是否开启多线程 IO
         !ProcessingEventsWhileBlocked && !(c->flags & (CLIENT_MASTER | CLIENT_SLAVE | CLIENT_BLOCKED)) &&
         // 主从库复制请求不使用多线程 IO

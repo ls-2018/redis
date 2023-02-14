@@ -387,7 +387,7 @@ void feedReplicationBuffer(char *s, size_t len) {
     incrementalTrimReplicationBacklog(REPL_BACKLOG_TRIM_BLOCKS_PER_CALL);
 }
 
-// 向复制流传播写命令。
+// 向复制流传播写命令.
 void replicationFeedSlaves(list *slaves, int dictid, robj **argv, int argc) {
     int j, len;
     char llstr[LONG_STR_SIZE];
@@ -565,7 +565,7 @@ void replicationFeedMonitors(client *c, list *monitors, int dictid, robj **argv,
 
     listRewind(monitors, &li);
     while ((ln = listNext(&li))) {
-        // 遍历链表上的每个元素，调用addReply()方法把数据写入buf缓冲区
+        // 遍历链表上的每个元素,调用addReply()方法把数据写入buf缓冲区
         client *monitor = ln->value;
         addReply(monitor, cmdobj);
         updateClientMemUsage(c);
@@ -3488,7 +3488,7 @@ long long replicationGetSlaveOffset(void) {
 
 /* --------------------------- REPLICATION CRON  ---------------------------- */
 
-// 正常情况，每秒调用1次。
+// 正常情况,每秒调用1次.
 void replicationCron(void) {
     // 重新连接主服务器、向主服务器发送 ACK 、判断数据发送失败情况、断开本服务器超时的从服务器,等等
 

@@ -80,7 +80,7 @@ void bioSubmitJob(int type, struct bio_job *job) {
     pthread_mutex_unlock(&bio_mutex[type]); // 解锁
 }
 
-// 将 value 的释放添加到异步线程队列中去，后台处理, 任务类型为 异步释放内存
+// 将 value 的释放添加到异步线程队列中去,后台处理, 任务类型为 异步释放内存
 void bioCreateLazyFreeJob(lazy_free_fn free_fn, int arg_count, ...) {
     va_list valist;
     /* 为作业结构和所有必需的参数分配内存 */
@@ -136,9 +136,9 @@ void *bioProcessBackgroundJobs(void *arg) {
     redisSetCpuAffinity(server.bio_cpulist);
 
     makeThreadKillable();
-    // 异步删除， bio正跑着，unlink无法获得锁提交job
+    // 异步删除, bio正跑着,unlink无法获得锁提交job
     pthread_mutex_lock(&bio_mutex[type]);
-    /* 阻塞SIGALRM，以确保只有主线程将接收看门狗信号。 */
+    /* 阻塞SIGALRM,以确保只有主线程将接收看门狗信号. */
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGALRM);
     if (pthread_sigmask(SIG_BLOCK, &sigset, NULL))
@@ -155,7 +155,7 @@ void *bioProcessBackgroundJobs(void *arg) {
         // 从任务队列中获取任务
         ln = listFirst(bio_jobs[type]);
         job = ln->value;
-        /* 现在可以解锁后台系统，因为我们知道有一个独立的作业结构来处理。*/
+        /* 现在可以解锁后台系统,因为我们知道有一个独立的作业结构来处理.*/
         pthread_mutex_unlock(&bio_mutex[type]);
 
         // 执行任务,此时已经释放了锁,因此可以添加任务

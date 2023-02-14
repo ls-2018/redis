@@ -2580,8 +2580,8 @@ void clusterLinkConnectHandler(connection *conn) {
      * If the node is flagged as MEET, we send a MEET message instead
      * of a PING one, to force the receiver to add us in its node
      * table. */
-    // 向新连接的节点发送 PING 命令，防止节点被识进入下线
-    // 如果节点被标记为 MEET ，那么发送 MEET 命令，否则发送 PING 命令
+    // 向新连接的节点发送 PING 命令,防止节点被识进入下线
+    // 如果节点被标记为 MEET ,那么发送 MEET 命令,否则发送 PING 命令
     mstime_t old_ping_sent = node->ping_sent;
     clusterSendPing(link, node->flags & CLUSTER_NODE_MEET ? CLUSTERMSG_TYPE_MEET : CLUSTERMSG_TYPE_PING);
     if (old_ping_sent) {
@@ -2595,8 +2595,8 @@ void clusterLinkConnectHandler(connection *conn) {
      * to this node. Instead after the PONG is received and we
      * are no longer in meet/handshake status, we want to send
      * normal PING packets. */
-    // 如果当前节点（发送者）没能收到 MEET 信息的回复，那么它将不再向目标节点发送命令。
-    // 如果接收到回复的话，那么节点将不再处于 HANDSHAKE 状态，并继续向目标节点发送普通 PING 命令
+    // 如果当前节点（发送者）没能收到 MEET 信息的回复,那么它将不再向目标节点发送命令.
+    // 如果接收到回复的话,那么节点将不再处于 HANDSHAKE 状态,并继续向目标节点发送普通 PING 命令
     node->flags &= ~CLUSTER_NODE_MEET;
 
     serverLog(LL_DEBUG, "Connecting with Node %.40s at %s:%d", node->name, node->ip, node->cport);
@@ -2733,9 +2733,9 @@ void clusterBuildMessageHdr(clusterMsg *hdr, int type) {
      * If this node is a slave we send the master's information instead (the
      * node is flagged as slave so the receiver knows that it is NOT really
      * in charge for this slots. */
-    // 如果当前节点是salve，则master为其主节点，如果当前节点是master节点，则master就是当前节点
+    // 如果当前节点是salve,则master为其主节点,如果当前节点是master节点,则master就是当前节点
     master = (nodeIsSlave(myself) && myself->slaveof) ? myself->slaveof : myself;
-    // 初始化协议版本、标识、及类型，
+    // 初始化协议版本、标识、及类型,
     memset(hdr, 0, sizeof(*hdr));
     hdr->ver = htons(CLUSTER_PROTO_VER);
     hdr->sig[0] = 'R';
@@ -2844,10 +2844,10 @@ void clusterSendPing(clusterLink *link, int type) {
      * message to). However practically there may be less valid nodes since
      * nodes in handshake state, disconnected, are not considered. */
     // freshnodes 是用于发送 gossip 信息的计数器
-    // 每次发送一条信息时，程序将 freshnodes 的值减一
-    // 当 freshnodes 的数值小于等于 0 时，程序停止发送 gossip 信息
+    // 每次发送一条信息时,程序将 freshnodes 的值减一
+    // 当 freshnodes 的数值小于等于 0 时,程序停止发送 gossip 信息
     // freshnodes 的数量是节点目前的 nodes 表中的节点数量减去 2
-    // 这里的 2 指两个节点，一个是 myself 节点（也即是发送信息的这个节点）
+    // 这里的 2 指两个节点,一个是 myself 节点（也即是发送信息的这个节点）
     // 另一个是接受 gossip 信息的节点
     int freshnodes = dictSize(server.cluster->nodes) - 2;
 
@@ -2878,7 +2878,7 @@ void clusterSendPing(clusterLink *link, int type) {
      * to feature our node, we set the number of entries per packet as
      * 10% of the total nodes we have. */
     // 既需要及时获得节点状态,又不能给集群的正常运行带来过大的额外通信负担.
-    // 计算要携带多少节点的信息，最少3个，最多 1/10 集群总节点数量
+    // 计算要携带多少节点的信息,最少3个,最多 1/10 集群总节点数量
     wanted = floor(dictSize(server.cluster->nodes) / 10);
     if (wanted < 3)
         wanted = 3;
@@ -2904,7 +2904,7 @@ void clusterSendPing(clusterLink *link, int type) {
     hdr = (clusterMsg *)buf;
 
     /* Populate the header. */
-    // 如果发送的信息是 PING ，那么更新最后一次发送 PING 命令的时间戳
+    // 如果发送的信息是 PING ,那么更新最后一次发送 PING 命令的时间戳
     if (!link->inbound && type == CLUSTERMSG_TYPE_PING)
         link->node->ping_sent = mstime();
     // 将当前节点的信息（比如名字、地址、端口号、负责处理的槽）记录到消息里面
@@ -2922,9 +2922,9 @@ void clusterSendPing(clusterLink *link, int type) {
         /* Don't include this node: the whole packet header is about us
          * already, so we just gossip about other nodes. */
         // 以下节点不能作为被选中节点：
-        // Myself:节点本身。
+        // Myself:节点本身.
         // PFAIL状态的节点
-        // 处于 HANDSHAKE 状态的节点。
+        // 处于 HANDSHAKE 状态的节点.
         // 带有 NOADDR 标识的节点
         // 因为不处理任何 Slot 而被断开连接的节点
         //
@@ -2953,12 +2953,12 @@ void clusterSendPing(clusterLink *link, int type) {
             continue;
 
         /* Add it */
-        // 这个被选中节点有效，计数器减一
+        // 这个被选中节点有效,计数器减一
         clusterSetGossipEntry(hdr, gossipcount, this);
         freshnodes--;
         gossipcount++;
     }
-    // 如果有 PFAIL 节点，最后添加
+    // 如果有 PFAIL 节点,最后添加
     /* If there are PFAIL nodes, add them at the end. */
     if (pfail_wanted) {
         dictIterator *di;
@@ -3996,17 +3996,17 @@ void clusterCron(void) {
     if (!(iteration % 10)) {
         int j;
 
-        // 随机 5 个节点，选出其中一个
+        // 随机 5 个节点,选出其中一个
         for (j = 0; j < 5; j++) {
             de = dictGetRandomKey(server.cluster->nodes);
             clusterNode *this = dictGetVal(de);
 
-            // 不要 PING 连接断开的节点，也不要 PING 最近已经 PING 过的节点
+            // 不要 PING 连接断开的节点,也不要 PING 最近已经 PING 过的节点
             if (this->link == NULL || this->ping_sent != 0)
                 continue;
             if (this->flags & (CLUSTER_NODE_MYSELF | CLUSTER_NODE_HANDSHAKE))
                 continue;
-            // 对比 pong_received 字段，选出更长时间未收到其 PONG 消息的节点(表示好久没有接受到该节点的PONG消息了)
+            // 对比 pong_received 字段,选出更长时间未收到其 PONG 消息的节点(表示好久没有接受到该节点的PONG消息了)
             if (min_pong_node == NULL || min_pong > this->pong_received) {
                 min_pong_node = this;
                 min_pong = this->pong_received;
@@ -4059,7 +4059,7 @@ void clusterCron(void) {
         mstime_t ping_delay = now - node->ping_sent;
         mstime_t data_delay = now - node->data_received;
         // 如果等到 PONG 到达的时间超过了 node timeout 一半的连接
-        // 因为尽管节点依然正常，但连接可能已经出问题了
+        // 因为尽管节点依然正常,但连接可能已经出问题了
 
         if (node->link &&                                            /* is connected */
             now - node->link->ctime > server.cluster_node_timeout && // 还未重连
@@ -4069,7 +4069,7 @@ void clusterCron(void) {
             /* and in such interval we are not seeing any traffic at all. */
             data_delay > server.cluster_node_timeout / 2) { // 等待pong消息超过了 timeout/2
             /* Disconnect the link, it will be reconnected automatically. */
-            // 释放连接，下次 clusterCron() 会自动重连
+            // 释放连接,下次 clusterCron() 会自动重连
             freeClusterLink(node->link);
         }
 
@@ -4079,7 +4079,7 @@ void clusterCron(void) {
          * a too big delay. */
         // 如果目前没有在 PING 节点
         // 并且已经有 node timeout 一半的时间没有从节点那里收到 PONG 回复
-        // 那么向节点发送一个 PING ，确保节点的信息不会太旧，有可能一直没有随机中
+        // 那么向节点发送一个 PING ,确保节点的信息不会太旧,有可能一直没有随机中
         if (node->link && node->ping_sent == 0 && (now - node->pong_received) > server.cluster_node_timeout / 2) {
             clusterSendPing(node->link, CLUSTERMSG_TYPE_PING);
             continue;
@@ -4087,7 +4087,7 @@ void clusterCron(void) {
 
         /* If we are a master and one of the slaves requested a manual
          * failover, ping it continuously. */
-        // 如果这是一个主节点，并且有一个从服务器请求进行手动故障转移,那么向从服务器发送 PING
+        // 如果这是一个主节点,并且有一个从服务器请求进行手动故障转移,那么向从服务器发送 PING
         if (server.cluster->mf_end && nodeIsMaster(myself) && server.cluster->mf_slave == node && node->link) {
             clusterSendPing(node->link, CLUSTERMSG_TYPE_PING);
             continue;
@@ -4107,11 +4107,11 @@ void clusterCron(void) {
          * our cluster bus link is also used for data: under heavy data
          * load pong delays are possible. */
         mstime_t node_delay = (ping_delay < data_delay) ? ping_delay : data_delay;
-        // 等待 PONG 回复的时长超过了限制值，将目标节点标记为 PFAIL （疑似下线)
+        // 等待 PONG 回复的时长超过了限制值,将目标节点标记为 PFAIL （疑似下线)
         if (node_delay > server.cluster_node_timeout) {
             /* Timeout reached. Set the node as possibly failing if it is
              * not already in this state. */
-            // 超时了，标记为疑似下线
+            // 超时了,标记为疑似下线
             if (!(node->flags & (CLUSTER_NODE_PFAIL | CLUSTER_NODE_FAIL))) {
                 serverLog(LL_DEBUG, "*** NODE %.40s possibly failing", node->name);
                 // 打开疑似下线标记
@@ -6515,16 +6515,16 @@ void readwriteCommand(client *c) {
     addReply(c, shared.ok);
 }
 
-/* 返回指向能够执行该命令的集群节点的指针。
+/* 返回指向能够执行该命令的集群节点的指针.
  * 1、单个键
- * 2、在同一个哈希槽中有多个键，而该槽是稳定的(没有正在重新分片)。
+ * 2、在同一个哈希槽中有多个键,而该槽是稳定的(没有正在重新分片).
  *
- * 如果成功，函数返回能够服务请求的节点。
- * 如果节点不是“myself”，则必须执行重定向。重定向的类型是通过设置引用'error_code'传递的整数来指定的，它将被设置为CLUSTER_REDIR_ASK或CLUSTER_REDIR_MOVED。
+ * 如果成功,函数返回能够服务请求的节点.
+ * 如果节点不是“myself”,则必须执行重定向.重定向的类型是通过设置引用'error_code'传递的整数来指定的,它将被设置为CLUSTER_REDIR_ASK或CLUSTER_REDIR_MOVED.
  * CLUSTER_REDIR_NONE myself
  * CLUSTER_REDIR_UNSTABLE 包含多个key,但slot正在迁移
  * CLUSTER_REDIR_DOWN_UNBOUND 对应节点已经下线(依赖全局状态)
- * CLUSTER_REDIR_DOWN_STATE和CLUSTER_REDIR_DOWN_RO_STATE如果集群处于关闭状态，但用户试图执行一个或多个键的命令
+ * CLUSTER_REDIR_DOWN_STATE和CLUSTER_REDIR_DOWN_RO_STATE如果集群处于关闭状态,但用户试图执行一个或多个键的命令
  */
 clusterNode *getNodeByQuery(client *c, struct redisCommand *cmd, robj **argv, int argc, int *hashslot, int *error_code) {
     clusterNode *n = NULL;
@@ -6535,27 +6535,27 @@ clusterNode *getNodeByQuery(client *c, struct redisCommand *cmd, robj **argv, in
     multiCmd mc;
     int i, slot = 0, migrating_slot = 0, importing_slot = 0, missing_keys = 0;
 
-    // 如果模块禁用集群重定向，则允许设置任何键。
+    // 如果模块禁用集群重定向,则允许设置任何键.
     if (server.cluster_module_flags & CLUSTER_MODULE_FLAG_NO_REDIRECTION) {
         return myself;
     }
 
-    // 默认错误代码。
+    // 默认错误代码.
     if (error_code) {
         *error_code = CLUSTER_REDIR_NONE;
     }
 
-    // 模块可以关闭Redis集群重定向:这在编写实现完全不同的分布式系统的模块时很有用。
-    // 我们处理所有的情况，就好像它们是EXEC命令一样，所以我们有一个通用的代码路径
+    // 模块可以关闭Redis集群重定向:这在编写实现完全不同的分布式系统的模块时很有用.
+    // 我们处理所有的情况,就好像它们是EXEC命令一样,所以我们有一个通用的代码路径
     if (cmd->proc == execCommand) {
-        // 如果没有设置CLIENT_MULTI标志，EXEC就会返回一个错误。
+        // 如果没有设置CLIENT_MULTI标志,EXEC就会返回一个错误.
         if (!(c->flags & CLIENT_MULTI)) {
             return myself;
         }
         ms = &c->mstate;
     }
     else {
-        // 如果客户端不在Multi/EXEC状态，为了有一个单独的代码路径来创建一个伪多态结构，我们在下面有一个单独的代码路径。
+        // 如果客户端不在Multi/EXEC状态,为了有一个单独的代码路径来创建一个伪多态结构,我们在下面有一个单独的代码路径.
         ms = &_ms;
         _ms.commands = &mc;
         _ms.count = 1;

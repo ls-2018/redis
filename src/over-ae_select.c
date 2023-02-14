@@ -27,7 +27,7 @@ static int aeApiCreate(aeEventLoop *eventLoop) {
 
 static int aeApiResize(aeEventLoop *eventLoop, int setsize) {
     AE_NOTUSED(eventLoop);
-    // 只需确保fd_set类型中有足够的空间。
+    // 只需确保fd_set类型中有足够的空间.
     if (setsize >= FD_SETSIZE) {
         return -1; // select 最多支持1024个fd
     }
@@ -66,9 +66,9 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
 
     memcpy(&state->_rfds, &state->rfds, sizeof(fd_set));
     memcpy(&state->_wfds, &state->wfds, sizeof(fd_set));
-    // select()用来等待文件描述符状态的改变。
+    // select()用来等待文件描述符状态的改变.
     // 参数n代表最大的文件描述词加1
-    // 参数readfds、writefds和exceptfds 称为描述词组，是用来回传该描述词的读，写或例外的状况。
+    // 参数readfds、writefds和exceptfds 称为描述词组,是用来回传该描述词的读,写或例外的状况.
 
     // tvp 阻塞时间
     retval = select(eventLoop->maxfd + 1, &state->_rfds, &state->_wfds, NULL, tvp);
@@ -94,7 +94,7 @@ static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
     else if (retval == -1 && errno != EINTR) {
         // EBADF 文件描述词为无效的或该文件已关闭
         // EINTR 此调用被信号所中断
-        // EINVAL 参数n为负值。
+        // EINVAL 参数n为负值.
         // ENOMEM 核心内存不足
         panic("aeApiPoll: select, %s", strerror(errno));
     }

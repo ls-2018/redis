@@ -296,10 +296,10 @@ unsigned long LFUDecrAndReturn(robj *o) {
     return counter; // 如果衰减大小为0,则返回原来的访问次数
 }
 
-// 我们不希望将AOF缓冲区和slave输出缓冲区计算为已使用的内存:驱逐应该主要使用数据大小，
-// 因为当我们将DELs推入其中时会引起反馈循环，放置越来越多的DELs会使它们更大，
-// 如果我们计算它们，我们需要驱逐更多的键，然后生成更多的DELs，可能会导致大量的驱逐循环，甚至所有的键都被驱逐。
-// 这个函数返回AOF和复制缓冲区的和。
+// 我们不希望将AOF缓冲区和slave输出缓冲区计算为已使用的内存:驱逐应该主要使用数据大小,
+// 因为当我们将DELs推入其中时会引起反馈循环,放置越来越多的DELs会使它们更大,
+// 如果我们计算它们,我们需要驱逐更多的键,然后生成更多的DELs,可能会导致大量的驱逐循环,甚至所有的键都被驱逐.
+// 这个函数返回AOF和复制缓冲区的和.
 size_t freeMemoryGetNotCountedMemory(void) {
     size_t overhead = 0;
 
@@ -414,8 +414,8 @@ int getMaxmemoryState(size_t *total, size_t *logical, size_t *tofree, float *lev
     return C_ERR;
 }
 
-// 如果分配更多内存后使用的内存大于maxmemory，则返回1，否则返回0。
-// 如果使用的内存超过maxmemory, Redis可能会拒绝用户的请求或驱逐一些键，特别是当我们一次性分配巨大的内存时。
+// 如果分配更多内存后使用的内存大于maxmemory,则返回1,否则返回0.
+// 如果使用的内存超过maxmemory, Redis可能会拒绝用户的请求或驱逐一些键,特别是当我们一次性分配巨大的内存时.
 int overMaxmemoryAfterAlloc(size_t moremem) {
     if (!server.maxmemory)
         return 0;
@@ -458,12 +458,12 @@ void startEvictionTimeProc(void) {
     }
 }
 
-/* 检查执行驱逐是否安全。
+/* 检查执行驱逐是否安全.
  *   Returns 1 可以驱逐
  *   Returns 0 跳过本次驱逐
  */
 static int isSafeToPerformEvictions(void) {
-    // 没有lua脚本执行超时，也没有在做数据超时
+    // 没有lua脚本执行超时,也没有在做数据超时
     if (scriptIsTimedout() || server.loading)
         return 0;
 
@@ -471,7 +471,7 @@ static int isSafeToPerformEvictions(void) {
     if (server.masterhost && server.repl_slave_ignore_maxmemory)
         return 0;
 
-    // 当客户端暂停时，不需要evict，因为数据是不会变化的
+    // 当客户端暂停时,不需要evict,因为数据是不会变化的
     if (checkClientPauseTimeoutAndReturnIfPaused())
         return 0;
 
@@ -629,7 +629,7 @@ int performEvictions(void) {
         }
         // 如果使用的是volatile-random and allkeys-random  随机策略,那么从目标字典中随机选出键
         else if (server.maxmemory_policy == MAXMEMORY_ALLKEYS_RANDOM || server.maxmemory_policy == MAXMEMORY_VOLATILE_RANDOM) {
-            // 当随机淘汰时，我们用静态变量next_db来存储当前执行到哪个db了
+            // 当随机淘汰时,我们用静态变量next_db来存储当前执行到哪个db了
 
             for (i = 0; i < server.dbnum; i++) {
                 j = (++next_db) % server.dbnum;
@@ -649,9 +649,9 @@ int performEvictions(void) {
             db = server.db + bestdbid;
             // 数组的第一个元素是删除操作对应的命令对象,而第二个元素是被删除的 key 对象.
             robj *keyobj = createStringObject(bestkey, sdslen(bestkey));
-            /*我们单独计算db*Delete()释放的内存量。实际上，在AOF和副本传播所需的内存可能大于我们正在释放的内存（删除key）
-           ，如果我们考虑这点的话会很绕。由signalModifiedKey生成的CSC失效消息也是这样。
-           因为AOF和输出缓冲区内存最终会被释放，所以我们只需要关心key空间使用的内存即可。*/
+            /*我们单独计算db*Delete()释放的内存量.实际上,在AOF和副本传播所需的内存可能大于我们正在释放的内存（删除key）
+           ,如果我们考虑这点的话会很绕.由signalModifiedKey生成的CSC失效消息也是这样.
+           因为AOF和输出缓冲区内存最终会被释放,所以我们只需要关心key空间使用的内存即可.*/
 
             // 计算删除键所释放的内存数量
 
@@ -675,15 +675,15 @@ int performEvictions(void) {
             keys_freed++;
 
             if (keys_freed % 16 == 0) {
-                // 当要释放的内存开始足够大时，我们可能会在这里花费太多时间，
-                // 不可能足够快地将数据传送到副本，因此我们会在循环中强制传输。
+                // 当要释放的内存开始足够大时,我们可能会在这里花费太多时间,
+                // 不可能足够快地将数据传送到副本,因此我们会在循环中强制传输.
                 if (slaves) {
                     flushSlavesOutputBuffers();
                 }
 
-                /*通常我们的停止条件是释放一个固定的，预先计算的内存量。但是，当我们*在另一个线程中删除对象时，
-                   最好不时*检查是否已经达到目标*内存，因为“mem\u freed”量只在dbAsyncDelete（）调用中*计算，
-                   而线程可以*一直释放内存。*/
+                /*通常我们的停止条件是释放一个固定的,预先计算的内存量.但是,当我们*在另一个线程中删除对象时,
+                   最好不时*检查是否已经达到目标*内存,因为“mem\u freed”量只在dbAsyncDelete（）调用中*计算,
+                   而线程可以*一直释放内存.*/
                 // 如果使用了惰性删除,并且每删除key后,统计下当前内存使用量
                 if (server.lazyfree_lazy_eviction) {
                     // 计算当前内存使用量是否不超过最大内存容量
@@ -692,8 +692,8 @@ int performEvictions(void) {
                     }
                 }
 
-                // 一段时间后，尽早退出循环-即使尚未达到内存限制
-                // 如果我们突然需要释放大量的内存，不要在这里花太多时间。
+                // 一段时间后,尽早退出循环-即使尚未达到内存限制
+                // 如果我们突然需要释放大量的内存,不要在这里花太多时间.
                 if (elapsedUs(evictionTimer) > eviction_time_limit_us) {
                     // We still need to free memory - start eviction timer proc
                     startEvictionTimeProc();

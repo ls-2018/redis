@@ -1,42 +1,12 @@
-/* Copyright (c) 2009-2020, Salvatore Sanfilippo <antirez at gmail dot com>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *   * Redistributions of source code must retain the above copyright notice,
- *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of Redis nor the names of its contributors may be used
- *     to endorse or promote products derived from this software without
- *     specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
 #include "over-server.h"
 #include "cluster.h"
 
 /* ========================== Clients timeouts ============================= */
 
-/* Check if this blocked client timedout (does nothing if the client is
- * not blocked right now). If so send a reply, unblock it, and return 1.
- * Otherwise 0 is returned and no operation is performed. */
+// 检查这个被阻塞的客户端是否超时(如果客户端现在没有被阻塞,则不执行任何操作).
+// 如果是,发送回复,解除屏蔽,并返回1.否则返回0,不做任何操作.
 int checkBlockedClientTimeout(client *c, mstime_t now) {
     if (c->flags & CLIENT_BLOCKED && c->bpop.timeout != 0 && c->bpop.timeout < now) {
-        /* Handle blocking operation specific timeout. */
         replyToBlockedClientTimedOut(c);
         unblockClient(c);
         return 1;
@@ -49,7 +19,6 @@ int checkBlockedClientTimeout(client *c, mstime_t now) {
 // 检查客户端是否已经超时,如果超时就关闭客户端,并返回 1 ;否则返回 0 .
 int clientsCronHandleTimeout(client *c, mstime_t now_ms) {
     time_t now = now_ms / 1000; // 获取当前时间
-
     if (server.maxidletime &&                           // 服务器设置了 maxidletime 时间
         !(c->flags & CLIENT_SLAVE) &&                   // 不检查作为从服务器的客户端
         !mustObeyClient(c) &&                           // 不检查主节点 和AOF
@@ -62,8 +31,6 @@ int clientsCronHandleTimeout(client *c, mstime_t now_ms) {
         return 1;
     }
     else if (c->flags & CLIENT_BLOCKED) {
-        /* Cluster: handle unblock & redirect of clients blocked
-         * into keys no longer served by this server. */
         if (server.cluster_enabled) {
             if (clusterRedirectBlockedClientIfNeeded(c))
                 unblockClient(c); // 取消客户端的阻塞状态
@@ -72,22 +39,21 @@ int clientsCronHandleTimeout(client *c, mstime_t now_ms) {
     return 0; // 客户度没有被关闭
 }
 
-/* For blocked clients timeouts we populate a radix tree of 128 bit keys
- * composed as such:
- *
- *  [8 byte big endian expire time]+[8 byte client ID]
- *
- * We don't do any cleanup in the Radix tree: when we run the clients that
- * reached the timeout already, if they are no longer existing or no longer
- * blocked with such timeout, we just go forward.
- *
- * Every time a client blocks with a timeout, we add the client in
- * the tree. In beforeSleep() we call handleBlockedClientsTimeout() to run
- * the tree and unblock the clients. */
+
+/*对于阻塞的客户端超时,我们填充一个128位键的基树像这样组成的:
+＊
+*[8字节big endian过期时间]+[8字节客户端ID]
+＊
+*我们不做任何清理Radix树:当我们运行客户端
+*已达到超时,如果它们不再存在或不再存在
+*阻塞了这样的超时,我们只是继续前进.
+＊
+*每次客户端出现超时阻塞时,我们都会添加该客户端
+*树.在beforeSleep()中,我们调用handleBlockedClientsTimeout()来运行
+*树和解除阻塞客户端.*/
 
 #define CLIENT_ST_KEYLEN 16 /* 8 bytes mstime + 8 bytes client ID. */
 
-/* Given client ID and timeout, write the resulting radix tree key in buf. */
 void encodeTimeoutKey(unsigned char *buf, uint64_t timeout, client *c) {
     timeout = htonu64(timeout);
     memcpy(buf, &timeout, sizeof(timeout));
@@ -96,8 +62,6 @@ void encodeTimeoutKey(unsigned char *buf, uint64_t timeout, client *c) {
         memset(buf + 12, 0, 4); /* Zero padding for 32bit target. */
 }
 
-/* Given a key encoded with encodeTimeoutKey(), resolve the fields and write
- * the timeout into *toptr and the client pointer into *cptr. */
 void decodeTimeoutKey(unsigned char *buf, uint64_t *toptr, client **cptr) {
     memcpy(toptr, buf, sizeof(*toptr));
     *toptr = ntohu64(*toptr);
@@ -117,8 +81,7 @@ void addClientToTimeoutTable(client *c) {
         c->flags |= CLIENT_IN_TO_TABLE;
 }
 
-/* Remove the client from the table when it is unblocked for reasons
- * different than timing out. */
+
 void removeClientFromTimeoutTable(client *c) {
     if (!(c->flags & CLIENT_IN_TO_TABLE))
         return;
@@ -154,30 +117,25 @@ void handleBlockedClientsTimeout(void) {
     raxStop(&ri); // 释放迭代器
 }
 
-/* Get a timeout value from an object and store it into 'timeout'.
- * The final timeout is always stored as milliseconds as a time where the
- * timeout will expire, however the parsing is performed according to
- * the 'unit' that can be seconds or milliseconds.
- *
- * Note that if the timeout is zero (usually from the point of view of
- * commands API this means no timeout) the value stored into 'timeout'
- * is zero. */
+// 从对象中获取一个超时值,并将其存储到'timeout'中.
+// 最终超时总是以毫秒的形式存储,作为超时到期的时间,但是解析是根据“单位”执行的,可以是秒或毫秒.
+// 注意,如果超时为零(通常从命令API的角度来看,这意味着没有超时),存储到'timeout'的值为零.
 int getTimeoutFromObjectOrReply(client *c, robj *object, mstime_t *timeout, int unit) {
     long long tval;
     long double ftval;
 
     if (unit == UNIT_SECONDS) {
-        if (getLongDoubleFromObjectOrReply(c, object, &ftval, "timeout is not a float or out of range") != C_OK)
+        if (getLongDoubleFromObjectOrReply(c, object, &ftval, "Timeout不是浮点数,或超出范围") != C_OK)
             return C_ERR;
         tval = (long long)(ftval * 1000.0);
     }
     else {
-        if (getLongLongFromObjectOrReply(c, object, &tval, "timeout is not an integer or out of range") != C_OK)
+        if (getLongLongFromObjectOrReply(c, object, &tval, "超时时间不是整数,或超出范围") != C_OK)
             return C_ERR;
     }
 
     if (tval < 0) {
-        addReplyError(c, "timeout is negative");
+        addReplyError(c, "超时参数为负");
         return C_ERR;
     }
 

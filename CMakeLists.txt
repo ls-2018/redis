@@ -55,7 +55,7 @@ set(SRC_SERVER_TMP
         src/aof.c
         src/sentinel.c
         src/tracking.c
-        src/timeout.c
+        src/over-timeout.c
         src/over-networking.c
         src/over-pqsort.c
         src/over-sort.c
@@ -83,14 +83,14 @@ set(SRC_SERVER_TMP
         src/over-function_lua.c
         src/over-bio.c
         src/over-ae.c
-        src/blocked.c
+        src/over-blocked.c
         src/t_string.c
         src/over-config.c
         src/over-endianconv.c
         src/over-crc16.c
         src/over-setcpuaffinity.c
         src/script.c
-        src/bitops.c
+        src/over-bitops.c
         src/ziplist.c
         src/over-defrag.c
         src/acl.c

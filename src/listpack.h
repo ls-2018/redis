@@ -18,7 +18,7 @@
 typedef struct {
     /* When string is used, it is provided with the length (slen). */
     unsigned char *sval; // 实际存放的数据
-    uint32_t slen;       // 定义该元素的编码类型，会对不同长度的整数和字符串进行编码；
+    uint32_t slen;       // 定义该元素的编码类型,会对不同长度的整数和字符串进行编码;
     /* When integer is used, 'sval' is NULL, and lval holds the value. */
     long long lval; // encoding+data的总长度
 } listpackEntry;

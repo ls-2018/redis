@@ -126,7 +126,7 @@ static int connSocketAccept(connection *conn, ConnectionCallbackFunc accept_hand
     return ret;
 }
 
-// 注册一个写处理程序，在连接可读时调用。如果为NULL，则删除现有的处理程序。
+// 注册一个写处理程序,在连接可读时调用.如果为NULL,则删除现有的处理程序.
 static int connSocketSetWriteHandler(connection *conn, ConnectionCallbackFunc func, int barrier) {
     if (func == conn->write_handler)
         return C_OK;
@@ -143,7 +143,7 @@ static int connSocketSetWriteHandler(connection *conn, ConnectionCallbackFunc fu
     return C_OK;
 }
 
-// 注册一个读处理程序，在连接可读时调用。如果为NULL，则删除现有的处理程序。
+// 注册一个读处理程序,在连接可读时调用.如果为NULL,则删除现有的处理程序.
 static int connSocketSetReadHandler(connection *conn, ConnectionCallbackFunc func) {
     if (func == conn->read_handler)
         return C_OK;
@@ -186,10 +186,10 @@ static void connSocketEventHandler(struct aeEventLoop *el, int fd, void *clientD
         conn->conn_handler = NULL;
     }
 
-    // 通常我们先执行可读事件，然后执行可写事件。这很有用，因为有时我们可以在处理完查询后立即回复查询。
-    // 然而，如果在掩码中设置了WRITE_BARRIER，我们的应用程序会要求我们做相反的事情:
-    // 永远不要在可读事件之后触发可写事件。在这种情况下，我们反转调用。
-    // 这是有用的，例如，我们想要在beforeSleep()钩子中做一些事情，比如在回复客户端之前将文件同步到磁盘。
+    // 通常我们先执行可读事件,然后执行可写事件.这很有用,因为有时我们可以在处理完查询后立即回复查询.
+    // 然而,如果在掩码中设置了WRITE_BARRIER,我们的应用程序会要求我们做相反的事情:
+    // 永远不要在可读事件之后触发可写事件.在这种情况下,我们反转调用.
+    // 这是有用的,例如,我们想要在beforeSleep()钩子中做一些事情,比如在回复客户端之前将文件同步到磁盘.
     int invert = conn->flags & CONN_FLAG_WRITE_BARRIER;
 
     int call_write = (mask & AE_WRITABLE) && conn->write_handler;
@@ -205,7 +205,7 @@ static void connSocketEventHandler(struct aeEventLoop *el, int fd, void *clientD
         if (!callHandler(conn, conn->write_handler))
             return;
     }
-    // 如果必须反转调用，则在可写事件之后触发可读事件。
+    // 如果必须反转调用,则在可写事件之后触发可读事件.
     if (invert && call_read) {
         if (!callHandler(conn, conn->read_handler))
             return;

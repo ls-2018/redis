@@ -82,7 +82,7 @@ typedef long long ustime_t; // 微秒
 #define CONFIG_RUN_ID_SIZE 40                                 // 运行时ID的长度
 #define RDB_EOF_MARK_SIZE 40                                  //
 #define CONFIG_REPL_BACKLOG_MIN_SIZE (1024 * 16)              /* 16k */
-#define CONFIG_BGSAVE_RETRY_DELAY 5                           // 稍等片刻再试一次。
+#define CONFIG_BGSAVE_RETRY_DELAY 5                           // 稍等片刻再试一次.
 #define CONFIG_DEFAULT_PID_FILE "/var/run/redis.pid"          //
 #define CONFIG_DEFAULT_BINDADDR_COUNT 2                       // 默认绑定的地址数量
 #define CONFIG_DEFAULT_BINDADDR \
@@ -111,7 +111,7 @@ typedef long long ustime_t; // 微秒
 #define ACTIVE_EXPIRE_CYCLE_SLOW 0
 #define ACTIVE_EXPIRE_CYCLE_FAST 1
 
-// 子进程将使用此状态代码退出，表示进程无错误的终止:这对于终止保存子进程(RDB或AOF)非常有用，而不会触发通常在写错误时开启的父进程写保护。通常，使用SIGUSR1终止的子代码将使用这个特殊代码退出。
+// 子进程将使用此状态代码退出,表示进程无错误的终止:这对于终止保存子进程(RDB或AOF)非常有用,而不会触发通常在写错误时开启的父进程写保护.通常,使用SIGUSR1终止的子代码将使用这个特殊代码退出.
 #define SERVER_CHILD_NOERROR_RETVAL 255
 
 /* Reading copy-on-write info is sometimes expensive and may slow down child
@@ -277,7 +277,7 @@ extern int configOOMScoreAdjValuesDefaults[CONFIG_OOM_COUNT];
 #define CLIENT_MODULE (1 << 27)                                                  /* Non connected client used by some module. */
 #define CLIENT_PROTECTED (1 << 28)                                               /* Client should not be freed for now. */
 /* #define CLIENT_... (1<<29) currently unused, feel free to use in the future */
-#define CLIENT_PENDING_COMMAND (1 << 30)          // 在线程I/O中用于在我们返回单线程后发出信号，表明客户端已经挂起了要执行的命令。
+#define CLIENT_PENDING_COMMAND (1 << 30)          // 在线程I/O中用于在我们返回单线程后发出信号,表明客户端已经挂起了要执行的命令.
 #define CLIENT_TRACKING (1ULL << 31)              // 客户端启用了key跟踪,以便执行客户端缓存.
 #define CLIENT_TRACKING_BROKEN_REDIR (1ULL << 32) /* Target client is invalid. */
 #define CLIENT_TRACKING_BCAST (1ULL << 33)        // 在BCAST模式下跟踪.
@@ -290,7 +290,7 @@ extern int configOOMScoreAdjValuesDefaults[CONFIG_OOM_COUNT];
 #define CLIENT_CLOSE_AFTER_COMMAND (1ULL << 40)   /* Close after executing commands and writing entire reply. */
 #define CLIENT_DENY_BLOCKING (1ULL << 41)         /* Indicate that the client should not be blocked. currently, turned on inside MULTI, Lua, RM_Call, and AOF client */
 #define CLIENT_REPL_RDBONLY (1ULL << 42)          /* This client is a replica that only wants RDB without replication buffer. */
-#define CLIENT_NO_EVICT (1ULL << 43)              // 该客户端受到保护，不允许因为客户端内存驱逐
+#define CLIENT_NO_EVICT (1ULL << 43)              // 该客户端受到保护,不允许因为客户端内存驱逐
 
 // 客户端阻塞类型
 #define BLOCKED_NONE 0     // 没有阻塞
@@ -465,7 +465,7 @@ typedef enum {
 
 /* SHUTDOWN flags */
 #define SHUTDOWN_NOFLAGS 0 /* No flags. */
-#define SHUTDOWN_SAVE 1    // 在SHUTDOWN时强制SAVE，即使没有配置保存点。
+#define SHUTDOWN_SAVE 1    // 在SHUTDOWN时强制SAVE,即使没有配置保存点.
 #define SHUTDOWN_NOSAVE 2  // 不要在关机时SAVE
 #define SHUTDOWN_NOW 4     // 不要等待SLAVE的追赶
 #define SHUTDOWN_FORCE 8   // 不要让错误阻止关机
@@ -492,7 +492,7 @@ typedef enum {
     CLIENT_PAUSE_ALL      // 暂停所有命令
 } pause_type;
 
-// 客户端暂停的目的。每个目的都有自己的结束时间和暂停类型。
+// 客户端暂停的目的.每个目的都有自己的结束时间和暂停类型.
 typedef enum {
     PAUSE_BY_CLIENT_COMMAND = 0, // 由于客户端的命令
     PAUSE_DURING_SHUTDOWN,       // 由于在shutdown状态中
@@ -514,8 +514,8 @@ typedef enum {
 
 // RDB活动类型
 #define RDB_CHILD_TYPE_NONE 0
-#define RDB_CHILD_TYPE_DISK 1   // RDB被写入磁盘。
-#define RDB_CHILD_TYPE_SOCKET 2 // RDB被写入套接字。
+#define RDB_CHILD_TYPE_DISK 1   // RDB被写入磁盘.
+#define RDB_CHILD_TYPE_SOCKET 2 // RDB被写入套接字.
 
 // keyspace 变更通知的 类型
 #define NOTIFY_KEYSPACE (1 << 0)                                                                                                                                             /* K */
@@ -789,8 +789,8 @@ typedef struct RedisModuleDigest {
 #define LRU_CLOCK_MAX ((1 << LRU_BITS) - 1) // obj->lru 的最大值, 4字节的最大值
 #define LRU_CLOCK_RESOLUTION 1000           // LRU检查最大时间  以毫秒为单位的 LRU 时钟精度
 
-#define OBJ_SHARED_REFCOUNT INT_MAX       // 全局对象永不销毁。
-#define OBJ_STATIC_REFCOUNT (INT_MAX - 1) // 在堆栈中分配的对象。
+#define OBJ_SHARED_REFCOUNT INT_MAX       // 全局对象永不销毁.
+#define OBJ_STATIC_REFCOUNT (INT_MAX - 1) // 在堆栈中分配的对象.
 
 #define OBJ_FIRST_SPECIAL_REFCOUNT OBJ_STATIC_REFCOUNT
 // unsigned  4字节
@@ -850,8 +850,8 @@ typedef struct clientReplyBlock {
 /* Similar with 'clientReplyBlock', it is used for shared buffers between
  * all replica clients and replication backlog. */
 typedef struct replBufBlock {
-    int refcount;          // 使用的副本或repl backlog的数量。
-    long long id;          // 唯一增量数。
+    int refcount;          // 使用的副本或repl backlog的数量.
+    long long id;          // 唯一增量数.
     long long repl_offset; // 复制偏移块
     size_t size, used;
     char buf[];
@@ -870,8 +870,8 @@ typedef struct redisDb {
     int id;                                 // 数据库号码
     long long avg_ttl;                      // 数据库的键的平均 TTL ,统计信息
     unsigned long expires_cursor;           // 活动的过期游标
-    list *defrag_later;                     // 一个接一个地尝试碎片整理的关键名称列表。
-    clusterSlotToKeyMapping *slots_to_keys; // 到键的槽数组。仅用于集群模式(db 0)。
+    list *defrag_later;                     // 一个接一个地尝试碎片整理的关键名称列表.
+    clusterSlotToKeyMapping *slots_to_keys; // 到键的槽数组.仅用于集群模式(db 0).
 } redisDb;
 
 typedef struct functionsLibCtx functionsLibCtx;
@@ -906,15 +906,14 @@ typedef struct multiState {
 // 阻塞状态
 typedef struct blockingState {
     //  一般字段
-    long count;       /* Elements to pop if count was specified (BLMPOP/BZMPOP), -1 otherwise. */
-    mstime_t timeout; // 阻塞时限[时间点]
-
-    dict *keys;   // 造成阻塞的键   、可以是list、zset、stream
-    robj *target; // 在被阻塞的键有新元素进入时,需要将这些新元素添加到哪里的目标键  用于 BLMOVE 命令
+    long count;       // 如果指定了count要弹出的元素(BLMPOP/BZMPOP),否则为-1.
+    mstime_t timeout; // 阻塞时限[时间点], 是时间点,不是阻塞时间长度
+    dict *keys;       // 造成阻塞的键   、可以是list、zset、stream
+    robj *target;     // 在被阻塞的键有新元素进入时,需要将这些新元素添加到哪里的目标键  用于 BLMOVE 命令
     struct blockPos {
-        int wherefrom; /* Where to pop from */
-        int whereto;   /* Where to push to */
-    } blockpos;        /* The positions in the src/dst lists/zsets where we want to pop/push an element for BLPOP, BRPOP, BLMOVE and BZMPOP. */
+        int wherefrom; // 从哪pop
+        int whereto;   // pop出的元素,push到哪
+    } blockpos;        // 在src/dst list/zsets中,我们想要pop/push BLPOP, BRPOP, BLMOVE和BZMPOP元素的位置.
 
     /* BLOCK_STREAM */
     size_t xread_count;   /* XREAD COUNT option. */
@@ -972,7 +971,7 @@ typedef struct {
 /* With multiplexing we need to take per-client state.
  * Clients are taken in a linked list. */
 
-#define CLIENT_ID_AOF (UINT64_MAX) // AOF客户端的保留ID。如果你需要更多的保留id，使用UINT64_MAX-1， -2，…等等。
+#define CLIENT_ID_AOF (UINT64_MAX) // AOF客户端的保留ID.如果你需要更多的保留id,使用UINT64_MAX-1, -2,…等等.
 
 /* Replication backlog is not separate memory, it just is one consumer of
  * the global replication buffer. This structure records the reference of
@@ -1018,13 +1017,13 @@ typedef struct client {
     long bulklen;                             // 命令内容的长度 在一个批量请求中
     list *reply;                              // 回复链表  可变大小缓冲区由reply链表和一个或多个字符串对象组成
     unsigned long long reply_bytes;           // 回复链表中对象的总大小
-    list *deferred_reply_errors;              // 用于模块线程安全上下文。
+    list *deferred_reply_errors;              // 用于模块线程安全上下文.
     size_t sentlen;                           // 已发送字节,处理 short write 用
     time_t ctime;                             // 记录了创建客户端的时间
     time_t lastinteraction;                   // 记录了客户端与服务器最后一次进行互动的时间
     time_t obuf_soft_limit_reached_time;      // 客户端的输出缓冲区超过软性限制的时间
     long duration;                            // 当前命令的执行时间
-    int slot;                                 // 客户端正在执行的slot。如果没有槽位被使用，则设置为-1
+    int slot;                                 // 客户端正在执行的slot.如果没有槽位被使用,则设置为-1
     uint64_t flags;                           // 客户端的标志值
     int authenticated;                        // 当 server.requirepass 不为 NULL 时 代表认证的状态  0 代表未认证,1 代表已认证
     int replstate;                            // 复制状态,如果是slave
@@ -1062,11 +1061,11 @@ typedef struct client {
     void *auth_callback_privdata;             /* Private data that is passed when the auth changed callback is executed. Opaque for Redis Core. */
     void *auth_module;                        /* The module that owns the callback, which is used to disconnect the client if the module is unloaded for cleanup. Opaque for Redis Core.*/
 
-    // 如果此客户端处于跟踪模式，且该字段不为零，则此客户端获取的无效key消息将发送到指定的客户端ID
+    // 如果此客户端处于跟踪模式,且该字段不为零,则此客户端获取的无效key消息将发送到指定的客户端ID
     uint64_t client_tracking_redirection;
     rax *client_tracking_prefixes; /* A dictionary of prefixes we are already subscribed to in BCAST mode, in the context of client side caching. */
     size_t last_memory_usage;      // 客户端 最新使用的内存
-    int last_memory_type;          // 客户端类型、可以使正常客户端，也可以是rdb aof module
+    int last_memory_type;          // 客户端类型、可以使正常客户端,也可以是rdb aof module
 
     listNode *mem_usage_bucket_node;        // 存储在内存bucket中的结构指针
     clientMemUsageBucket *mem_usage_bucket; // client 的内存情况记录在了哪个bucket中
@@ -1259,7 +1258,7 @@ typedef struct redisOp {
     int target;  // 传播目标
 } redisOp;
 
-/* 定义一个Redis操作数组。有一个API可以简单地添加到这个结构中。
+/* 定义一个Redis操作数组.有一个API可以简单地添加到这个结构中.
  *
  * redisOpArrayInit();
  * redisOpArrayAppend();
@@ -1382,21 +1381,18 @@ typedef enum {
 } aof_file_type;
 
 typedef struct {
-    sds file_name;           /* file name */
-    long long file_seq;      /* file sequence */
-    aof_file_type file_type; /* file type */
+    sds file_name;           // 文件名
+    long long file_seq;      // 文件序列
+    aof_file_type file_type; // 文件类型
 } aofInfo;
 
 typedef struct {
-    aofInfo *base_aof_info;       /* BASE文件信息。如果没有BASE文件，则为NULL。 */
-    list *incr_aof_list;          /* INCR AOFs清单。重写失败时，我们可能有多个INCR AOF。*/
-    list *history_aof_list;       /* HISTORY AOF list. When the AOFRW success, The aofInfo contained in
-                                               `base_aof_info` and `incr_aof_list` will be moved to this list. We
-                                               will delete these AOF files when AOFRW finish. */
-    long long curr_base_file_seq; /* The sequence number used by the current BASE file. */
-    long long curr_incr_file_seq; /* The sequence number used by the current INCR file. */
-    int dirty;                    /* 1 Indicates that the aofManifest in the memory is inconsistent with
-                                                   disk, we need to persist it immediately. */
+    aofInfo *base_aof_info;       /* BASE文件信息.如果没有BASE文件,则为NULL. */
+    list *incr_aof_list;          /* INCR AOFs清单.重写失败时,我们可能有多个INCR AOF.*/
+    list *history_aof_list;       // 历史清单.当AOFRW成功时,' base_aof_info '和' incr_aof_list '中包含的aofInfo将被移动到这个列表中.AOFRW完成后,我们会删除这些AOF文件.
+    long long curr_base_file_seq; // 当前BASE文件使用的序列号.
+    long long curr_incr_file_seq; // 当前INCR文件使用的序列号.
+    int dirty;                    // 内存中的aofManifest与磁盘不一致,需要立即持久化.
 } aofManifest;
 
 /*-----------------------------------------------------------------------------
@@ -1491,18 +1487,18 @@ struct redisServer {
     list *monitors;                                                          // 保存了所有监视器
     client *current_client;                                                  // 服务器处理中的客户端,仅用于崩溃报告
     int clients_paused;                                                      // 如果客户端当前处于暂停状态,则为True
-    clientMemUsageBucket client_mem_usage_buckets[CLIENT_MEM_USAGE_BUCKETS]; // 每个桶存储一系列的client，同一个桶内各client的内存差不多
+    clientMemUsageBucket client_mem_usage_buckets[CLIENT_MEM_USAGE_BUCKETS]; // 每个桶存储一系列的client,同一个桶内各client的内存差不多
     rax *clients_timeout_table;                                              // 存放 超时的 阻塞客户端 的 前缀树.
     long fixed_time_expire;                                                  // 如果>0,则根据server.mstime对密钥进行过期.
     int in_nested_call;                                                      // If > 0, 嵌套调用中
     rax *clients_index;                                                      // 按客户端ID存储的前缀树
     pause_type client_pause_type;                                            // 如果客户端当前处于暂停状态,则为True
-    list *postponed_clients;                                                 // 系统繁忙，而被延迟处理的client
+    list *postponed_clients;                                                 // 系统繁忙,而被延迟处理的client
     mstime_t client_pause_end_time;                                          // 撤销暂停的时间
     pause_event *client_pause_per_purpose[NUM_PAUSE_PURPOSES];               //
     char neterr[ANET_ERR_LEN];                                               // 网络错误
     dict *migrate_cached_sockets;                                            // MIGRATE 缓存
-    redisAtomic uint64_t next_client_id;                                     // 下一个客户端唯一ID。增量。
+    redisAtomic uint64_t next_client_id;                                     // 下一个客户端唯一ID.增量.
     int protected_mode;                                                      // 不接受外部链接
     int io_threads_num;                                                      // 可以使用的总IO线程数
     int io_threads_do_reads;                                                 // 是否从IO线程 读取并解析数据
@@ -1562,11 +1558,11 @@ struct redisServer {
     struct malloc_stats cron_malloc_stats;              // serverCron  定时采样内存数据
     redisAtomic long long stat_net_input_bytes;         // 从网络读取到的字节数
     redisAtomic long long stat_net_output_bytes;        /* 写到网络的字节数 */
-    size_t stat_current_cow_peak;                       // 写入字节时拷贝的峰值大小。
-    size_t stat_current_cow_bytes;                      // 当子节点处于活动状态时，在写字节上复制。
+    size_t stat_current_cow_peak;                       // 写入字节时拷贝的峰值大小.
+    size_t stat_current_cow_bytes;                      // 当子节点处于活动状态时,在写字节上复制.
     monotime stat_current_cow_updated;                  // stat_current_cow_bytes最近一次更新时间
-    size_t stat_current_save_keys_processed;            // 当子节点处于活动状态时，已处理键。
-    size_t stat_current_save_keys_total;                // 子程序开始时的键数。
+    size_t stat_current_save_keys_processed;            // 当子节点处于活动状态时,已处理键.
+    size_t stat_current_save_keys_total;                // 子程序开始时的键数.
     size_t stat_rdb_cow_bytes;                          // rdb 过程中 COW 消耗d内存大小
     size_t stat_aof_cow_bytes;                          /* Copy on write bytes during AOF rewrite. */
     size_t stat_module_cow_bytes;                       /* Copy on write bytes during module fork. */
@@ -1575,17 +1571,17 @@ struct redisServer {
     size_t stat_cluster_links_memory;                   /* Mem usage by cluster links */
     long long stat_unexpected_error_replies;            /* Number of unexpected (aof-loading, replica to master, etc.) error replies */
     long long stat_total_error_replies;                 // 命令失败计数器(rejected_calls或failed_calls).
-    long long stat_dump_payload_sanitizations;          // 深度转储有效载荷的完整性验证数量。
+    long long stat_dump_payload_sanitizations;          // 深度转储有效载荷的完整性验证数量.
     long long stat_io_reads_processed;                  // IO /主线程处理的读事件数
     long long stat_io_writes_processed;                 // IO /主线程处理的写事件数
     redisAtomic long long stat_total_reads_processed;   // 已处理的读事件总数
     redisAtomic long long stat_total_writes_processed;  // 已处理的写事件总数
 
-    // 下面两个用于跟踪瞬时指标，如每秒操作数、网络流量。
+    // 下面两个用于跟踪瞬时指标,如每秒操作数、网络流量.
     struct {
         long long last_sample_time;              // 最后一次进行抽样的时间
         long long last_sample_count;             // ToDo 最后一次抽样时,服务器已执行命令的数量
-        long long samples[STATS_METRIC_SAMPLES]; // 抽样结果,存储16个抽样数据，每秒钟执行多少次
+        long long samples[STATS_METRIC_SAMPLES]; // 抽样结果,存储16个抽样数据,每秒钟执行多少次
         int idx;                                 // 数组索引,用于保存抽样结果,并在需要时回绕到 0
     } inst_metric[STATS_METRIC_COUNT];           // 有多少种指标
     long long stat_reply_buffer_shrinks;         // 输出缓冲区 缩容的次数
@@ -1627,8 +1623,8 @@ struct redisServer {
     char *aof_filename;                   /* Basename of the AOF file and manifest file */
     char *aof_dirname;                    /* Name of the AOF directory */
     int aof_no_fsync_on_rewrite;          /* Don't fsync if a rewrite is in prog. */
-    int aof_rewrite_perc;                 // 重写AOF，如果增长率 :growth > M
-    off_t aof_rewrite_min_size;           /* AOF文件至少N个字节。  */
+    int aof_rewrite_perc;                 // 重写AOF,如果增长率 :growth > M
+    off_t aof_rewrite_min_size;           /* AOF文件至少N个字节.  */
     off_t aof_rewrite_base_size;          // 最后一次执行 BGREWRITEAOF 时,AOF 文件的大小
     off_t aof_current_size;               // AOF 文件的当前字节大小
     off_t aof_last_incr_size;             // 最新的AOF文件大小增量
@@ -1691,8 +1687,8 @@ struct redisServer {
                                     * loading aof or rdb. (for testings). negative
                                     * value means fractions of microseconds (on average). */
 
-    // 共享管道，用于子进程往父进程写数据
-    int child_info_pipe[2]; // 用于写入child_info_data的管道。  -1 表示没启动  [父<-子,子->父]
+    // 共享管道,用于子进程往父进程写数据
+    int child_info_pipe[2]; // 用于写入child_info_data的管道.  -1 表示没启动  [父<-子,子->父]
     int child_info_nread;   // 最后一次从管道读取的字节数
     // 在AOF/repl 中传播命令
     redisOpArray also_propagate; // 额外的命令要传播
@@ -1702,7 +1698,7 @@ struct redisServer {
     int syslog_enabled;    // 是否启用系统日志
     char *syslog_ident;    // Syslog标识
     int syslog_facility;   // Syslog设备
-    int crashlog_enabled;  // 为crashlog启用信号处理程序。
+    int crashlog_enabled;  // 为crashlog启用信号处理程序.
     int memcheck_enabled;  // Enable memory check on crash.
     int use_exit_on_panic; /* Use exit() on panic and assert rather than
                             * abort(). useful for Valgrind. */
@@ -1728,8 +1724,8 @@ struct redisServer {
     int repl_diskless_sync;               // Master send RDB to slaves sockets directly. */
     int repl_diskless_load;               // Slave parse RDB directly from the socket. see REPL_DISKLESS_LOAD_* enum */
     int repl_diskless_sync_delay;         // Delay to start a diskless repl BGSAVE. */
-    int repl_diskless_sync_max_replicas;  // 最大副本的无盘repl BGSAVE延迟(如果它们都连接，启动更快)。
-    size_t repl_buffer_mem;               // 复制缓冲区的内存。
+    int repl_diskless_sync_max_replicas;  // 最大副本的无盘repl BGSAVE延迟(如果它们都连接,启动更快).
+    size_t repl_buffer_mem;               // 复制缓冲区的内存.
     list *repl_buffer_blocks;             // 复制缓冲区块列表(为slave客户端和repl backlog服务)
 
     // slave 复制
@@ -1810,13 +1806,13 @@ struct redisServer {
     // List parameters */
     int list_max_listpack_size;
     int list_compress_depth;
-    // 时间缓存，不要此次请求都调用一次系统函数获取当前时间
-    redisAtomic time_t unixtime; // Unix时间 采样每个cron周期。  秒
+    // 时间缓存,不要此次请求都调用一次系统函数获取当前时间
+    redisAtomic time_t unixtime; // Unix时间 采样每个cron周期.  秒
     time_t timezone;             // 时区
     int daylight_active;         // 夏令时标志(大于0说明夏令时有效,等于0说明无效,小于0说明信息不可用)
     mstime_t mstime;             // 当前时间  毫秒
     ustime_t ustime;             // 毫秒
-    size_t blocking_op_nesting;  // 嵌套级别的阻塞操作，用于重置 blocked_last_cron
+    size_t blocking_op_nesting;  // 嵌套级别的阻塞操作,用于重置 blocked_last_cron
     long long blocked_last_cron; // 指示阻塞操作中最后一次执行cron作业的mstime
 
     // Pubsub
@@ -1842,7 +1838,7 @@ struct redisServer {
     int cluster_announce_port;                           // base port to announce on cluster bus. */
     int cluster_announce_tls_port;                       // TLS port to announce on cluster bus. */
     int cluster_announce_bus_port;                       // bus port to announce on cluster bus. */
-    int cluster_module_flags;                            // Redis模块能够设置的标志集，以抑制某些原生Redis集群功能  (包含key重定向)
+    int cluster_module_flags;                            // Redis模块能够设置的标志集,以抑制某些原生Redis集群功能  (包含key重定向)
     int cluster_allow_reads_when_down;                   // Are reads allowed when the cluster is down? */
     int cluster_config_file_lock_fd;                     // 集群配置文件的fd
     unsigned long long cluster_link_sendbuf_limit_bytes; // Memory usage limit on individual link send buffers*/
@@ -2195,7 +2191,7 @@ typedef struct {
 #define IO_THREADS_OP_IDLE 0
 #define IO_THREADS_OP_READ 1
 #define IO_THREADS_OP_WRITE 2
-extern int io_threads_op; // IO线程现在要干的事件类型，来控制当前 IO 线程应该处理读还是写事件
+extern int io_threads_op; // IO线程现在要干的事件类型,来控制当前 IO 线程应该处理读还是写事件
 
 /*-----------------------------------------------------------------------------
  * Extern declarations
@@ -3265,7 +3261,7 @@ void dismissMemory(void *ptr, size_t size_hint);
 void dismissMemoryInChild(void);
 
 #define RESTART_SERVER_NONE 0
-#define RESTART_SERVER_GRACEFULLY (1 << 0)     // 执行正确的关机操作。但我们不会等待滞后的副本。
+#define RESTART_SERVER_GRACEFULLY (1 << 0)     // 执行正确的关机操作.但我们不会等待滞后的副本.
 #define RESTART_SERVER_CONFIG_REWRITE (1 << 1) /* CONFIG REWRITE before restart.*/
 
 int restartServer(int flags, mstime_t delay);

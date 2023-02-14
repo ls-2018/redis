@@ -16,7 +16,7 @@
 #include "over-zmalloc.h"
 #include "over-config.h"
 
-// 包括本系统支持的最佳多路复用层。以下按性能顺序，降序排列。
+// 包括本系统支持的最佳多路复用层.以下按性能顺序,降序排列.
 #ifdef HAVE_EVPORT
 #    include "over-ae_evport.c"
 #else
@@ -83,8 +83,8 @@ int aeGetSetSize(aeEventLoop *eventLoop) {
     return eventLoop->setsize;
 }
 
-// 告诉事件处理的下一次迭代将超时设置为0。
-// 没什么用，只调用了一次，就是去掉了这个flag  AE_DONT_WAIT
+// 告诉事件处理的下一次迭代将超时设置为0.
+// 没什么用,只调用了一次,就是去掉了这个flag  AE_DONT_WAIT
 void aeSetDontWait(aeEventLoop *eventLoop, int noWait) {
     if (noWait)
         eventLoop->flags |= AE_DONT_WAIT;
@@ -403,7 +403,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
                 tvp = NULL; // 永远等待
             }
         }
-        // 事件循环如果不支持阻塞等待，就将tv都设置为0
+        // 事件循环如果不支持阻塞等待,就将tv都设置为0
         if (eventLoop->flags & AE_DONT_WAIT) {
             tv.tv_sec = tv.tv_usec = 0;
             tvp = &tv;
@@ -440,9 +440,9 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
             // 如果触发的是可读事件,调用事件注册时设置的读事件回调处理函数
             if (!invert && fe->mask & mask & AE_READABLE) { // & & 检查事件是否仍然有效
                 fe->rfileProc(eventLoop, fd, fe->clientData,
-                              mask); // 可以读的,回调函数    【创建链接，读取数据】   client的可读回调是connSocketEventHandler
+                              mask); // 可以读的,回调函数    【创建链接,读取数据】   client的可读回调是connSocketEventHandler
                 fired++;
-                // 根本原因是事件循环可能从事件回调本身，导致事件指针无效
+                // 根本原因是事件循环可能从事件回调本身,导致事件指针无效
                 fe = &eventLoop->events[fd]; // 在调整大小的情况下刷新.    513931df
             }
 
@@ -458,7 +458,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
 
             // 如果必须反转调用,则在可写事件之后触发可读事件.
             if (invert) {
-                fe = &eventLoop->events[fd]; // 在调整大小的情况下刷新。
+                fe = &eventLoop->events[fd]; // 在调整大小的情况下刷新.
                 if ((fe->mask & mask & AE_READABLE) && (!fired || fe->wfileProc != fe->rfileProc)) {
                     fe->rfileProc(eventLoop, fd, fe->clientData, mask);
                     fired++;
@@ -480,8 +480,8 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags) {
 int aeWait(int fd, int mask, long long milliseconds) {
     struct pollfd pfd;
     // struct pollfd{
-    //   int fd; /*文件描述符，如建立socket后获取的fd, 此处表示想查询的文件描述符*/
-    //   short events;	/*等待的事件，就是要监测的感兴趣的事情*/
+    //   int fd; /*文件描述符,如建立socket后获取的fd, 此处表示想查询的文件描述符*/
+    //   short events;	/*等待的事件,就是要监测的感兴趣的事情*/
     //   short revents;	/*实际发生了的事情*/
     // };
 
@@ -490,19 +490,19 @@ int aeWait(int fd, int mask, long long milliseconds) {
 
     memset(&pfd, 0, sizeof(pfd));
     pfd.fd = fd;
-    // POLLIN/POLLRDNORM(可读)，POLLOUT/PILLWRNORM(可写)，POLLEER(出错)。
+    // POLLIN/POLLRDNORM(可读),POLLOUT/PILLWRNORM(可写),POLLEER(出错).
     if (mask & AE_READABLE)
         pfd.events |= POLLIN;
     if (mask & AE_WRITABLE)
         pfd.events |= POLLOUT;
-    // poll()函数的作用是把当前的文件指针挂到等待队列中。
+    // poll()函数的作用是把当前的文件指针挂到等待队列中.
     //
-    // pollfd *fds : 指向pollfd结构体数组，用于存放需要检测器状态的Socket 描述符或其它文件描述符。
-    // unsigned int nfds: 指定pollfd 结构体数组的个数，即监控几个pollfd.
-    // timeout:指poll() 函数调用阻塞的时间，单位是ms.如果timeout=0则不阻塞，如timeout=INFTIM 表 示一直阻塞直到感兴趣的事情发生。
-    // 返回值：>0 表示数组fds 中准备好读，写或出错状态的那些socket描述符的总数量
-    // ==0 表示数组fds 中都没有准备好读写或出错，当poll 阻塞超时timeout 就会返回。
-    // -1 表示poll() 函数调用失败，同时回自动设置全局变量errno.
+    // pollfd *fds : 指向pollfd结构体数组,用于存放需要检测器状态的Socket 描述符或其它文件描述符.
+    // unsigned int nfds: 指定pollfd 结构体数组的个数,即监控几个pollfd.
+    // timeout:指poll() 函数调用阻塞的时间,单位是ms.如果timeout=0则不阻塞,如timeout=INFTIM 表 示一直阻塞直到感兴趣的事情发生.
+    // 返回值：>0 表示数组fds 中准备好读,写或出错状态的那些socket描述符的总数量
+    // ==0 表示数组fds 中都没有准备好读写或出错,当poll 阻塞超时timeout 就会返回.
+    // -1 表示poll() 函数调用失败,同时回自动设置全局变量errno.
     if ((retval = poll(&pfd, 1, milliseconds)) == 1) {
         if (pfd.revents & POLLIN)
             retmask |= AE_READABLE;

@@ -32,7 +32,7 @@ typedef struct dictEntry {
         int64_t s64;  // 存储过期时间时使用该字段
         double d;     // 存储 score 时使用
     } v;
-    struct dictEntry *next; // 存在hash冲突时，作链表使用
+    struct dictEntry *next; // 存在hash冲突时,作链表使用
     void *metadata[];       /* An arbitrary number of bytes (starting at a
                              * pointer-aligned address) of size as returned
                              * by dictType's dictEntryMetadataBytes(). */

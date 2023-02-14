@@ -43,3 +43,4 @@ redis.code-workspace
 cmake-build-debug
 .DS_Store
 .idea/
+src/temp*

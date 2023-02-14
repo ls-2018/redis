@@ -14,8 +14,8 @@ monotime (*getMonotonicUs)(void) = NULL;
 
 static char monotonic_info_string[32];
 
-// 使用处理器时钟(又名x86上的TSC)可以提高整个Redis的性能，无论在哪里使用onotonic时钟。
-// 处理器时钟明显快于调用'clock_getting' (POSIX)。
+// 使用处理器时钟(又名x86上的TSC)可以提高整个Redis的性能,无论在哪里使用onotonic时钟.
+// 处理器时钟明显快于调用'clock_getting' (POSIX).
 
 #if defined(USE_PROCESSOR_CLOCK) && defined(__x86_64__) && defined(__linux__)
 #    include <regex.h>

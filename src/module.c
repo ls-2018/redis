@@ -10922,7 +10922,7 @@ void moduleFireServerEvent(uint64_t eid, int subid, void *data) {
     // eid 事件类型ID
     // subid与事件相关的子事件
 
-    if (listLength(RedisModule_EventListeners) == 0) { // 如果无事可做，则尽快返回
+    if (listLength(RedisModule_EventListeners) == 0) { // 如果无事可做,则尽快返回
         return;
     }
 
@@ -10931,12 +10931,12 @@ void moduleFireServerEvent(uint64_t eid, int subid, void *data) {
     listRewind(RedisModule_EventListeners, &li); // 在列表私有迭代器结构中创建一个迭代器
     while ((ln = listNext(&li))) {
         RedisModuleEventListener *el = ln->value;
-        if (el->event.id == eid) { // 触发事件时，会便利所有的事件
+        if (el->event.id == eid) { // 触发事件时,会便利所有的事件
             RedisModuleCtx ctx;
             if (eid == REDISMODULE_EVENT_CLIENT_CHANGE) { // client发生变换
 
-                // 在客户端更改的情况下，我们将推送真实的客户端，以便事件处理程序可以在需要时对其进行更改。
-                // 例如，以一种不依赖于稍后执行的特定命令的方式更改其身份验证状态。
+                // 在客户端更改的情况下,我们将推送真实的客户端,以便事件处理程序可以在需要时对其进行更改.
+                // 例如,以一种不依赖于稍后执行的特定命令的方式更改其身份验证状态.
                 moduleCreateContext(&ctx, el->module, REDISMODULE_CTX_NONE);
                 ctx.client = (client *)data;
             }
@@ -10954,7 +10954,7 @@ void moduleFireServerEvent(uint64_t eid, int subid, void *data) {
              * DB automatically. */
             selectDb(ctx.client, 0);
 
-            // 事件特定的上下文和数据指针设置。
+            // 事件特定的上下文和数据指针设置.
             if (eid == REDISMODULE_EVENT_CLIENT_CHANGE) {
                 serverAssert(modulePopulateClientInfoStructure(&civ1, data, el->event.dataver) == REDISMODULE_OK);
                 moduledata = &civ1;

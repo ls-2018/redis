@@ -109,7 +109,7 @@ void notifyKeyspaceEvent(int type, char *event, robj *key, int dbid) {
     robj *chanobj, *eventobj;
     int len = -1;
     char buf[24];
-    // 如果任何模块对事件感兴趣，立即通知模块系统。这样就绕过了通知配置，但是模块引擎只在事件类型与订阅者感兴趣的类型匹配时才调用事件订阅者
+    // 如果任何模块对事件感兴趣,立即通知模块系统.这样就绕过了通知配置,但是模块引擎只在事件类型与订阅者感兴趣的类型匹配时才调用事件订阅者
     moduleNotifyKeyspaceEvent(type, event, key, dbid);
 
     // 如果给定的通知不是服务器允许发送的通知,那么直接返回

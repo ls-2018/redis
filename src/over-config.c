@@ -174,7 +174,7 @@ struct standardConfig {
 
 dict *configs = NULL; // 运行时 配置
 
-// 根据提供的sds字符串名称查找配置，如果配置不存在则返回NULL
+// 根据提供的sds字符串名称查找配置,如果配置不存在则返回NULL
 static standardConfig *lookupConfig(sds name) {
     dictEntry *de = dictFind(configs, name);
     return de ? dictGetVal(de) : NULL;
@@ -1602,10 +1602,10 @@ cleanup:
     return retval;
 }
 
-// 重写“path”处的配置文件。如果配置文件已经存在，我们尽量保留注释和整体结构。
-// 除非已显式地包含在旧配置文件中，否则不重写处于默认值的配置参数。
-// force_write标志覆盖这个行为并强制写入所有内容。目前仅用于测试目的。
-// 如果出现错误，返回-1并相应地设置errno，否则为0。
+// 重写“path”处的配置文件.如果配置文件已经存在,我们尽量保留注释和整体结构.
+// 除非已显式地包含在旧配置文件中,否则不重写处于默认值的配置参数.
+// force_write标志覆盖这个行为并强制写入所有内容.目前仅用于测试目的.
+// 如果出现错误,返回-1并相应地设置errno,否则为0.
 int rewriteConfig(char *path, int force_write) {
     struct rewriteConfigState *state;
     sds newcontent;
@@ -2292,7 +2292,7 @@ static int updateMaxmemory(const char **err) {
             // 如果即将要执行的命令可能占用大量内存
             // 并且前面的内存释放失败的话
             // 那么向客户端返回内存错误
-            serverLog(LL_WARNING, "警告:通过CONFIG set设置的新的maxmemory值(%llu)小于当前内存使用量(%zu)。这将导致键逐出和/或无法接受新的写入命令，具体取决于maxmemory-policy。", server.maxmemory, used);
+            serverLog(LL_WARNING, "警告:通过CONFIG set设置的新的maxmemory值(%llu)小于当前内存使用量(%zu).这将导致键逐出和/或无法接受新的写入命令,具体取决于maxmemory-policy.", server.maxmemory, used);
         }
         startEvictionTimeProc(); // ✅
     }

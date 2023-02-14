@@ -1,10 +1,6 @@
 
 #include "over-server.h"
 
-/* -----------------------------------------------------------------------------
- * Helpers and low level bit functions.
- * -------------------------------------------------------------------------- */
-
 // 计算长度为 count 的二进制数组指针 s 被设置为 1 的位数量
 // 这个函数只能在最大为 512 MB 的字符串上使用或更多(server.proto_max_bulk_len)
 long long redisPopcount(void *s, long count) {
@@ -18,14 +14,12 @@ long long redisPopcount(void *s, long count) {
     static const unsigned char bitsinbyte[256] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4,
                                                   4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5,
                                                   4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
-
-    /* Count initial bytes not aligned to 32 bit. */
+// 计算未对齐为32位的初始字节数.
     while ((unsigned long)p & 3 && count) {
         bits += bitsinbyte[*p++];
         count--;
     }
 
-    /* Count bits 28 bytes at a time */
     // 每次统计 28 字节
     p4 = (uint32_t *)p;
     while (count >= 28) {
@@ -56,9 +50,7 @@ long long redisPopcount(void *s, long count) {
         aux7 = (aux7 & 0x33333333) + ((aux7 >> 2) & 0x33333333);
         bits += ((((aux1 + (aux1 >> 4)) & 0x0F0F0F0F) + ((aux2 + (aux2 >> 4)) & 0x0F0F0F0F) + ((aux3 + (aux3 >> 4)) & 0x0F0F0F0F) + ((aux4 + (aux4 >> 4)) & 0x0F0F0F0F) + ((aux5 + (aux5 >> 4)) & 0x0F0F0F0F) + ((aux6 + (aux6 >> 4)) & 0x0F0F0F0F) + ((aux7 + (aux7 >> 4)) & 0x0F0F0F0F)) * 0x01010101) >> 24;
     }
-    /* Count the remaining bytes. */
     // 不足 28 字节的,剩下的每个字节通过查表来完成
-
     p = (unsigned char *)p4;
     while (count--) bits += bitsinbyte[*p++];
     return bits;

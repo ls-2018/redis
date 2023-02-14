@@ -276,17 +276,17 @@ robj *dbRandomKey(redisDb *db) {
     }
 }
 
-// 同步和异步删除。
+// 同步和异步删除.
 static int dbGenericDelete(redisDb *db, robj *key, int async) {
-    // 从expires字典中删除条目不会释放该键的sds，因为它与主字典共享。
-    // 首先从 expires 队列删除，然后再从 db->dict 中删除
+    // 从expires字典中删除条目不会释放该键的sds,因为它与主字典共享.
+    // 首先从 expires 队列删除,然后再从 db->dict 中删除
     if (dictSize(db->expires) > 0) {
         dictDelete(db->expires, key->ptr);
     }
     dictEntry *de = dictUnlink(db->dict, key->ptr); // 异步
     if (de) {
         robj *val = dictGetVal(de);
-        moduleNotifyKeyUnlink(key, val, db->id); // 告诉模块该key已从数据库中解除链接。
+        moduleNotifyKeyUnlink(key, val, db->id); // 告诉模块该key已从数据库中解除链接.
         if (val->type == OBJ_STREAM) {           // 我们想尝试使用阻塞的 XREADGROUP 解除阻塞任何客户端
             signalKeyAsReady(db, key, val->type);
         }
@@ -310,12 +310,12 @@ int dbSyncDelete(redisDb *db, robj *key) {
     return dbGenericDelete(db, key, 0);
 }
 
-/* 从DB中删除键、值和相关过期项(如果有的话)。如果该值包含许多分配，则可以异步释放它。*/
+/* 从DB中删除键、值和相关过期项(如果有的话).如果该值包含许多分配,则可以异步释放它.*/
 int dbAsyncDelete(redisDb *db, robj *key) {
     return dbGenericDelete(db, key, 1);
 }
 
-/* 这是一个包装器，其行为依赖于Redis lazy free配置。同步或异步删除密钥。*/
+/* 这是一个包装器,其行为依赖于Redis lazy free配置.同步或异步删除密钥.*/
 int dbDelete(redisDb *db, robj *key) {
     return dbGenericDelete(db, key, server.lazyfree_lazy_server_del);
 }
@@ -1116,7 +1116,7 @@ void shutdownCommand(client *c) {
 
     blockClient(c, BLOCKED_SHUTDOWN);
     if (prepareForShutdown(flags) == C_OK) {
-        exit(0); // 直接退出了，当前client缓冲区里的内容也就不会到client了
+        exit(0); // 直接退出了,当前client缓冲区里的内容也就不会到client了
     }
     /* If we're here, then shutdown is ongoing (the client is still blocked) or
      * failed (the client has received an error). */

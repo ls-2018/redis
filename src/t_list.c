@@ -1059,14 +1059,12 @@ void serveClientBlockedOnList(client *receiver, robj *o, robj *key, robj *dstkey
 }
 
 /* Blocking RPOP/LPOP/LMPOP
- *
- * 'numkeys' is the number of keys.
- * 'timeout_idx' parameter position of block timeout.
- * 'where' LIST_HEAD for LEFT, LIST_TAIL for RIGHT.
- * 'count' is the number of elements requested to pop, or -1 for plain single pop.
- *
- * When count is -1, a reply of a single bulk-string will be used.
- * When count > 0, an array reply will be used. */
+ * 'numkeys'是键的个数.
+ * 'timeout_idx'参数块超时位置.
+ * LIST_HEAD为左,LIST_TAIL为右.
+ * 'count'是要求弹出的元素数量,或-1弹出一个;当count为-1时,将使用单个bulk-string的应答.
+ * 计数时>0时,将使用数组应答.
+ * */
 void blockingPopGenericCommand(client *c, robj **keys, int numkeys, int where, int timeout_idx, long count) {
     robj *o;
     robj *key;

@@ -29,7 +29,7 @@ void freeClientMultiState(client *c) {
 void queueMultiCommand(client *c) {
     multiCmd *mc;
 
-    // 如果事务已经中止，则没有必要浪费内存。这是有用的情况下客户端发送这些在管道，或不麻烦阅读以前的响应，没有注意到多已经中止。
+    // 如果事务已经中止,则没有必要浪费内存.这是有用的情况下客户端发送这些在管道,或不麻烦阅读以前的响应,没有注意到多已经中止.
     if (c->flags & (CLIENT_DIRTY_CAS | CLIENT_DIRTY_EXEC)) {
         return;
     }
@@ -46,7 +46,7 @@ void queueMultiCommand(client *c) {
     c->mstate.cmd_inv_flags |= ~c->cmd->flags;
     c->mstate.argv_len_sums += c->argv_len_sum + sizeof(robj *) * c->argc;
 
-    // 重置客户端的参数，因为我们将它们复制到mstate，不应该再从c引用它们。
+    // 重置客户端的参数,因为我们将它们复制到mstate,不应该再从c引用它们.
     c->argv = NULL;
     c->argc = 0;
     c->argv_len_sum = 0;

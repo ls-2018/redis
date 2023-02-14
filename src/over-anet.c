@@ -566,7 +566,7 @@ int anetTcpAccept(char *err, int serversock, char *ip, size_t ip_len, int *port)
     if (sa.ss_family == AF_INET) { // ipv4
         struct sockaddr_in *s = (struct sockaddr_in *)&sa;
         if (ip) {
-            // 将IPv4或IPv6 Internet网络地址转换为 Internet标准格式的字符串。
+            // 将IPv4或IPv6 Internet网络地址转换为 Internet标准格式的字符串.
             inet_ntop(AF_INET, (void *)&(s->sin_addr), ip, ip_len);
         }
         if (port) {

@@ -19,7 +19,7 @@
 
 #define UNUSED(V) ((void)V)
 
-// 包装redisSecureConnection以避免在不支持TLS的情况下构建hiredis_ssl依赖。
+// 包装redisSecureConnection以避免在不支持TLS的情况下构建hiredis_ssl依赖.
 int cliSecureConnection(redisContext *c, cliSSLconfig config, const char **err) {
 #ifdef USE_OPENSSL
     static SSL_CTX *ssl_ctx = NULL;
@@ -216,7 +216,7 @@ sds *getSdsArrayFromArgv(int argc, char **argv, int quoted) {
     return res;
 }
 
-// 取消以空结束的字符串的引号，并将其作为二进制安全的sds返回。
+// 取消以空结束的字符串的引号,并将其作为二进制安全的sds返回.
 sds unquoteCString(char *str) {
     int count;
     sds *unquoted = sdssplitargs(str, &count);

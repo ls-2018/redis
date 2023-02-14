@@ -1419,14 +1419,8 @@ werr:
     return -1;
 }
 
-/* Produces a dump of the database in RDB format sending it to the specified
- * Redis I/O channel. On success C_OK is returned, otherwise C_ERR
- * is returned and part of the output, or all the output, can be
- * missing because of I/O errors.
- *
- * When the function returns C_ERR and if 'error' is not NULL, the
- * integer pointed by 'error' is set to the value of errno just after the I/O
- * error. */
+// 生成RDB格式的数据库转储,将其发送到指定的Redis I/O通道.如果成功返回C_OK,否则返回C_ERR,部分输出或全部输出可能因为I/O错误而丢失.
+// 当函数返回C_ERR并且'error'不为NULL时,'error'指向的整数将被设置为在I/O错误之后的errno值.
 int rdbSaveRio(int req, rio *rdb, int *error, int rdbflags, rdbSaveInfo *rsi) {
     char magic[10];
     uint64_t cksum;
@@ -1624,7 +1618,7 @@ int rdbSaveBackground(int req, char *filename, rdbSaveInfo *rsi) {
             serverLog(LL_WARNING, "不能保存在后台:fork: %s", strerror(errno));
             return C_ERR;
         }
-        serverLog(LL_NOTICE, "后台保存已启动 ，pid:%ld", (long)childpid);
+        serverLog(LL_NOTICE, "后台保存已启动 ,pid:%ld", (long)childpid);
         server.rdb_save_time_start = time(NULL);
         server.rdb_child_type = RDB_CHILD_TYPE_DISK;
         return C_OK;
@@ -2895,7 +2889,6 @@ void stopLoading(int success) {
 }
 
 void startSaving(int rdbflags) {
-    /* Fire the persistence modules end event. */
     int subevent;
     if (rdbflags & RDBFLAGS_AOF_PREAMBLE && getpid() != server.pid)
         subevent = REDISMODULE_SUBEVENT_PERSISTENCE_AOF_START;
@@ -3706,17 +3699,17 @@ void bgsaveCommand(client *c) {
     }
 }
 
-// 填充rdbSaveInfo结构，该结构用于在RDB文件中持久化复制信息。
-// 目前结构显式地包含当前从主流中选择的DB，但是如果rdbSave*()系列函数接收到一个NULL rsi结构，复制ID/偏移量也不会被保存。
-// 该函数填充'rsi'，通常在调用者中由堆栈分配，如果实例有有效的主客户端，则返回填充的指针，否则返回NULL, RDB保存将不持久化任何与复制相关的信息。
+// 填充rdbSaveInfo结构,该结构用于在RDB文件中持久化复制信息.
+// 目前结构显式地包含当前从主流中选择的DB,但是如果rdbSave*()系列函数接收到一个NULL rsi结构,复制ID/偏移量也不会被保存.
+// 该函数填充'rsi',通常在调用者中由堆栈分配,如果实例有有效的主客户端,则返回填充的指针,否则返回NULL, RDB保存将不持久化任何与复制相关的信息.
 rdbSaveInfo *rdbPopulateSaveInfo(rdbSaveInfo *rsi) {
     rdbSaveInfo rsi_init = RDB_SAVE_INFO_INIT;
     *rsi = rsi_init;
 
-    // 如果实例是主实例，只有当repl_backlog不为NULL时，我们才能填充复制信息。如果repl_backlog为NULL，则意味着实例不在任何复制链中。在这种情况下，复制信息是无用的，因为当一个从连接到我们，NULL repl_backlog将触发一个完全同步，同时我们将使用一个新的replid和清除replid2。
+    // 如果实例是主实例,只有当repl_backlog不为NULL时,我们才能填充复制信息.如果repl_backlog为NULL,则意味着实例不在任何复制链中.在这种情况下,复制信息是无用的,因为当一个从连接到我们,NULL repl_backlog将触发一个完全同步,同时我们将使用一个新的replid和清除replid2.
     if (!server.masterhost && server.repl_backlog) { // 从节点才会有这些信息     、repl_backlog:      backlog 环形缓冲复制队列
-        // 注意，当 server.slaveseldb==-1，这意味着该主服务器在完全同步后没有应用任何写命令。
-        // 所以我们可以让repl_stream_db为0，这允许重新启动的从服务器重新加载复制ID/偏移量，这是安全的，因为下一个写命令必须生成一个SELECT语句。
+        // 注意,当 server.slaveseldb==-1,这意味着该主服务器在完全同步后没有应用任何写命令.
+        // 所以我们可以让repl_stream_db为0,这允许重新启动的从服务器重新加载复制ID/偏移量,这是安全的,因为下一个写命令必须生成一个SELECT语句.
         rsi->repl_stream_db = server.slaveseldb == -1 ? 0 : server.slaveseldb;
         return rsi;
     }
@@ -3724,8 +3717,8 @@ rdbSaveInfo *rdbPopulateSaveInfo(rdbSaveInfo *rsi) {
         rsi->repl_stream_db = server.master->db->id;
         return rsi;
     }
-    // 如果我们有一个缓存的主数据库，我们可以使用它来填充RDB文件中的复制选择DB信息:
-    // 从数据库只能从主数据库到达的数据中增加master_repl_offset，所以如果我们断开连接，缓存的主数据库中的偏移量是有效的。
+    // 如果我们有一个缓存的主数据库,我们可以使用它来填充RDB文件中的复制选择DB信息:
+    // 从数据库只能从主数据库到达的数据中增加master_repl_offset,所以如果我们断开连接,缓存的主数据库中的偏移量是有效的.
     if (server.cached_master) {
         rsi->repl_stream_db = server.cached_master->db->id;
         return rsi;
