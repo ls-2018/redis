@@ -65,7 +65,7 @@ void sendChildInfoGeneric(childInfoType info_type, size_t keys, double progress,
 
         int cow_info = (info_type != CHILD_INFO_TYPE_CURRENT_INFO); // 写时复制信息
         if (cow || cow_info) {
-            serverLog(cow_info ? LL_NOTICE : LL_VERBOSE, "Fork CoW for %s: current %zu MB, peak %zu MB, average %llu MB", pname, cow >> 20, peak_cow >> 20, (sum_cow / update_count) >> 20);
+            serverLog(cow_info ? LL_NOTICE : LL_VERBOSE, "Fork CoW写时复制 %s: current %zu MB, peak %zu MB, average %llu MB", pname, cow >> 20, peak_cow >> 20, (sum_cow / update_count) >> 20);
         }
     }
 
@@ -81,6 +81,7 @@ void sendChildInfoGeneric(childInfoType info_type, size_t keys, double progress,
     }
 }
 
+// 读取子进程发送过来的消息
 void updateChildInfo(childInfoType information_type, size_t cow, monotime cow_updated, size_t keys, double progress) {
     if (cow > server.stat_current_cow_peak)
         server.stat_current_cow_peak = cow;

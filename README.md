@@ -861,3 +861,28 @@ addACLLogEntry ACLSelectorCheckCmd
 PROPAGATE_AOF与PROPAGATE_REPL的区别
 
 // lua执行时,为什么会接收新的请求 src/networking.c:2510
+
+- checkChildrenDone 子进程执行完后，父进程干的活
+- backgroundRewriteDoneHandler
+- rdbSaveRio
+- rewriteAppendOnlyFileRio
+
+```
+ hexdump -cd appendonly.aof.1.base.rdb
+0000000   R   E   D   I   S   0   0   1   0   �  \t   r   e   d   i   s
+0000000   17746   18756   12371   12592   64048   29193   25701   29545
+0000010   -   v   e   r 005   7   .   0   .   0   �  \n   r   e   d   i
+0000010   30253   29285   14085   12334   12334   02810   25970   26980
+0000020   s   -   b   i   t   s   �   @   � 005   c   t   i   m   e   �
+0000020   11635   26978   29556   16576   01530   29795   28009   49765
+0000030   � 222   �   c   �  \b   u   s   e   d   -   m   e   m   �   @
+0000030   37585   25580   02298   29557   25701   27949   28005   16578
+0000040 232 020  \0   �  \b   a   o   f   -   b   a   s   e   � 001   �
+0000040   04250   64000   24840   26223   25133   29537   49253   65281
+0000050   + 032   �  \f   N   T   -   �
+0000050   06699   03276   21582   44845
+0000058
+```
+
+
+如果正在RDB ,不进行写文件？  代码在哪？

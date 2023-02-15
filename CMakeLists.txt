@@ -52,7 +52,7 @@ set(SRC_SERVER_TMP
         src/sparkline.c
         src/t_stream.c
         src/intset.c
-        src/aof.c
+        src/over-aof.c
         src/sentinel.c
         src/tracking.c
         src/over-timeout.c

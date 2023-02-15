@@ -11,63 +11,37 @@
 
 // RIO API 接口和状态
 struct rio {
-    /* Backend functions.
-     * Since this functions do not tolerate short writes or reads the return
-     * value is simplified to: zero on error, non zero on complete success. */
-    size_t (*read)(struct rio *, void *buf, size_t len);
-
-    size_t (*write)(struct rio *, const void *buf, size_t len);
-
-    off_t (*tell)(struct rio *);
-
-    int (*flush)(struct rio *);
-
-    /* The update_cksum method if not NULL is used to compute the checksum of
-     * all the data that was read or written so far. The method should be
-     * designed so that can be called with the current checksum, and the buf
-     * and len fields pointing to the new block of data to add to the checksum
-     * computation. */
-    // 校验和计算函数,每次有写入/读取新数据时都要计算一次
-    void (*update_cksum)(struct rio *, const void *buf, size_t len);
-
-    /* The current checksum and flags (see RIO_FLAG_*) */
-    // 当前校验和
-    uint64_t cksum, flags;
-
-    /* number of bytes read or written */
-    size_t processed_bytes;
-
-    /* maximum single read or write chunk size */
-    size_t max_processing_chunk;
-
-    /* Backend-specific vars. */
+    size_t (*read)(struct rio *, void *buf, size_t len);             //
+    size_t (*write)(struct rio *, const void *buf, size_t len);      //
+    off_t (*tell)(struct rio *);                                     //
+    int (*flush)(struct rio *);                                      //
+    void (*update_cksum)(struct rio *, const void *buf, size_t len); // 校验和计算函数,每次有写入/读取新数据时都要计算一次
+    uint64_t cksum, flags;                                           // 当前校验和
+    size_t processed_bytes;                                          // 读或写的字节数
+    size_t max_processing_chunk;                                     // 最大单个读或写块大小
     union
     {
-        /* In-memory buffer target. */
         struct {
             sds ptr;   // 缓存指针
             off_t pos; // 偏移量
-        } buffer;
-        /* Stdio file pointer target. */
+        } buffer;      // 内存缓冲区目标。
         struct {
             FILE *fp;       // 被打开文件的指针
             off_t buffered; // 最近一次 fsync() 以来,写入的字节量
             off_t autosync; // 写入多少字节之后,才会自动执行一次 fsync()
-        } file;
-        /* Connection object (used to read from socket) */
+        } file;             // Stdio文件指针目标。
         struct {
-            connection *conn;   /* Connection */
-            off_t pos;          /* pos in buf that was returned */
-            sds buf;            /* buffered data */
-            size_t read_limit;  /* don't allow to buffer/read more than that */
-            size_t read_so_far; /* amount of data read from the rio (not buffered) */
-        } conn;
-        /* FD target (used to write to pipe). */
+            connection *conn;
+            off_t pos;          // 返回的buf中的Pos
+            sds buf;            // 缓冲数据
+            size_t read_limit;  // 不允许缓冲/读取超过这个值
+            size_t read_so_far;
+        } conn;                 // 连接对象(用于从套接字读取)
         struct {
             int fd; /* File descriptor. */
             off_t pos;
             sds buf;
-        } fd;
+        } fd; // FD目标(用于写入管道)。
     } io;
 };
 

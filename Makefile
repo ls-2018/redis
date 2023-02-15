@@ -27,3 +27,4 @@ sync:
 rm:
 	rm -rf ./src/appendonlydir
 	rm -rf ./src/dump.rdb
+	rm -rf ./src/temp*

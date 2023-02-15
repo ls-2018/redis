@@ -311,16 +311,14 @@ aofManifest *aofLoadManifestFromFile(sds am_filepath) {
     return am;
 
 loaderr:
-    /* Sanitizer suppression: may report a false positive if we goto loaderr
-     * and exit(1) without freeing these allocations. */
     if (argv)
         sdsfreesplitres(argv, argc);
     if (ai)
         aofInfoFree(ai);
 
-    serverLog(LL_WARNING, "\n*** FATAL AOF MANIFEST FILE ERROR ***\n");
+    serverLog(LL_WARNING, "\n*** 致命的aof manifest文件错误 ***\n");
     if (line) {
-        serverLog(LL_WARNING, "Reading the manifest file, at line %d\n", linenum);
+        serverLog(LL_WARNING, "读取清单文件,行数 %d\n", linenum);
         serverLog(LL_WARNING, ">>> '%s'\n", line);
     }
     serverLog(LL_WARNING, "%s\n", err);
@@ -413,20 +411,14 @@ void markRewrittenIncrAofAsHistory(aofManifest *am) {
     if (!listLength(am->incr_aof_list)) {
         return;
     }
-
     listNode *ln;
     listIter li;
-
     listRewindTail(am->incr_aof_list, &li);
-
-    /* "server.aof_fd != -1" means AOF enabled, then we must skip the
-     * last AOF, because this file is our currently writing. */
     if (server.aof_fd != -1) {
         ln = listNext(&li);
         serverAssert(ln != NULL);
     }
 
-    /* Move aofInfo from 'incr_aof_list' to 'history_aof_list'. */
     while ((ln = listNext(&li)) != NULL) {
         aofInfo *ai = (aofInfo *)ln->value;
         serverAssert(ai->file_type == AOF_FILE_TYPE_INCR);
@@ -452,7 +444,7 @@ int writeAofManifestFile(sds buf) {
 
     int fd = open(tmp_am_filepath, O_WRONLY | O_TRUNC | O_CREAT, 0644);
     if (fd == -1) {
-        serverLog(LL_WARNING, "Can't open the AOF manifest file %s: %s", tmp_am_name, strerror(errno));
+        serverLog(LL_WARNING, "打开AOF清单文件失败 %s: %s", tmp_am_name, strerror(errno));
 
         ret = C_ERR;
         goto cleanup;
@@ -466,7 +458,7 @@ int writeAofManifestFile(sds buf) {
             if (errno == EINTR)
                 continue;
 
-            serverLog(LL_WARNING, "Error trying to write the temporary AOF manifest file %s: %s", tmp_am_name, strerror(errno));
+            serverLog(LL_WARNING, "试图写入临时AOF清单文件时出错 %s: %s", tmp_am_name, strerror(errno));
 
             ret = C_ERR;
             goto cleanup;
@@ -477,14 +469,14 @@ int writeAofManifestFile(sds buf) {
     }
 
     if (redis_fsync(fd) == -1) {
-        serverLog(LL_WARNING, "Fail to fsync the temp AOF file %s: %s.", tmp_am_name, strerror(errno));
+        serverLog(LL_WARNING, "同步AOF文件数据失败 %s: %s.", tmp_am_name, strerror(errno));
 
         ret = C_ERR;
         goto cleanup;
     }
 
     if (rename(tmp_am_filepath, am_filepath) != 0) {
-        serverLog(LL_WARNING, "Error trying to rename the temporary AOF manifest file %s into %s: %s", tmp_am_name, am_name, strerror(errno));
+        serverLog(LL_WARNING, "尝试重命名临时AOF清单文件时出错 %s into %s: %s", tmp_am_name, am_name, strerror(errno));
 
         ret = C_ERR;
     }
@@ -516,11 +508,10 @@ void aofUpgradePrepare(aofManifest *am) {
     serverAssert(!aofFileExist(server.aof_filename));
 
     if (dirCreateIfMissing(server.aof_dirname) == -1) {
-        serverLog(LL_WARNING, "Can't open or create append-only dir %s: %s", server.aof_dirname, strerror(errno));
+        serverLog(LL_WARNING, "不能打开或创建 append-only 目录 %s: %s", server.aof_dirname, strerror(errno));
         exit(1);
     }
 
-    /* Manually construct a BASE type aofInfo and add it to aofManifest. */
     if (am->base_aof_info)
         aofInfoFree(am->base_aof_info);
     aofInfo *ai = aofInfoCreate();
@@ -537,13 +528,13 @@ void aofUpgradePrepare(aofManifest *am) {
 
     sds aof_filepath = makePath(server.aof_dirname, server.aof_filename);
     if (rename(server.aof_filename, aof_filepath) == -1) {
-        serverLog(LL_WARNING, "Error trying to move the old AOF file %s into dir %s: %s", server.aof_filename, server.aof_dirname, strerror(errno));
+        serverLog(LL_WARNING, "试图移动旧的AOF文件 %s 到目录 %s:出错 %s", server.aof_filename, server.aof_dirname, strerror(errno));
         sdsfree(aof_filepath);
         exit(1);
     }
     sdsfree(aof_filepath);
 
-    serverLog(LL_NOTICE, "Successfully migrated an old-style AOF file (%s) into the AOF directory (%s).", server.aof_filename, server.aof_dirname);
+    serverLog(LL_NOTICE, "已成功将旧式AOF文件(%s)迁移到AOF目录(%s)。", server.aof_filename, server.aof_dirname);
 }
 
 int aofDelHistoryFiles(void) {
@@ -558,7 +549,7 @@ int aofDelHistoryFiles(void) {
     while ((ln = listNext(&li)) != NULL) {
         aofInfo *ai = (aofInfo *)ln->value;
         serverAssert(ai->file_type == AOF_FILE_TYPE_HIST);
-        serverLog(LL_NOTICE, "Removing the history file %s in the background", ai->file_name);
+        serverLog(LL_NOTICE, "后台移除历史文件 %s ", ai->file_name);
         sds aof_filepath = makePath(server.aof_dirname, ai->file_name);
         bg_unlink(aof_filepath);
         sdsfree(aof_filepath);
@@ -573,7 +564,7 @@ int aofDelHistoryFiles(void) {
 void aofDelTempIncrAofFile() {
     sds aof_filename = getTempIncrAofName();
     sds aof_filepath = makePath(server.aof_dirname, aof_filename);
-    serverLog(LL_NOTICE, "Removing the temp incr aof file %s in the background", aof_filename);
+    serverLog(LL_NOTICE, "删除后台的临时incr aof文件%s", aof_filename);
     bg_unlink(aof_filepath);
     sdsfree(aof_filepath);
     sdsfree(aof_filename);
@@ -709,13 +700,11 @@ int aofRewriteLimited(void) {
     static time_t next_rewrite_time = 0;
 
     if (server.stat_aofrw_consecutive_failures < AOF_REWRITE_LIMITE_THRESHOLD) {
-        /* We may be recovering from limited state, so reset all states. */
         next_delay_minutes = 0;
         next_rewrite_time = 0;
         return 0;
     }
 
-    /* if it is in the limiting state, then check if the next_rewrite_time is reached */
     if (next_rewrite_time != 0) {
         if (server.unixtime < next_rewrite_time) {
             return 1;
@@ -732,7 +721,7 @@ int aofRewriteLimited(void) {
     }
 
     next_rewrite_time = server.unixtime + next_delay_minutes * 60;
-    serverLog(LL_WARNING, "Background AOF rewrite has repeatedly failed and triggered the limit, will retry in %d minutes", next_delay_minutes);
+    serverLog(LL_WARNING, "后台AOF重写已多次失败并触发限制，将在%d分钟内重试", next_delay_minutes);
     return 1;
 }
 
@@ -740,8 +729,7 @@ int aofRewriteLimited(void) {
  * AOF file implementation
  * ------------------------------------------------------------------------- */
 
-/* Return true if an AOf fsync is currently already in progress in a
- * BIO thread. */
+// 如果一个AOf fsync当前正在BIO线程中进行，则返回true。
 int aofFsyncInProgress(void) {
     return bioPendingJobsOfType(BIO_AOF_FSYNC) != 0;
 }
@@ -914,7 +902,7 @@ void flushAppendOnlyFile(int force) {
         if (server.aof_fsync == AOF_FSYNC_EVERYSEC &&             //
             server.aof_fsync_offset != server.aof_current_size && //
             server.unixtime > server.aof_last_fsync &&            //
-            !(sync_in_progress = aofFsyncInProgress())            //
+            !(sync_in_progress = aofFsyncInProgress())            // 是否AOF子进程正在运行
         ) {
             goto try_fsync;
         }
@@ -924,8 +912,7 @@ void flushAppendOnlyFile(int force) {
     }
 
     if (server.aof_fsync == AOF_FSYNC_EVERYSEC)
-        // 是否有 SYNC 正在后台进行？
-        sync_in_progress = aofFsyncInProgress();
+        sync_in_progress = aofFsyncInProgress(); // 是否有 SYNC 正在后台进行？
     // 每秒 fsync ,并且强制写入为假
     if (server.aof_fsync == AOF_FSYNC_EVERYSEC && !force) {
         /* With this append fsync policy we do background fsyncing.
@@ -1225,12 +1212,8 @@ void feedAppendOnlyFile(int dictid, robj **argv, int argc) {
  * AOF loading
  * ------------------------------------------------------------------------- */
 
-/* In Redis commands are always executed in the context of a client, so in
- * order to load the append only file we need to create a fake client.
- *
- * Redis 命令必须由客户端执行,
- * 所以 AOF 装载程序需要创建一个无网络连接的客户端来执行 AOF 文件中的命令.
- */
+// * Redis 命令必须由客户端执行,
+// * 所以 AOF 装载程序需要创建一个无网络连接的客户端来执行 AOF 文件中的命令.
 struct client *createAOFClient(void) {
     struct client *c = createClient(NULL);
 
@@ -1256,8 +1239,7 @@ struct client *createAOFClient(void) {
     return c;
 }
 
-/* Replay an append log file. On success AOF_OK or AOF_TRUNCATED is returned,
- * otherwise, one of the following is returned:
+/* 重放追加日志文件。如果成功返回AOF_OK或AOF_TRUNCATED，否则返回以下其中之一:
  * AOF_OPEN_ERR: Failed to open the AOF file.
  * AOF_NOT_EXIST: AOF file doesn't exist.
  * AOF_EMPTY: The AOF file is empty (nothing to load).
@@ -1277,12 +1259,12 @@ int loadSingleAppendOnlyFile(char *filename) {
     if (fp == NULL) {
         int en = errno;
         if (redis_stat(aof_filepath, &sb) == 0 || errno != ENOENT) {
-            serverLog(LL_WARNING, "Fatal error: can't open the append log file %s for reading: %s", filename, strerror(en));
+            serverLog(LL_WARNING, "致命错误:无法打开附加日志文件%s以读取:%s", filename, strerror(en));
             sdsfree(aof_filepath);
             return AOF_OPEN_ERR;
         }
         else {
-            serverLog(LL_WARNING, "The append log file %s doesn't exist: %s", filename, strerror(errno));
+            serverLog(LL_WARNING, "追加日志文件%s不存在:%s", filename, strerror(errno));
             sdsfree(aof_filepath);
             return AOF_NOT_EXIST;
         }
@@ -1314,18 +1296,18 @@ int loadSingleAppendOnlyFile(char *filename) {
         rio rdb;
         int old_style = !strcmp(filename, server.aof_filename);
         if (old_style)
-            serverLog(LL_NOTICE, "Reading RDB preamble from AOF file...");
+            serverLog(LL_NOTICE, "从AOF文件读取RDB序言…");
         else
-            serverLog(LL_NOTICE, "Reading RDB base file on AOF loading...");
+            serverLog(LL_NOTICE, "读取RDB基础文件在AOF加载…");
 
         if (fseek(fp, 0, SEEK_SET) == -1)
             goto readerr;
         rioInitWithFile(&rdb, fp);
         if (rdbLoadRio(&rdb, RDBFLAGS_AOF_PREAMBLE, NULL) != C_OK) {
             if (old_style)
-                serverLog(LL_WARNING, "Error reading the RDB preamble of the AOF file %s, AOF loading aborted", filename);
+                serverLog(LL_WARNING, "读取AOF文件%s的RDB序文错误，AOF加载中止", filename);
             else
-                serverLog(LL_WARNING, "Error reading the RDB base file %s, AOF loading aborted", filename);
+                serverLog(LL_WARNING, "读取RDB基本文件%s时出错，AOF加载中止", filename);
 
             goto readerr;
         }
@@ -1337,7 +1319,6 @@ int loadSingleAppendOnlyFile(char *filename) {
         }
     }
 
-    /* Read the actual AOF file, in REPL format, command by command. */
     while (1) {
         int argc, j;
         unsigned long len;
@@ -2167,7 +2148,6 @@ int rewriteAppendOnlyFileRio(rio *aof) {
     long key_count = 0;
     long long updated_time = 0;
 
-    /* Record timestamp at the beginning of rewriting AOF. */
     if (server.aof_timestamp_enabled) {
         sds ts = genAofTimestampAnnotationIfNeeded(1);
         if (rioWrite(aof, ts, sdslen(ts)) == 0) {
@@ -2330,7 +2310,7 @@ int rewriteAppendOnlyFile(char *filename) {
 
     if (server.aof_use_rdb_preamble) {
         int error;
-        if (rdbSaveRio(SLAVE_REQ_NONE, &aof, &error, RDBFLAGS_AOF_PREAMBLE, NULL) == C_ERR) {
+        if (rdbSaveRio(SLAVE_REQ_NONE, &aof, &error, RDBFLAGS_AOF_PREAMBLE, NULL) == C_ERR) { // rewriteAppendOnlyFile->rdbSaveRio
             errno = error;
             goto werr;
         }
@@ -2353,24 +2333,25 @@ int rewriteAppendOnlyFile(char *filename) {
 
     // 原子地改名,用重写后的新 AOF 文件覆盖旧 AOF 文件
     if (rename(tmpfile, filename) == -1) {
-        serverLog(LL_WARNING, "Error moving temp append only file on the final destination: %s", strerror(errno));
+        serverLog(LL_WARNING, "移动临时AOF文件出现错误: %s", strerror(errno));
         unlink(tmpfile);
         stopSaving(0);
         return C_ERR;
     }
-    serverLog(LL_NOTICE, "SYNC append only file rewrite performed");
+    serverLog(LL_NOTICE, "同步AOF文件");
     stopSaving(1);
 
     return C_OK;
 
 werr:
-    serverLog(LL_WARNING, "Write error writing append only file on disk: %s", strerror(errno));
+    serverLog(LL_WARNING, "写AOF文件出现错误: %s", strerror(errno));
     if (fp)
         fclose(fp);
     unlink(tmpfile);
     stopSaving(0);
     return C_ERR;
 }
+
 /*
  * AOF 重写的四个触发时机
  *    时机一：bgrewriteaof 命令被执行.
@@ -2396,7 +2377,7 @@ int rewriteAppendOnlyFileBackground(void) {
         return C_ERR; // 创建了一个新的AOF文件,并更新了对应的索引信息
     }
     server.stat_aof_rewrites++;
-    //    childpid=0;
+    //    childpid = 0;
     childpid = redisFork(CHILD_TYPE_AOF);
     if (childpid == 0) { // 创建子进程
         char tmpfile[256];
@@ -2418,10 +2399,10 @@ int rewriteAppendOnlyFileBackground(void) {
         /* Parent */
         if (childpid == -1) {
             server.aof_lastbgrewrite_status = C_ERR;
-            serverLog(LL_WARNING, "Can't rewrite append only file in background: fork: %s", strerror(errno));
+            serverLog(LL_WARNING, "后台AOF重写进程FORK失败: fork: %s", strerror(errno));
             return C_ERR;
         }
-        serverLog(LL_NOTICE, "Background append only file rewriting started by pid %ld", (long)childpid);
+        serverLog(LL_NOTICE, "后台进程 %ld 开始AOF 重写", (long)childpid);
         // 记录 AOF 重写的信息
         server.aof_rewrite_scheduled = 0;
         server.aof_rewrite_time_start = time(NULL);
@@ -2438,10 +2419,9 @@ void bgrewriteaofCommand(client *c) {
     else if (hasActiveChildProcess() || server.in_exec) {
         // 有RDB子进程,将AOF重写设置为待调度运行
         server.aof_rewrite_scheduled = 1;
-        /* When manually triggering AOFRW we reset the count
-         * so that it can be executed immediately. */
+        // 当手动触发AOF RW时，我们重置计数，以便它可以立即执行。
         server.stat_aofrw_consecutive_failures = 0;
-        addReplyStatus(c, "Background append only file rewriting scheduled");
+        addReplyStatus(c, "后台AOF重写开始调度");
     }
     else if (rewriteAppendOnlyFileBackground() == C_OK) { // 实际执行AOF重写
         addReplyStatus(c, "后台AOF重写已开启");
@@ -2536,25 +2516,21 @@ void backgroundRewriteDoneHandler(int exitcode, int bysignal) {
         aofManifest *temp_am;
         mstime_t latency;
 
-        serverLog(LL_NOTICE, "Background AOF rewrite terminated with success");
+        serverLog(LL_NOTICE, "AOF 后台重写进程成功终止");
         // 创建临时文件,并进行 AOF 重写
         snprintf(tmpfile, 256, "temp-rewriteaof-bg-%d.aof", (int)server.child_pid);
-
         serverAssert(server.aof_manifest != NULL);
-
-        /* Dup a temporary aof_manifest for subsequent modifications. */
         temp_am = aofManifestDup(server.aof_manifest);
 
-        /* Get a new BASE file name and mark the previous (if we have)
-         * as the HISTORY type. */
+        // 获取一个新的BASE文件名，并将之前的(如果有的话)标记为HISTORY类型。
         sds new_base_filename = getNewBaseFileNameAndMarkPreAsHistory(temp_am);
         serverAssert(new_base_filename != NULL);
         new_base_filepath = makePath(server.aof_dirname, new_base_filename);
 
-        /* Rename the temporary aof file to 'new_base_filename'. */
+        // 将临时aof文件重命名为“new_base_filename”。
         latencyStartMonitor(latency);
         if (rename(tmpfile, new_base_filepath) == -1) {
-            serverLog(LL_WARNING, "Error trying to rename the temporary AOF file %s into %s: %s", tmpfile, new_base_filepath, strerror(errno));
+            serverLog(LL_WARNING, "试图将临时AOF文件%s重命名为 %s: 产生错误 %s", tmpfile, new_base_filepath, strerror(errno));
             aofManifestFree(temp_am);
             sdsfree(new_base_filepath);
             goto cleanup;
@@ -2562,18 +2538,18 @@ void backgroundRewriteDoneHandler(int exitcode, int bysignal) {
         latencyEndMonitor(latency);
         latencyAddSampleIfNeeded("aof-rename", latency);
 
-        /* Rename the temporary incr aof file to 'new_incr_filename'. */
+        // 重命名临时增量 AOF文件
         if (server.aof_state == AOF_WAIT_REWRITE) {
-            /* Get temporary incr aof name. */
+            // 获取临时aof增量文件名称
             sds temp_incr_aof_name = getTempIncrAofName();
             sds temp_incr_filepath = makePath(server.aof_dirname, temp_incr_aof_name);
             sdsfree(temp_incr_aof_name);
-            /* Get next new incr aof name. */
+            // 获取临时aof增量文件名称
             sds new_incr_filename = getNewIncrAofName(temp_am);
             new_incr_filepath = makePath(server.aof_dirname, new_incr_filename);
             latencyStartMonitor(latency);
             if (rename(temp_incr_filepath, new_incr_filepath) == -1) {
-                serverLog(LL_WARNING, "Error trying to rename the temporary incr AOF file %s into %s: %s", temp_incr_filepath, new_incr_filepath, strerror(errno));
+                serverLog(LL_WARNING, "试图将临时AOF文件%s重命名为 %s: 产生错误 %s", temp_incr_filepath, new_incr_filepath, strerror(errno));
                 bg_unlink(new_base_filepath);
                 sdsfree(new_base_filepath);
                 aofManifestFree(temp_am);
@@ -2586,11 +2562,10 @@ void backgroundRewriteDoneHandler(int exitcode, int bysignal) {
             sdsfree(temp_incr_filepath);
         }
 
-        /* Change the AOF file type in 'incr_aof_list' from AOF_FILE_TYPE_INCR
-         * to AOF_FILE_TYPE_HIST, and move them to the 'history_aof_list'. */
+        // 将'incr_aof_list'中的AOF文件类型从AOF_FILE_TYPE_INCR更改为AOF_FILE_TYPE_HIST，并将其移动到'history_aof_list'。
         markRewrittenIncrAofAsHistory(temp_am);
 
-        /* Persist our modifications. */
+        // 持久化我们的修改
         if (persistAofManifest(temp_am) == C_ERR) {
             bg_unlink(new_base_filepath);
             aofManifestFree(temp_am);
@@ -2617,29 +2592,24 @@ void backgroundRewriteDoneHandler(int exitcode, int bysignal) {
             server.aof_last_fsync = server.unixtime;
         }
 
-        /* We don't care about the return value of `aofDelHistoryFiles`, because the history
-         * deletion failure will not cause any problems. */
-        aofDelHistoryFiles();
+        aofDelHistoryFiles(); // 删除历史AOF文件
 
         server.aof_lastbgrewrite_status = C_OK;
         server.stat_aofrw_consecutive_failures = 0;
 
-        serverLog(LL_NOTICE, "Background AOF rewrite finished successfully");
+        serverLog(LL_NOTICE, "后台 AOF重写成功");
         // 如果是第一次创建 AOF 文件,那么更新 AOF 状态
         if (server.aof_state == AOF_WAIT_REWRITE)
             server.aof_state = AOF_ON;
 
-        serverLog(LL_VERBOSE, "Background AOF rewrite signal handler took %lldus", ustime() - now);
+        serverLog(LL_VERBOSE, "后台AOF重写信号处理程序 花费 %lldus", ustime() - now);
     }
     else if (!bysignal && exitcode != 0) { // BGREWRITEAOF 重写出错
-
         server.aof_lastbgrewrite_status = C_ERR;
         server.stat_aofrw_consecutive_failures++;
-
-        serverLog(LL_WARNING, "Background AOF rewrite terminated with error");
+        serverLog(LL_WARNING, "后台AOF重写 错误终止");
     }
     else { // 未知错误
-
         /* SIGUSR1 is whitelisted, so we have a way to kill a child without
          * triggering an error condition. */
         if (bysignal != SIGUSR1) {
@@ -2653,7 +2623,7 @@ void backgroundRewriteDoneHandler(int exitcode, int bysignal) {
 cleanup:
     aofRemoveTempFile(server.child_pid); // 移除临时文件
 
-    /* Clear AOF buffer and delete temp incr aof for next rewrite. */
+    // 清理AOF缓冲 清除增量AOF文件
     if (server.aof_state == AOF_WAIT_REWRITE) {
         sdsfree(server.aof_buf);
         server.aof_buf = sdsempty();
@@ -2661,7 +2631,7 @@ cleanup:
     }
     server.aof_rewrite_time_last = time(NULL) - server.aof_rewrite_time_start;
     server.aof_rewrite_time_start = -1;
-    /* Schedule a new rewrite if we are waiting for it to switch the AOF ON. */
+    // 如果我们正在等待它打开AOF，计划一个新的重写。
     if (server.aof_state == AOF_WAIT_REWRITE)
         server.aof_rewrite_scheduled = 1;
 }

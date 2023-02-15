@@ -1232,8 +1232,6 @@ ssize_t rdbSaveAuxField(rio *rdb, void *key, size_t keylen, void *val, size_t va
     return len;
 }
 
-/* Wrapper for rdbSaveAuxField() used when key/val length can be obtained
- * with strlen(). */
 ssize_t rdbSaveAuxFieldStrStr(rio *rdb, char *key, char *val) {
     return rdbSaveAuxField(rdb, key, strlen(key), val, strlen(val));
 }
@@ -1245,13 +1243,13 @@ ssize_t rdbSaveAuxFieldStrInt(rio *rdb, char *key, long long val) {
     return rdbSaveAuxField(rdb, key, strlen(key), buf, vlen);
 }
 
-/* Save a few default AUX fields with information about the RDB generated. */
+// 保存一些默认的AUX字段，其中包含关于生成的RDB的信息。
 int rdbSaveInfoAuxFields(rio *rdb, int rdbflags, rdbSaveInfo *rsi) {
     UNUSED(rdbflags);
     int redis_bits = (sizeof(void *) == 8) ? 64 : 32;
     int aof_base = (rdbflags & RDBFLAGS_AOF_PREAMBLE) != 0;
 
-    /* Add a few fields about the state when the RDB was created. */
+    // 添加一些关于创建RDB时的状态的字段。
     if (rdbSaveAuxFieldStrStr(rdb, "redis-ver", REDIS_VERSION) == -1) // redis版本信息
         return -1;
     if (rdbSaveAuxFieldStrInt(rdb, "redis-bits", redis_bits) == -1) // 运行平台的架构信息
@@ -1261,7 +1259,6 @@ int rdbSaveInfoAuxFields(rio *rdb, int rdbflags, rdbSaveInfo *rsi) {
     if (rdbSaveAuxFieldStrInt(rdb, "used-mem", zmalloc_used_memory()) == -1) // 已使用的内存量
         return -1;
 
-    /* Handle saving options that generate aux fields. */
     if (rsi) {
         if (rdbSaveAuxFieldStrInt(rdb, "repl-stream-db", rsi->repl_stream_db) == -1)
             return -1;
@@ -1437,11 +1434,11 @@ int rdbSaveRio(int req, rio *rdb, int *error, int rdbflags, rdbSaveInfo *rsi) {
     if (!(req & SLAVE_REQ_RDB_EXCLUDE_DATA) && rdbSaveModulesAux(rdb, REDISMODULE_AUX_BEFORE_RDB) == -1)
         goto werr;
 
-    /* save functions */
+    // 保存函数信息
     if (!(req & SLAVE_REQ_RDB_EXCLUDE_FUNCTIONS) && rdbSaveFunctions(rdb) == -1)
         goto werr;
 
-    /* save all databases, skip this if we're in functions-only mode */
+    // 保存所有数据库，如果我们在函数模式下跳过这一步
     if (!(req & SLAVE_REQ_RDB_EXCLUDE_DATA)) {
         for (j = 0; j < server.dbnum; j++) {
             if (rdbSaveDb(rdb, j, rdbflags, &key_counter) == -1)
@@ -1452,12 +1449,10 @@ int rdbSaveRio(int req, rio *rdb, int *error, int rdbflags, rdbSaveInfo *rsi) {
     if (!(req & SLAVE_REQ_RDB_EXCLUDE_DATA) && rdbSaveModulesAux(rdb, REDISMODULE_AUX_AFTER_RDB) == -1)
         goto werr;
 
-    /* EOF opcode */
     if (rdbSaveType(rdb, RDB_OPCODE_EOF) == -1)
         goto werr;
 
-    /* CRC64 checksum. It will be zero if checksum computation is disabled, the
-     * loading code skips the check in this case. */
+    // CRC64校验和。如果校验和计算被禁用，它将为零，在这种情况下，加载代码将跳过检查。
     cksum = rdb->cksum;
     memrev64ifbe(&cksum);
     if (rioWrite(rdb, &cksum, 8) == 0)

@@ -154,13 +154,12 @@ static const rio rioFileIO = {
     rioFileWrite, // 写函数
     rioFileTell,  // 偏移量函数
     rioFileFlush, //
-    NULL,         // /* update_checksum */
-    0,            //    /* current checksum */
-    0,            // /* flags */
-    0,            //        /* bytes read or written */
-    0,            //        /* read/write chunk size */
-    {{NULL, 0}}   /* union for io-specific vars */
-};
+    NULL,         // 更新校验和函数
+    0,            // 当前校验值
+    0,
+    0, // 读或写的字节数
+    0, // 读/写块大小
+    {{NULL, 0}}};
 
 // 初始化文件流
 void rioInitWithFile(rio *r, FILE *fp) {

@@ -5,12 +5,9 @@
 #include <stdio.h>
 #include "rio.h"
 
-/* TBD: include only necessary headers. */
 #include "over-server.h"
 
-/* The current RDB version. When the format changes in a way that is no longer
- * backward compatible this number gets incremented. */
-#define RDB_VERSION 10
+#define RDB_VERSION 10 // 当前rdb格式版本
 
 /* Defines related to the dump file format. To store 32 bits lengths for short
  * keys requires a lot of space, so we check the most significant 2 bits of
@@ -102,7 +99,7 @@
 
 /* flags on the purpose of rdb save or load */
 #define RDBFLAGS_NONE 0                /* No special RDB loading. */
-#define RDBFLAGS_AOF_PREAMBLE (1 << 0) /* Load/save the RDB as AOF preamble. */
+#define RDBFLAGS_AOF_PREAMBLE (1 << 0) // 加载/保存RDB作为AOF的序号
 #define RDBFLAGS_REPLICATION (1 << 1)  /* Load/save for SYNC. */
 #define RDBFLAGS_ALLOW_DUP (1 << 2)    /* Allow duplicated keys when loading.*/
 #define RDBFLAGS_FEED_REPL (1 << 3)    /* Feed replication stream when loading.*/
