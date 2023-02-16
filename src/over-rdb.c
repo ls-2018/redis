@@ -88,10 +88,10 @@ int rdbLoadType(rio *rdb) {
     return type;
 }
 
-// 这仅用于加载使用RDB_OPCODE_EXPIRETIME操作码存储的旧数据库。
-// 新版本的Redis使用RDB_OPCODE_EXPIRETIME_MS操作码存储。
-// 在返回错误-1时，但是这可能是一个有效的时间，
-// 因此为了检查加载错误，调用者应该在调用此函数后调用rioGetReadError()。
+// 这仅用于加载使用RDB_OPCODE_EXPIRETIME操作码存储的旧数据库.
+// 新版本的Redis使用RDB_OPCODE_EXPIRETIME_MS操作码存储.
+// 在返回错误-1时,但是这可能是一个有效的时间,
+// 因此为了检查加载错误,调用者应该在调用此函数后调用rioGetReadError().
 time_t rdbLoadTime(rio *rdb) {
     int32_t t32;
     if (rioRead(rdb, &t32, 4) == 0)
@@ -105,13 +105,13 @@ int rdbSaveMillisecondTime(rio *rdb, long long t) {
     return rdbWriteRaw(rdb, &t64, 8);
 }
 
-// 这个函数从RDB文件中加载时间。它得到RDB的版本，因为，不幸的是，在Redis 5 (RDB版本9)之前，
-// 该函数无法将数据从小端序转换到小端序，所以密钥过期的RDB文件不能在大端序和小端序系统之间共享(因为过期时间将完全错误)。
-// 修复这个问题只是调用memrev64ifbe()，然而，如果我们修复了所有RDB版本，这个调用将引入对大端系统的不兼容性:
-//      升级到Redis版本5后，他们将不再能够加载他们自己的旧RDB文件。因此，我们只针对新的RDB版本修复该函数，
-//      并像过去一样加载旧的RDB版本，允许大端系统加载它们自己的旧RDB文件。
+// 这个函数从RDB文件中加载时间.它得到RDB的版本,因为,不幸的是,在Redis 5 (RDB版本9)之前,
+// 该函数无法将数据从小端序转换到小端序,所以密钥过期的RDB文件不能在大端序和小端序系统之间共享(因为过期时间将完全错误).
+// 修复这个问题只是调用memrev64ifbe(),然而,如果我们修复了所有RDB版本,这个调用将引入对大端系统的不兼容性:
+//      升级到Redis版本5后,他们将不再能够加载他们自己的旧RDB文件.因此,我们只针对新的RDB版本修复该函数,
+//      并像过去一样加载旧的RDB版本,允许大端系统加载它们自己的旧RDB文件.
 //
-// 在I/O错误时，函数返回LLONG_MAX，但是如果这也是一个有效的存储值，调用者应该在调用该函数后使用rioGetReadError()检查错误。
+// 在I/O错误时,函数返回LLONG_MAX,但是如果这也是一个有效的存储值,调用者应该在调用该函数后使用rioGetReadError()检查错误.
 long long rdbLoadMillisecondTime(rio *rdb, int rdbver) {
     int64_t t64;
     if (rioRead(rdb, &t64, 8) == 0)
@@ -219,7 +219,7 @@ int rdbLoadLenByRef(rio *rdb, int *isencoded, uint64_t *lenptr) {
     return 0;
 }
 
-// 这类似于rdbLoadLenByRef()，但直接返回从RDB流读取的值，通过返回RDB_LENERR发出错误信号(因为它是一个太大的计数，适用于任何Redis数据结构)。
+// 这类似于rdbLoadLenByRef(),但直接返回从RDB流读取的值,通过返回RDB_LENERR发出错误信号(因为它是一个太大的计数,适用于任何Redis数据结构).
 uint64_t rdbLoadLen(rio *rdb, int *isencoded) {
     uint64_t len;
 
@@ -711,9 +711,9 @@ int rdbLoadObjectType(rio *rdb) {
     return type;
 }
 
-// 这个助手函数将消费者组Pending Entries List (PEL)序列化到RDB文件中。
-// 'nacks'参数告诉函数是否也持久化未确认消息的信息，或者是否仅持久化ID:这很有用，因为对于全局消费者组PEL，
-// 我们也序列化了nacks，但在序列化本地消费者PEL时，我们只添加了ID，这将在全局PEL中解析，以放置对相同结构的引用。
+// 这个助手函数将消费者组Pending Entries List (PEL)序列化到RDB文件中.
+// 'nacks'参数告诉函数是否也持久化未确认消息的信息,或者是否仅持久化ID:这很有用,因为对于全局消费者组PEL,
+// 我们也序列化了nacks,但在序列化本地消费者PEL时,我们只添加了ID,这将在全局PEL中解析,以放置对相同结构的引用.
 ssize_t rdbSaveStreamPEL(rio *rdb, rax *pel, int nacks) {
     ssize_t n, nwritten = 0;
 
@@ -727,7 +727,7 @@ ssize_t rdbSaveStreamPEL(rio *rdb, rax *pel, int nacks) {
     raxStart(&ri, pel);
     raxSeek(&ri, "^", NULL, 0);
     while (raxNext(&ri)) {
-        // 我们将id以原始形式存储为128个大端数字，比如它们在基树键中。
+        // 我们将id以原始形式存储为128个大端数字,比如它们在基树键中.
         if ((n = rdbWriteRaw(rdb, ri.key, sizeof(streamID))) == -1) {
             raxStop(&ri);
             return -1;
@@ -755,7 +755,7 @@ ssize_t rdbSaveStreamPEL(rio *rdb, rax *pel, int nacks) {
     return nwritten;
 }
 
-// 将流消费者组的消费者序列化到RDB中。流数据类型序列化的辅助函数。这里我们要做的是为每个消费者持久化消费者元数据，它是PEL。
+// 将流消费者组的消费者序列化到RDB中.流数据类型序列化的辅助函数.这里我们要做的是为每个消费者持久化消费者元数据,它是PEL.
 size_t rdbSaveStreamConsumers(rio *rdb, streamCG *cg) {
     ssize_t n, nwritten = 0;
 
@@ -1116,7 +1116,7 @@ size_t rdbSavedObjectLen(robj *o, robj *key, int dbid) {
     return len;
 }
 
-// 生成RDB文件时,会调用,将键值对[类型，过期时间]写到文件中
+// 生成RDB文件时,会调用,将键值对[类型,过期时间]写到文件中
 int rdbSaveKeyValuePair(rio *rdb, robj *key, robj *val, long long expiretime, int dbid) {
     int savelru = server.maxmemory_policy & MAXMEMORY_FLAG_LRU;
     int savelfu = server.maxmemory_policy & MAXMEMORY_FLAG_LFU;
@@ -1194,13 +1194,13 @@ ssize_t rdbSaveAuxFieldStrInt(rio *rdb, char *key, long long val) {
     return rdbSaveAuxField(rdb, key, strlen(key), buf, vlen);
 }
 
-// 保存一些默认的AUX字段，其中包含关于生成的RDB的信息。
+// 保存一些默认的AUX字段,其中包含关于生成的RDB的信息.
 int rdbSaveInfoAuxFields(rio *rdb, int rdbflags, rdbSaveInfo *rsi) {
     UNUSED(rdbflags);
     int redis_bits = (sizeof(void *) == 8) ? 64 : 32;
     int aof_base = (rdbflags & RDBFLAGS_AOF_PREAMBLE) != 0;
 
-    // 添加一些关于创建RDB时的状态的字段。
+    // 添加一些关于创建RDB时的状态的字段.
     if (rdbSaveAuxFieldStrStr(rdb, "redis-ver", REDIS_VERSION) == -1) // redis版本信息
         return -1;
     if (rdbSaveAuxFieldStrInt(rdb, "redis-bits", redis_bits) == -1) // 运行平台的架构信息
@@ -1389,7 +1389,7 @@ int rdbSaveRio(int req, rio *rdb, int *error, int rdbflags, rdbSaveInfo *rsi) {
     if (!(req & SLAVE_REQ_RDB_EXCLUDE_FUNCTIONS) && rdbSaveFunctions(rdb) == -1)
         goto werr;
 
-    // 保存所有数据库，如果我们在函数模式下跳过这一步
+    // 保存所有数据库,如果我们在函数模式下跳过这一步
     if (!(req & SLAVE_REQ_RDB_EXCLUDE_DATA)) {
         for (j = 0; j < server.dbnum; j++) {
             if (rdbSaveDb(rdb, j, rdbflags, &key_counter) == -1)
@@ -1403,7 +1403,7 @@ int rdbSaveRio(int req, rio *rdb, int *error, int rdbflags, rdbSaveInfo *rsi) {
     if (rdbSaveType(rdb, RDB_OPCODE_EOF) == -1)
         goto werr;
 
-    // CRC64校验和。如果校验和计算被禁用，它将为零，在这种情况下，加载代码将跳过检查。
+    // CRC64校验和.如果校验和计算被禁用,它将为零,在这种情况下,加载代码将跳过检查.
     cksum = rdb->cksum;
     memrev64ifbe(&cksum);
     if (rioWrite(rdb, &cksum, 8) == 0)
@@ -1792,8 +1792,8 @@ int lpPairsValidateIntegrityAndDups(unsigned char *lp, size_t size, int deep) {
     return ret;
 }
 
-// 从指定的文件中加载指定类型的Redis对象。成功时返回一个新分配的对象，否则返回NULL。
-// 当函数返回NULL且'error'不为NULL时，'error'指向的整数将被设置为发生错误的类型
+// 从指定的文件中加载指定类型的Redis对象.成功时返回一个新分配的对象,否则返回NULL.
+// 当函数返回NULL且'error'不为NULL时,'error'指向的整数将被设置为发生错误的类型
 robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error) {
     robj *o = NULL, *ele, *dec;
     uint64_t len;

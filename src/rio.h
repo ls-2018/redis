@@ -24,12 +24,12 @@ struct rio {
         struct {
             sds ptr;   // 缓存指针
             off_t pos; // 偏移量
-        } buffer;      // 内存缓冲区目标。
+        } buffer;      // 内存缓冲区目标.
         struct {
             FILE *fp;       // 被打开文件的指针
             off_t buffered; // 最近一次 fsync() 以来,写入的字节量
             off_t autosync; // 写入多少字节之后,才会自动执行一次 fsync()
-        } file;             // Stdio文件指针目标。
+        } file;             // Stdio文件指针目标.
         struct {
             connection *conn;
             off_t pos;          // 返回的buf中的Pos
@@ -41,7 +41,7 @@ struct rio {
             int fd; /* File descriptor. */
             off_t pos;
             sds buf;
-        } fd; // FD目标(用于写入管道)。
+        } fd; // FD目标(用于写入管道).
     } io;
 };
 

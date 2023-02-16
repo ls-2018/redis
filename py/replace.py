@@ -5,7 +5,7 @@ for current_dir, dirs, files in os.walk(os.path.dirname(os.path.dirname(os.path.
         p = os.path.join(current_dir, file)
         if 'deps' in p:
             continue
-        if os.path.splitext(p)[1] not in ['.c', '.h', '.md']:
+        if os.path.splitext(p)[1] not in ['.c', '.h', '.md', '.conf']:
             continue
         with open(p, 'r', encoding='utf8') as f:
             data = f.read()

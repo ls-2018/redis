@@ -330,6 +330,26 @@ listpack
   
 ```
 
+#### zset 使用 listpack 的条件
+```
+1、Zset 保存的元素个数⼩于 128.
+2、Zset 元素的成员⻓度都⼩于 64 字节.
+
+zset-max-ziplist-entries 128
+zset-max-ziplist-value 64
+```
+
+#### hash 使用 ziplist 的条件
+```
+Hash 对象保存的所有键值对的键和值的字符串⻓度均⼩于 64 字节.
+Hash 对象保存的键值对数量⼩于 512 个.
+
+list-max-ziplist-entries 512
+list-max-ziplist-value 64
+```
+
+
+
 ```
 # 查看键的空转时长,不会改变lru属性
 OBJECT IDLETIME msg  
@@ -360,7 +380,6 @@ OBJECT IDLETIME msg
 1、内存利用率,数组和压缩列表都是非常紧凑的数据结构,它比链表占用的内存要更少.Redis是内存数据库,大量数据存到内存中,此时需要做尽可能的优化,提高内存的利用率. 
 2、数组对CPU高速缓存支持更友好,所以Redis在设计时,集合数据元素较少情况下,默认采用内存紧凑排列的方式存储,同时利用CPU高速缓存不会降低访问速度.
 当数据元素超过设定阈值后,避免查询时间复杂度太高,转为哈希和跳表数据结构存储,保证查询效率.
-```
 
 ziplist 设计的目的不是为了查询,而是为了减少内存的使用和内存的碎片化
 
@@ -370,6 +389,8 @@ ziplist 设计的目的不是为了查询,而是为了减少内存的使用和�
 
 Redis 是单线程,主要是指 Redis 的网络 IO 和键值对读写是由一个线程来完成的,这也是 Redis 对外提供键值存储服务的主要流程.但
 Redis 的其他功能,比如持久化、异步删除、集群数据同步等,其实是由额外的线程执行的.
+```
+
 
 #### 为什么用单线程？
 
@@ -402,22 +423,6 @@ Redis 的瓶颈不在 CPU ,而在内存和网络,内存不够可以增加内存�
 
 执行命令还是由单线程顺序执行,只是处理网络数据读写采用了多线程,而且 IO 线程要么同时读 Socket ,要么同时写 Socket ,不会同时读写
 ```
-
-Redis 的单线程指 Redis 的网络 IO 和键值对读写由一个线程来完成的（这是 Redis 对外提供键值对存储服务的主要流程） Redis
-的持久化、异步删除、集群数据同步等功能是由其他线程而不是主线程来执行的,所以严格来说,Redis 并不是单线程
-
-为什么用单线程？ 多线程会有共享资源的并发访问控制问题,为了避免这些问题,Redis 采用了单线程的模式,而且采用单线程对于 Redis
-的内部实现的复杂度大大降低
-
-为什么单线程就挺快？ 1.Redis 大部分操作是在内存上完成,并且采用了高效的数据结构如哈希表和跳表 2.Redis 采用多路复用,能保证在网络
-IO 中可以并发处理大量的客户端请求,实现高吞吐率
-
-Redis 6.0 版本为什么又引入了多线程？ Redis 的瓶颈不在 CPU ,而在内存和网络,内存不够可以增加内存或通过数据结构等进行优化 但
-Redis 的网络 IO 的读写占用了发部分 CPU
-的时间,如果可以把网络处理改成多线程的方式,性能会有很大提升 所以总结下 Redis 6.0 版本引入多线程有两个原因 1.充分利用服务器的多核资源
-2.多线程分摊 Redis 同步 IO 读写负荷
-
-执行命令还是由单线程顺序执行,只是处理网络数据读写采用了多线程,而且 IO 线程要么同时读 Socket ,要么同时写 Socket ,不会同时读写
 
 #### Redis单线程处理IO请求性能瓶颈主要包括2个方面：
 
@@ -458,27 +463,15 @@ f、主从全量同步生成RDB：虽然采用fork子进程生成数据快照,�
 个人理解,IO多路复用简单说是IO阻塞或非阻塞的都不准确.严格来说应用程序从网络读取数据到数据可用,分两个阶段：第一阶段读网络数据到内核,第二阶段读内核数据到用户态.IO多路复用解决了第一阶段阻塞问题,而第二阶段的读取阻塞的串行读.为了进一步提高REDIS的吞吐量,REDIS6.0使用多线程利用多CPU的优势解决第二阶段的阻塞.说的不对的地方,请斧正.
 ```
 
-【redis为什么会用单线程？】 作者阐述的原因有：
-
-1. 多线程的性能并不是呈线性增长的
-2. 引入多线程需要处理“多线程下共享资源的并发访问空置”
-3. 引入多线程会增加代码的调试难度和维护难度.
-
-个人理解是这样的redis在CPU指令在内存中处理数据速度极快,网络 IO 的读写其实是瓶颈,所以使用其他线程处理.但是Mysql主要性能瓶颈在于数据的存/取,如果使用单线程那就太慢了.
-
-个人理解,IO多路复用简单说是IO阻塞或非阻塞的都不准确.严格来说应用程序从网络读取数据到数据可用,分两个阶段：第一阶段读网络数据到内核,第二阶段读内核数据到用户态.
-IO多路复用解决了第一阶段阻塞问题,而第二阶段的读取阻塞的串行读.为了进一步提高REDIS的吞吐量,REDIS6.0使用多线程利用多CPU的优势解决第二阶段的阻塞.说的不对的地方,请斧正.
-
-repl_backlog_buffer 环形缓冲区 repl_backlog_size 是为了从库断开之后,如何找到主从差异数据而设计的环形缓冲区,从而避免全量同步带来的性能开销.
-
 #### repl_backlog_buffer 环形缓冲区 repl_backlog_size
 
 ```
 是为了从库断开之后,如何找到主从差异数据而设计的环形缓冲区,从而避免全量同步带来的性能开销.
 ```
 
-主从全量同步使用RDB而不使用AOF的原因：
+#### 主从全量同步使用RDB而不使用AOF的原因：
 
+```
 1、首先RDB和AOF最大的区别就是,RDB是内存快照,而AOF记录的是数据变化的过程,在全量初始化的情况下肯定是快照更优,RDB作为数据初始化的方式也更加快
 2、是针对RDB和AOF的文件大小问题,AOF是数据变化的过程（动态变化）,相比于RDB不利于压缩,使用RDB在传输文件的时候可以更好的节约网络资源
 3、进行主从同步并不是只使用RDB,而是RDB +
@@ -492,6 +485,7 @@ psync 的格式如下：psync <Master-Run-ID> <OFFSET> ,通过缓冲区 + offset
 
 【完全重同步】的开销是很大的（走bgsave）,生产环境中希望尽可能的使用【部分重同步】,但是【部分重同步】的条件也比较苛刻条件如下：
 1、从服务器两次执行 RUN_ID 必须相等 2、复制偏移量必须包含在复制缓冲区中
+```
 
 #### 主从全量同步使用RDB而不使用AOF的原因：
 
@@ -732,7 +726,7 @@ rss 表示 resident set size
     - allkeys-lru
     - allkeys-random
     - allkeys-lfu
-
+```
 简单举个例子,假设 lfu_decay_time 取值为 1,如果数据在 N 分钟内没有被访问,那么它的访问次数就要减 N.如果 lfu_decay_time
 取值更大,
 那么相应的衰减值会变小,衰减效果也会减弱.所以,如果业务应用中有短时高频访问的数据的话,建议把 lfu_decay_time 值设置为
@@ -740,6 +734,7 @@ rss 表示 resident set size
 策略在它们不再被访问后,会较快地衰减它们的访问次数,尽早把它们从缓存中淘汰出去,避免缓存污染. a) counter值越大,递增概率越低
 b) lfu-log-factor设置越大,递增概率越低 b)
 lfu-decay-time设置越大,衰减速度越慢
+```
 
 ### embstr类型的字符串长度为啥最大是44？
 
@@ -832,8 +827,8 @@ https://blog.csdn.net/u012422440/article/details/103536687
 
     当集群不可用、key 找不到对应的 slot、key 不在当前实例中、操作的 key 不在同一个 slot 中,或者 key 正在迁移等这几种情况发生时,事务的执行都会被放弃
 
+##  
 
-## 
 - 解析客户端命令 processInlineBuffer、processMultibulkBuffer
 
 # todo
@@ -851,6 +846,7 @@ updateClientMemUsage |-> lookupCommand
 # todo
 
 addACLLogEntry ACLSelectorCheckCmd
+
 - https://blog.csdn.net/qq_29235677/article/details/121475204
 - https://zhuanlan.zhihu.com/p/341434214
 - https://blog.csdn.net/weixin_40785301/article/details/122629052
@@ -862,7 +858,7 @@ PROPAGATE_AOF与PROPAGATE_REPL的区别
 
 // lua执行时,为什么会接收新的请求 src/networking.c:2510
 
-- checkChildrenDone 子进程执行完后，父进程干的活
+- checkChildrenDone 子进程执行完后,父进程干的活
 - backgroundRewriteDoneHandler
 - rdbSaveRio
 - rewriteAppendOnlyFileRio
@@ -884,5 +880,14 @@ PROPAGATE_AOF与PROPAGATE_REPL的区别
 0000058
 ```
 
-
-如果正在RDB ,不进行写文件？  代码在哪？
+## 性能检测
+- 来监测和统计测试期间内的最⼤延迟 ms 
+  ```
+  redis-cli --latency -h `host` -p `port` --intrinsic-latency 100 [执行的秒数]
+  ```
+- 禁用内存大页
+  ```
+  echo never > /sys/kernel/mm/transparent_hugepage/enabled
+  ```
+- swap
+  cat /proc/`redis-cli info | grep process_id`/smaps | egrep '^(Swap|Size)' 

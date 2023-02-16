@@ -534,7 +534,7 @@ void aofUpgradePrepare(aofManifest *am) {
     }
     sdsfree(aof_filepath);
 
-    serverLog(LL_NOTICE, "已成功将旧式AOF文件(%s)迁移到AOF目录(%s)。", server.aof_filename, server.aof_dirname);
+    serverLog(LL_NOTICE, "已成功将旧式AOF文件(%s)迁移到AOF目录(%s).", server.aof_filename, server.aof_dirname);
 }
 
 int aofDelHistoryFiles(void) {
@@ -721,7 +721,7 @@ int aofRewriteLimited(void) {
     }
 
     next_rewrite_time = server.unixtime + next_delay_minutes * 60;
-    serverLog(LL_WARNING, "后台AOF重写已多次失败并触发限制，将在%d分钟内重试", next_delay_minutes);
+    serverLog(LL_WARNING, "后台AOF重写已多次失败并触发限制,将在%d分钟内重试", next_delay_minutes);
     return 1;
 }
 
@@ -729,7 +729,7 @@ int aofRewriteLimited(void) {
  * AOF file implementation
  * ------------------------------------------------------------------------- */
 
-// 如果一个AOf fsync当前正在BIO线程中进行，则返回true。
+// 如果一个AOf fsync当前正在BIO线程中进行,则返回true.
 int aofFsyncInProgress(void) {
     return bioPendingJobsOfType(BIO_AOF_FSYNC) != 0;
 }
@@ -1239,7 +1239,7 @@ struct client *createAOFClient(void) {
     return c;
 }
 
-/* 重放追加日志文件。如果成功返回AOF_OK或AOF_TRUNCATED，否则返回以下其中之一:
+/* 重放追加日志文件.如果成功返回AOF_OK或AOF_TRUNCATED,否则返回以下其中之一:
  * AOF_OPEN_ERR: Failed to open the AOF file.
  * AOF_NOT_EXIST: AOF file doesn't exist.
  * AOF_EMPTY: The AOF file is empty (nothing to load).
@@ -1305,9 +1305,9 @@ int loadSingleAppendOnlyFile(char *filename) {
         rioInitWithFile(&rdb, fp);
         if (rdbLoadRio(&rdb, RDBFLAGS_AOF_PREAMBLE, NULL) != C_OK) {
             if (old_style)
-                serverLog(LL_WARNING, "读取AOF文件%s的RDB序文错误，AOF加载中止", filename);
+                serverLog(LL_WARNING, "读取AOF文件%s的RDB序文错误,AOF加载中止", filename);
             else
-                serverLog(LL_WARNING, "读取RDB基本文件%s时出错，AOF加载中止", filename);
+                serverLog(LL_WARNING, "读取RDB基本文件%s时出错,AOF加载中止", filename);
 
             goto readerr;
         }
@@ -2419,7 +2419,7 @@ void bgrewriteaofCommand(client *c) {
     else if (hasActiveChildProcess() || server.in_exec) {
         // 有RDB子进程,将AOF重写设置为待调度运行
         server.aof_rewrite_scheduled = 1;
-        // 当手动触发AOF RW时，我们重置计数，以便它可以立即执行。
+        // 当手动触发AOF RW时,我们重置计数,以便它可以立即执行.
         server.stat_aofrw_consecutive_failures = 0;
         addReplyStatus(c, "后台AOF重写开始调度");
     }
@@ -2522,12 +2522,12 @@ void backgroundRewriteDoneHandler(int exitcode, int bysignal) {
         serverAssert(server.aof_manifest != NULL);
         temp_am = aofManifestDup(server.aof_manifest);
 
-        // 获取一个新的BASE文件名，并将之前的(如果有的话)标记为HISTORY类型。
+        // 获取一个新的BASE文件名,并将之前的(如果有的话)标记为HISTORY类型.
         sds new_base_filename = getNewBaseFileNameAndMarkPreAsHistory(temp_am);
         serverAssert(new_base_filename != NULL);
         new_base_filepath = makePath(server.aof_dirname, new_base_filename);
 
-        // 将临时aof文件重命名为“new_base_filename”。
+        // 将临时aof文件重命名为“new_base_filename”.
         latencyStartMonitor(latency);
         if (rename(tmpfile, new_base_filepath) == -1) {
             serverLog(LL_WARNING, "试图将临时AOF文件%s重命名为 %s: 产生错误 %s", tmpfile, new_base_filepath, strerror(errno));
@@ -2562,7 +2562,7 @@ void backgroundRewriteDoneHandler(int exitcode, int bysignal) {
             sdsfree(temp_incr_filepath);
         }
 
-        // 将'incr_aof_list'中的AOF文件类型从AOF_FILE_TYPE_INCR更改为AOF_FILE_TYPE_HIST，并将其移动到'history_aof_list'。
+        // 将'incr_aof_list'中的AOF文件类型从AOF_FILE_TYPE_INCR更改为AOF_FILE_TYPE_HIST,并将其移动到'history_aof_list'.
         markRewrittenIncrAofAsHistory(temp_am);
 
         // 持久化我们的修改
@@ -2631,7 +2631,7 @@ cleanup:
     }
     server.aof_rewrite_time_last = time(NULL) - server.aof_rewrite_time_start;
     server.aof_rewrite_time_start = -1;
-    // 如果我们正在等待它打开AOF，计划一个新的重写。
+    // 如果我们正在等待它打开AOF,计划一个新的重写.
     if (server.aof_state == AOF_WAIT_REWRITE)
         server.aof_rewrite_scheduled = 1;
 }
