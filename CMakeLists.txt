@@ -70,7 +70,7 @@ set(SRC_SERVER_TMP
         src/over-call_reply.c
         src/redis-check-aof.c
         src/over-localtime.c
-        src/rdb.c
+        src/over-rdb.c
         src/slowlog.c
         src/listpack.c
         src/multi.c

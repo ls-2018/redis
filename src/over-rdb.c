@@ -15,19 +15,14 @@
 #include <sys/stat.h>
 #include <sys/param.h>
 
-/* This macro is called when the internal RDB structure is corrupt */
 #define rdbReportCorruptRDB(...) rdbReportError(1, __LINE__, __VA_ARGS__)
-/* This macro is called when RDB read failed (possibly a short read) */
 #define rdbReportReadError(...) rdbReportError(0, __LINE__, __VA_ARGS__)
-
-/* This macro tells if we are in the context of a RESTORE command, and not loading an RDB or AOF. */
 #define isRestoreContext() (server.current_client == NULL || server.current_client->id == CLIENT_ID_AOF) ? 0 : 1
 
-char *rdbFileBeingLoaded = NULL; /* used for rdb checking on read error */
+char *rdbFileBeingLoaded = NULL;
 extern int rdbCheckMode;
 
 void rdbCheckError(const char *fmt, ...);
-
 void rdbCheckSetError(const char *fmt, ...);
 
 #ifdef __GNUC__
@@ -86,9 +81,6 @@ int rdbSaveType(rio *rdb, unsigned char type) {
     return rdbWriteRaw(rdb, &type, 1);
 }
 
-/* Load a "type" in RDB format, that is a one byte unsigned integer.
- * This function is not only used to load object types, but also special
- * "types" like the end-of-file type, the EXPIRE type, and so forth. */
 int rdbLoadType(rio *rdb) {
     unsigned char type;
     if (rioRead(rdb, &type, 1) == 0)
@@ -96,11 +88,10 @@ int rdbLoadType(rio *rdb) {
     return type;
 }
 
-/* This is only used to load old databases stored with the RDB_OPCODE_EXPIRETIME
- * opcode. New versions of Redis store using the RDB_OPCODE_EXPIRETIME_MS
- * opcode. On error -1 is returned, however this could be a valid time, so
- * to check for loading errors the caller should call rioGetReadError() after
- * calling this function. */
+// 这仅用于加载使用RDB_OPCODE_EXPIRETIME操作码存储的旧数据库。
+// 新版本的Redis使用RDB_OPCODE_EXPIRETIME_MS操作码存储。
+// 在返回错误-1时，但是这可能是一个有效的时间，
+// 因此为了检查加载错误，调用者应该在调用此函数后调用rioGetReadError()。
 time_t rdbLoadTime(rio *rdb) {
     int32_t t32;
     if (rioRead(rdb, &t32, 4) == 0)
@@ -110,25 +101,17 @@ time_t rdbLoadTime(rio *rdb) {
 
 int rdbSaveMillisecondTime(rio *rdb, long long t) {
     int64_t t64 = (int64_t)t;
-    memrev64ifbe(&t64); /* Store in little endian. */
+    memrev64ifbe(&t64); // 小端存储
     return rdbWriteRaw(rdb, &t64, 8);
 }
 
-/* This function loads a time from the RDB file. It gets the version of the
- * RDB because, unfortunately, before Redis 5 (RDB version 9), the function
- * failed to convert data to/from little endian, so RDB files with keys having
- * expires could not be shared between big endian and little endian systems
- * (because the expire time will be totally wrong). The fix for this is just
- * to call memrev64ifbe(), however if we fix this for all the RDB versions,
- * this call will introduce an incompatibility for big endian systems:
- * after upgrading to Redis version 5 they will no longer be able to load their
- * own old RDB files. Because of that, we instead fix the function only for new
- * RDB versions, and load older RDB versions as we used to do in the past,
- * allowing big endian systems to load their own old RDB files.
- *
- * On I/O error the function returns LLONG_MAX, however if this is also a
- * valid stored value, the caller should use rioGetReadError() to check for
- * errors after calling this function. */
+// 这个函数从RDB文件中加载时间。它得到RDB的版本，因为，不幸的是，在Redis 5 (RDB版本9)之前，
+// 该函数无法将数据从小端序转换到小端序，所以密钥过期的RDB文件不能在大端序和小端序系统之间共享(因为过期时间将完全错误)。
+// 修复这个问题只是调用memrev64ifbe()，然而，如果我们修复了所有RDB版本，这个调用将引入对大端系统的不兼容性:
+//      升级到Redis版本5后，他们将不再能够加载他们自己的旧RDB文件。因此，我们只针对新的RDB版本修复该函数，
+//      并像过去一样加载旧的RDB版本，允许大端系统加载它们自己的旧RDB文件。
+//
+// 在I/O错误时，函数返回LLONG_MAX，但是如果这也是一个有效的存储值，调用者应该在调用该函数后使用rioGetReadError()检查错误。
 long long rdbLoadMillisecondTime(rio *rdb, int rdbver) {
     int64_t t64;
     if (rioRead(rdb, &t64, 8) == 0)
@@ -138,9 +121,7 @@ long long rdbLoadMillisecondTime(rio *rdb, int rdbver) {
     return (long long)t64;
 }
 
-/* Saves an encoded length. The first two bits in the first byte are used to
- * hold the encoding type. See the RDB_* definitions for more information
- * on the types of encoding. */
+// 保存编码后的长度,前两个bits保存了编码类型
 int rdbSaveLen(rio *rdb, uint64_t len) {
     unsigned char buf[2];
     size_t nwritten;
@@ -238,10 +219,7 @@ int rdbLoadLenByRef(rio *rdb, int *isencoded, uint64_t *lenptr) {
     return 0;
 }
 
-/* This is like rdbLoadLenByRef() but directly returns the value read
- * from the RDB stream, signaling an error by returning RDB_LENERR
- * (since it is a too large count to be applicable in any Redis data
- * structure). */
+// 这类似于rdbLoadLenByRef()，但直接返回从RDB流读取的值，通过返回RDB_LENERR发出错误信号(因为它是一个太大的计数，适用于任何Redis数据结构)。
 uint64_t rdbLoadLen(rio *rdb, int *isencoded) {
     uint64_t len;
 
@@ -250,10 +228,6 @@ uint64_t rdbLoadLen(rio *rdb, int *isencoded) {
     return len;
 }
 
-/* Encodes the "value" argument as integer when it fits in the supported ranges
- * for encoded types. If the function successfully encodes the integer, the
- * representation is stored in the buffer pointer to by "enc" and the string
- * length is returned. Otherwise 0 is returned. */
 int rdbEncodeInteger(long long value, unsigned char *enc) {
     if (value >= -(1 << 7) && value <= (1 << 7) - 1) {
         enc[0] = (RDB_ENCVAL << 6) | RDB_ENC_INT8;
@@ -279,9 +253,6 @@ int rdbEncodeInteger(long long value, unsigned char *enc) {
     }
 }
 
-/* Loads an integer-encoded object with the specified encoding type "enctype".
- * The returned value changes according to the flags, see
- * rdbGenericLoadStringObject() for more info. */
 void *rdbLoadIntegerObject(rio *rdb, int enctype, int flags, size_t *lenptr) {
     int plain = flags & RDB_LOAD_PLAIN;
     int sds = flags & RDB_LOAD_SDS;
@@ -329,9 +300,6 @@ void *rdbLoadIntegerObject(rio *rdb, int enctype, int flags, size_t *lenptr) {
     }
 }
 
-/* String objects in the form "2391" "-100" without any space and with a
- * range of values that can fit in an 8, 16 or 32 bit signed value can be
- * encoded as integers to save space */
 int rdbTryIntegerEncoding(char *s, size_t len, unsigned char *enc) {
     long long value;
     if (string2ll(s, len, &value)) {
@@ -692,8 +660,7 @@ int rdbLoadBinaryFloatValue(rio *rdb, float *val) {
     return 0;
 }
 
-/* Save the object type of object "o". */
-int rdbSaveObjectType(rio *rdb, robj *o) {
+int rdbSaveObjectType(rio *rdb, robj *o) { // 保存主逻辑✈️✈️✈️✈️✈️✈️✈️✈️✈️✈️✈️✈️
     switch (o->type) {
         case OBJ_STRING:
             return rdbSaveType(rdb, RDB_TYPE_STRING);
@@ -744,28 +711,23 @@ int rdbLoadObjectType(rio *rdb) {
     return type;
 }
 
-/* This helper function serializes a consumer group Pending Entries List (PEL)
- * into the RDB file. The 'nacks' argument tells the function if also persist
- * the information about the not acknowledged message, or if to persist
- * just the IDs: this is useful because for the global consumer group PEL
- * we serialized the NACKs as well, but when serializing the local consumer
- * PELs we just add the ID, that will be resolved inside the global PEL to
- * put a reference to the same structure. */
+// 这个助手函数将消费者组Pending Entries List (PEL)序列化到RDB文件中。
+// 'nacks'参数告诉函数是否也持久化未确认消息的信息，或者是否仅持久化ID:这很有用，因为对于全局消费者组PEL，
+// 我们也序列化了nacks，但在序列化本地消费者PEL时，我们只添加了ID，这将在全局PEL中解析，以放置对相同结构的引用。
 ssize_t rdbSaveStreamPEL(rio *rdb, rax *pel, int nacks) {
     ssize_t n, nwritten = 0;
 
-    /* Number of entries in the PEL. */
+    // 保存pel的大小
     if ((n = rdbSaveLen(rdb, raxSize(pel))) == -1)
         return -1;
     nwritten += n;
 
-    /* Save each entry. */
+    // 保存每一项
     raxIterator ri;
     raxStart(&ri, pel);
     raxSeek(&ri, "^", NULL, 0);
     while (raxNext(&ri)) {
-        /* We store IDs in raw form as 128 big big endian numbers, like
-         * they are inside the radix tree key. */
+        // 我们将id以原始形式存储为128个大端数字，比如它们在基树键中。
         if ((n = rdbWriteRaw(rdb, ri.key, sizeof(streamID))) == -1) {
             raxStop(&ri);
             return -1;
@@ -793,9 +755,7 @@ ssize_t rdbSaveStreamPEL(rio *rdb, rax *pel, int nacks) {
     return nwritten;
 }
 
-/* Serialize the consumers of a stream consumer group into the RDB. Helper
- * function for the stream data type serialization. What we do here is to
- * persist the consumer metadata, and it's PEL, for each consumer. */
+// 将流消费者组的消费者序列化到RDB中。流数据类型序列化的辅助函数。这里我们要做的是为每个消费者持久化消费者元数据，它是PEL。
 size_t rdbSaveStreamConsumers(rio *rdb, streamCG *cg) {
     ssize_t n, nwritten = 0;
 
@@ -839,8 +799,6 @@ size_t rdbSaveStreamConsumers(rio *rdb, streamCG *cg) {
     return nwritten;
 }
 
-/* Save a Redis object.
- * Returns -1 on error, number of bytes written on success. */
 ssize_t rdbSaveObject(rio *rdb, robj *o, robj *key, int dbid) {
     ssize_t n = 0, nwritten = 0;
 
@@ -1152,20 +1110,13 @@ ssize_t rdbSaveObject(rio *rdb, robj *o, robj *key, int dbid) {
     return nwritten;
 }
 
-/* Return the length the object will have on disk if saved with
- * the rdbSaveObject() function. Currently we use a trick to get
- * this length with very little changes to the code. In the future
- * we could switch to a faster solution. */
 size_t rdbSavedObjectLen(robj *o, robj *key, int dbid) {
     ssize_t len = rdbSaveObject(NULL, o, key, dbid);
     serverAssertWithInfo(NULL, o, len != -1);
     return len;
 }
 
-/* Save a key-value pair, with expire time, type, key, value.
- * On error -1 is returned.
- * On success if the key was actually saved 1 is returned. */
-// 生成RDB文件时,会调用,将键值对写到文件中
+// 生成RDB文件时,会调用,将键值对[类型，过期时间]写到文件中
 int rdbSaveKeyValuePair(rio *rdb, robj *key, robj *val, long long expiretime, int dbid) {
     int savelru = server.maxmemory_policy & MAXMEMORY_FLAG_LRU;
     int savelfu = server.maxmemory_policy & MAXMEMORY_FLAG_LFU;
@@ -1525,11 +1476,7 @@ int rdbSave(int req, char *filename, rdbSaveInfo *rsi) {
     if (!fp) {
         char *str_err = strerror(errno);
         char *cwdp = getcwd(cwd, MAXPATHLEN);
-        serverLog(
-            LL_WARNING,
-            "Failed opening the temp RDB file %s (in server root dir %s) "
-            "for saving: %s",
-            tmpfile, cwdp ? cwdp : "unknown", str_err);
+        serverLog(LL_WARNING, "打开临时RDB文件失败 %s (in server root dir %s) for saving: %s", tmpfile, cwdp ? cwdp : "unknown", str_err);
         return C_ERR;
     }
 
@@ -1556,7 +1503,7 @@ int rdbSave(int req, char *filename, rdbSaveInfo *rsi) {
     fp = NULL;
 
     // 使用重命名的方式,实现原子生成db文件
-    printf("save db: pwd:%s %s-->%s\n", getcwd(cwd, MAXPATHLEN), tmpfile, filename);
+    serverLog(LL_NOTICE,"保存数据库文件: pwd:%s %s-->%s\n", getcwd(cwd, MAXPATHLEN), tmpfile, filename);
     if (rename(tmpfile, filename) == -1) {
         char *str_err = strerror(errno);
         char *cwdp = getcwd(cwd, MAXPATHLEN);
@@ -1845,10 +1792,8 @@ int lpPairsValidateIntegrityAndDups(unsigned char *lp, size_t size, int deep) {
     return ret;
 }
 
-/* Load a Redis object of the specified type from the specified file.
- * On success a newly allocated object is returned, otherwise NULL.
- * When the function returns NULL and if 'error' is not NULL, the
- * integer pointed by 'error' is set to the type of error that occurred */
+// 从指定的文件中加载指定类型的Redis对象。成功时返回一个新分配的对象，否则返回NULL。
+// 当函数返回NULL且'error'不为NULL时，'error'指向的整数将被设置为发生错误的类型
 robj *rdbLoadObject(int rdbtype, rio *rdb, sds key, int dbid, int *error) {
     robj *o = NULL, *ele, *dec;
     uint64_t len;

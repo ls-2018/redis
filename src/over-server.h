@@ -2887,7 +2887,7 @@ int writeCommandsDeniedByDiskError(void);
 sds writeCommandsGetDiskErrorMessage(int);
 
 /* RDB persistence */
-#include "rdb.h"
+#include "over-rdb.h"
 
 void killRDBChild(void);
 

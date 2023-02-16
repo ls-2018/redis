@@ -29,7 +29,7 @@
 
 #include "over-mt19937-64.h"
 #include "over-server.h"
-#include "rdb.h"
+#include "over-rdb.h"
 
 #include <stdarg.h>
 #include <sys/time.h>
