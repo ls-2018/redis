@@ -1,17 +1,10 @@
 // 客户端缓存
 #include "over-server.h"
 
-/* The tracking table is constituted by a radix tree of keys, each pointing
- * to a radix tree of client IDs, used to track the clients that may have
- * certain keys in their local, client side, cache.
- *
- * When a client enables tracking with "CLIENT TRACKING on", each key served to
- * the client is remembered in the table mapping the keys to the client IDs.
- * Later, when a key is modified, all the clients that may have local copy
- * of such key will receive an invalidation message.
- *
- * Clients will normally take frequently requested objects in memory, removing
- * them when invalidation messages are received. */
+// 跟踪表由一个前缀树组成，每个键指向一个客户端id的基树，用于跟踪客户端可能在其本地，客户端，缓存中有某些键。
+// 当客户端启用“client tracking on”跟踪时，提供给客户端的每个键都被记录在映射到客户端id的表中。
+// 稍后，当密钥被修改时，所有可能拥有该密钥本地副本的客户端将收到一条无效消息。
+// 客户端通常将频繁请求的对象保存在内存中，在收到无效消息时删除它们
 rax *TrackingTable = NULL;
 rax *PrefixTable = NULL;
 uint64_t TrackingTableTotalItems = 0; /* Total number of IDs stored across
@@ -24,9 +17,8 @@ robj *TrackingChannelName;
  * represents the list of keys modified, and the list of clients that need
  * to be notified, for a given prefix. */
 typedef struct bcastState {
-    rax *keys;    /* Keys modified in the current event loop cycle. */
-    rax *clients; /* Clients subscribed to the notification events for this
-                     prefix. */
+    rax *keys;    // 在当前事件循环中修改的键。
+    rax *clients; // 客户端订阅了此前缀的通知事件。
 } bcastState;
 
 /* Remove the tracking state from the client 'c'. Note that there is not much
@@ -445,7 +437,7 @@ void trackingInvalidateKeysOnFlush(int async) {
             freeTrackingRadixTree(TrackingTable);
         }
         TrackingTable = raxNew();
-        TrackingTableTotalItems = 0;g
+        TrackingTableTotalItems = 0;
     }
 }
 
@@ -597,8 +589,7 @@ void trackingBroadcastInvalidationMessages(void) {
             raxStop(&ri2);
 
             /* Clean up: we can remove everything from this state, because we
-             * want to only track the new keys that will be accumulated starting
-             * from now. */
+             * want to only track the new keys that will be accumulated starting from now. */
             sdsfree(proto);
         }
         raxFree(bs->keys);
@@ -607,8 +598,7 @@ void trackingBroadcastInvalidationMessages(void) {
     raxStop(&ri);
 }
 
-/* This is just used in order to access the amount of used slots in the
- * tracking table. */
+/* This is just used in order to access the amount of used slots in the tracking table. */
 uint64_t trackingGetTotalItems(void) {
     return TrackingTableTotalItems;
 }

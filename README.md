@@ -853,6 +853,8 @@ addACLLogEntry ACLSelectorCheckCmd
 - https://blog.csdn.net/cristianoxm/article/details/106860233
 - https://blog.csdn.net/qq_45800640/article/details/119189270
 - https://blog.csdn.net/sinat_14840559/article/details/124433556
+- https://blog.csdn.net/wsdc0521/article/details/106766096
+
 
 PROPAGATE_AOF与PROPAGATE_REPL的区别
 
@@ -891,3 +893,15 @@ PROPAGATE_AOF与PROPAGATE_REPL的区别
   ```
 - swap
   cat /proc/`redis-cli info | grep process_id`/smaps | egrep '^(Swap|Size)' 
+
+
+
+```
+[root@localhost ~]# ps -aT -p 19291
+  PID  SPID TTY          TIME CMD
+19291 19291 pts/1    00:00:00 redis-server
+19291 19292 pts/1    00:00:00 bio_close_file
+19291 19293 pts/1    00:00:00 bio_aof_fsync
+19291 19294 pts/1    00:00:00 bio_lazy_free
+19291 19295 pts/1    00:00:00 jemalloc_bg_thd
+```
