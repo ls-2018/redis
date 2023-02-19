@@ -2778,10 +2778,7 @@ char *getClientSockname(client *c) {
 
 // 获取客户端的各项信息,将它们储存到 s 里面,并返回.
 sds catClientInfoString(sds s, client *client) {
-    char flags[16];
-    char events[3];
-    char conninfo[CONN_INFO_LEN];
-    char *p;
+    char flags[16], events[3], conninfo[CONN_INFO_LEN], *p;
 
     p = flags;
     if (client->flags & CLIENT_SLAVE) {
@@ -2844,35 +2841,35 @@ sds catClientInfoString(sds s, client *client) {
         used_blocks_of_repl_buf = last->id - cur->id + 1;
     }
     sds ret;
-    ret = sdscatfmt(s, "id=%U", (unsigned long long)client->id);                     //
-    ret = sdscatfmt(s, "addr=%s", getClientPeerId(client));                          // 只有IP
-    ret = sdscatfmt(s, "laddr=%s", getClientSockname(client));                       // IP:PORT
-    ret = sdscatfmt(s, "%s", connGetInfo(client->conn, conninfo, sizeof(conninfo))); // 返回描述连接的文本 fd=7
-    ret = sdscatfmt(s, "名称=%s", client->name ? (char *)client->name->ptr : "");
-    ret = sdscatfmt(s, "存活时间=%I", (long long)(server.unixtime - client->ctime)); // 服务端当前时间-客户端创建时间
-    ret = sdscatfmt(s, "空闲时间=%I", (long long)(server.unixtime - client->lastinteraction));
-    ret = sdscatfmt(s, "flags=%s", flags);
-    ret = sdscatfmt(s, "db=%i", client->db->id);
-    ret = sdscatfmt(s, "订阅频道的数量=%i", (int)dictSize(client->pubsub_channels));
-    ret = sdscatfmt(s, "订阅频道正则模式的数量=%i", (int)listLength(client->pubsub_patterns));
-    ret = sdscatfmt(s, "正在执行的事务数量=%i", (client->flags & CLIENT_MULTI) ? client->mstate.count : -1);
+    ret = sdscatfmt(s, "id=%U ", (unsigned long long)client->id);                       //
+    ret = sdscatfmt(ret, "addr=%s ", getClientPeerId(client));                          // 只有IP
+    ret = sdscatfmt(ret, "laddr=%s ", getClientSockname(client));                       // IP:PORT
+    ret = sdscatfmt(ret, "%s ", connGetInfo(client->conn, conninfo, sizeof(conninfo))); // 返回描述连接的文本 fd=7
+    ret = sdscatfmt(ret, "名称=%s ", client->name ? (char *)client->name->ptr : "");
+    ret = sdscatfmt(ret, "存活时间=%I ", (long long)(server.unixtime - client->ctime)); // 服务端当前时间-客户端创建时间
+    ret = sdscatfmt(ret, "空闲时间=%I ", (long long)(server.unixtime - client->lastinteraction));
+    ret = sdscatfmt(ret, "flags=%s ", flags);
+    ret = sdscatfmt(ret, "db=%i ", client->db->id);
+    ret = sdscatfmt(ret, "订阅频道的数量=%i ", (int)dictSize(client->pubsub_channels));
+    ret = sdscatfmt(ret, "订阅频道正则模式的数量=%i ", (int)listLength(client->pubsub_patterns));
+    ret = sdscatfmt(ret, "正在执行的事务数量=%i ", (client->flags & CLIENT_MULTI) ? client->mstate.count : -1);
 
     // 缓冲区溢出会导致客户端连接关闭
-    ret = sdscatfmt(s, "输入缓冲区大小已用空间=%U", (unsigned long long)sdslen(client->querybuf));
-    ret = sdscatfmt(s, "输入缓冲区大小可用空间=%U", (unsigned long long)sdsavail(client->querybuf));
-    ret = sdscatfmt(s, "argv列表中对象长度的和=%U", (unsigned long long)client->argv_len_sum);
-    ret = sdscatfmt(s, "multi-mem=%U", (unsigned long long)client->mstate.argv_len_sums);
-    ret = sdscatfmt(s, "可使用的内存大小=%U", (unsigned long long)client->buf_usable_size);
-    ret = sdscatfmt(s, "最近5秒间隔内使用的缓冲器的峰值=%U", (unsigned long long)client->buf_peak);
-    ret = sdscatfmt(s, "记录了buf数组目前已使用的字节数量=%U", (unsigned long long)client->bufpos);
-    ret = sdscatfmt(s, "oll=%U", (unsigned long long)listLength(client->reply) + used_blocks_of_repl_buf);
-    ret = sdscatfmt(s, "客户端输出缓冲区使用的内存=%U", (unsigned long long)obufmem);
-    ret = sdscatfmt(s, "计算此客户端消耗的总内存=%U", (unsigned long long)total_mem);
-    ret = sdscatfmt(s, "客户端注册的回调函数[rw]=%s", events);
-    ret = sdscatfmt(s, "最近执行的命令=%s", client->lastcmd ? client->lastcmd->fullname : "NULL"); // 表示客户端最新执行的命令
-    ret = sdscatfmt(s, "用户=%s", client->user ? client->user->name : "(superuser)");
-    ret = sdscatfmt(s, "客户端追踪者ID=%I", (client->flags & CLIENT_TRACKING) ? (long long)client->client_tracking_redirection : -1);
-    ret = sdscatfmt(s, "resp协议版本=%i", client->resp);
+    ret = sdscatfmt(ret, "输入缓冲区大小已用空间=%U ", (unsigned long long)sdslen(client->querybuf));
+    ret = sdscatfmt(ret, "输入缓冲区大小可用空间=%U ", (unsigned long long)sdsavail(client->querybuf));
+    ret = sdscatfmt(ret, "argv列表中对象长度的和=%U ", (unsigned long long)client->argv_len_sum);
+    ret = sdscatfmt(ret, "multi-mem=%U ", (unsigned long long)client->mstate.argv_len_sums);
+    ret = sdscatfmt(ret, "可使用的内存大小=%U ", (unsigned long long)client->buf_usable_size);
+    ret = sdscatfmt(ret, "最近5秒间隔内使用的缓冲器的峰值=%U ", (unsigned long long)client->buf_peak);
+    ret = sdscatfmt(ret, "记录了buf数组目前已使用的字节数量=%U ", (unsigned long long)client->bufpos);
+    ret = sdscatfmt(ret, "oll=%U ", (unsigned long long)listLength(client->reply) + used_blocks_of_repl_buf);
+    ret = sdscatfmt(ret, "客户端输出缓冲区使用的内存=%U ", (unsigned long long)obufmem);
+    ret = sdscatfmt(ret, "计算此客户端消耗的总内存=%U ", (unsigned long long)total_mem);
+    ret = sdscatfmt(ret, "客户端注册的回调函数[rw]=%s ", events);
+    ret = sdscatfmt(ret, "最近执行的命令=%s ", client->lastcmd ? client->lastcmd->fullname : "NULL"); // 表示客户端最新执行的命令
+    ret = sdscatfmt(ret, "用户=%s ", client->user ? client->user->name : "(superuser)");
+    ret = sdscatfmt(ret, "客户端追踪者ID=%I ", (client->flags & CLIENT_TRACKING) ? (long long)client->client_tracking_redirection : -1);
+    ret = sdscatfmt(ret, "resp协议版本=%i ", client->resp);
 
     return ret;
 }
