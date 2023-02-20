@@ -1,6 +1,6 @@
 {
   "MASTERS": {
-    "summary": "List the monitored masters",
+    "summary": "列出所有监控的主机",
     "complexity": "O(N) where N is the number of masters",
     "group": "sentinel",
     "since": "2.8.4",

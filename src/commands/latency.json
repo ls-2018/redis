@@ -1,7 +1,7 @@
 {
   "LATENCY": {
     "summary": "A container for latency diagnostics commands",
-    "complexity": "Depends on subcommand.",
+    "complexity": "取决于子命令.",
     "group": "server",
     "since": "2.8.13",
     "arity": -2

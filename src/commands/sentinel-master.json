@@ -1,6 +1,6 @@
 {
   "MASTER": {
-    "summary": "Shows the state of a master",
+    "summary": "显示主机的状态",
     "complexity": "O(1)",
     "group": "sentinel",
     "since": "2.8.4",

@@ -1,7 +1,7 @@
 {
   "DEBUG": {
     "summary": "A container for debugging commands",
-    "complexity": "Depends on subcommand.",
+    "complexity": "取决于子命令.",
     "group": "server",
     "since": "1.0.0",
     "arity": -2,

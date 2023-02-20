@@ -1,6 +1,6 @@
 {
   "REPLICAS": {
-    "summary": "List the monitored replicas",
+    "summary": "列出被监控的副本",
     "complexity": "O(N) where N is the number of replicas",
     "group": "sentinel",
     "since": "5.0.0",

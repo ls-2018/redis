@@ -1,7 +1,7 @@
 {
   "MODULE": {
     "summary": "A container for module commands",
-    "complexity": "Depends on subcommand.",
+    "complexity": "取决于子命令.",
     "group": "server",
     "since": "4.0.0",
     "arity": -2

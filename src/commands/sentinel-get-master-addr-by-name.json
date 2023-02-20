@@ -1,6 +1,6 @@
 {
   "GET-MASTER-ADDR-BY-NAME": {
-    "summary": "Get port and address of a master",
+    "summary": "获取主机的端口和地址",
     "complexity": "O(1)",
     "group": "sentinel",
     "since": "2.8.4",

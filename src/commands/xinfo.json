@@ -1,7 +1,7 @@
 {
   "XINFO": {
     "summary": "A container for stream introspection commands",
-    "complexity": "Depends on subcommand.",
+    "complexity": "取决于子命令.",
     "group": "stream",
     "since": "5.0.0",
     "arity": -2

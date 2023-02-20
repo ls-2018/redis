@@ -1,7 +1,7 @@
 {
   "SCRIPT": {
     "summary": "A container for Lua scripts management commands",
-    "complexity": "Depends on subcommand.",
+    "complexity": "取决于子命令.",
     "group": "scripting",
     "since": "2.6.0",
     "arity": -2

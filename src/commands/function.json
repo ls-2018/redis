@@ -1,7 +1,7 @@
 {
   "FUNCTION": {
     "summary": "A container for function commands",
-    "complexity": "Depends on subcommand.",
+    "complexity": "取决于子命令.",
     "group": "scripting",
     "since": "7.0.0",
     "arity": -2

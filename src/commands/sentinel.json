@@ -1,7 +1,7 @@
 {
   "SENTINEL": {
-    "summary": "A container for Sentinel commands",
-    "complexity": "Depends on subcommand.",
+    "summary": "一个哨兵命令的容器",
+    "complexity": "取决于子命令.",
     "group": "sentinel",
     "since": "2.8.4",
     "arity": -2,

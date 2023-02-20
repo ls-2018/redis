@@ -1,7 +1,7 @@
 {
   "PUBSUB": {
     "summary": "A container for Pub/Sub commands",
-    "complexity": "Depends on subcommand.",
+    "complexity": "取决于子命令.",
     "group": "pubsub",
     "since": "2.8.0",
     "arity": -2

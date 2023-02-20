@@ -1,7 +1,7 @@
 {
   "CLIENT": {
     "summary": "A container for client connection commands",
-    "complexity": "Depends on subcommand.",
+    "complexity": "取决于子命令.",
     "group": "connection",
     "since": "2.4.0",
     "arity": -2,

@@ -1,7 +1,7 @@
 {
   "ACL": {
     "summary": "A container for Access List Control commands ",
-    "complexity": "Depends on subcommand.",
+    "complexity": "取决于子命令.",
     "group": "server",
     "since": "6.0.0",
     "arity": -2,

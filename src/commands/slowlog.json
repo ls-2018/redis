@@ -1,7 +1,7 @@
 {
   "SLOWLOG": {
     "summary": "A container for slow log commands",
-    "complexity": "Depends on subcommand.",
+    "complexity": "取决于子命令.",
     "group": "server",
     "since": "2.2.12",
     "arity": -2
