@@ -143,14 +143,13 @@ typedef struct clusterNode {
     list *fail_reports;                     // 下线记录列表
 } clusterNode;
 
-/* Slot to keys for a single slot. The keys in the same slot are linked together
- * using dictEntry metadata. */
+// 相同slot内的key的链表
 typedef struct slotToKeys {
-    uint64_t count;  /* Number of keys in the slot. */
-    dictEntry *head; /* The first key-value entry in the slot. */
+    uint64_t count;  // slot中的key数量。
+    dictEntry *head; // 槽中的第一个键-值条目。
 } slotToKeys;
 
-/* Slot to keys mapping for all slots, opaque outside this file. */
+// 所有槽的槽到键映射，在此文件外部不透明。
 struct clusterSlotToKeyMapping {
     slotToKeys by_slot[CLUSTER_SLOTS];
 };
